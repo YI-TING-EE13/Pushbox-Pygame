@@ -5,13 +5,11 @@ PushBox - A modern Sokoban puzzle game
 
 控制方式:
 - 方向鍵 ↑↓←→ 或 WASD: 移動
-- Z / Backspace: 撤銷
-- Y / R: 重做
-- F5 / Delete: 重置關卡
-- Esc / P: 暫停
-- M: 選單
-- E: 編輯器
-- H / F1: 說明
+- Z / Backspace: 撤銷 (Undo)
+- Y / R: 重做 (Redo)
+- F5 / Delete: 重置關卡 (Reset)
+- M: 返回選單
+- H / F1: 遊戲說明 (Help)
 """
 
 import sys

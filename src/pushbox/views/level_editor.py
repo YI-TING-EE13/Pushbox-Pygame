@@ -439,6 +439,9 @@ class LevelEditor:
         # Map Size Controls
         self._draw_size_controls()
 
+        # Shortcuts Hints
+        self._draw_hints()
+
         # --- Draw Grid Area ---
         self._draw_grid()
 
@@ -605,3 +608,37 @@ class LevelEditor:
         pygame.draw.rect(self.screen, COLORS["panel_bg"], bg, border_radius=5)
         pygame.draw.rect(self.screen, COLORS["text_highlight"], bg, 1, border_radius=5)
         self.screen.blit(surf, surf.get_rect(center=bg.center))
+
+    def _draw_hints(self) -> None:
+        """Draw shortcut hints in sidebar."""
+        if not self.small_font:
+            return
+
+        y = 545
+        # Line separator
+        pygame.draw.line(
+            self.screen,
+            COLORS["grid_lines"],
+            (20, y),
+            (self.sidebar_width - 20, y),
+            1,
+        )
+        y += 15
+
+        label = self.small_font.render("操作提示:", True, COLORS["text_dim"])
+        self.screen.blit(label, (20, y))
+        y += 25
+
+        hints = [
+            "左鍵：放置 | 右鍵：清除",
+            "1-5：切換工具",
+            "Z：撤銷 | Y / R：重做",
+            "Ctrl + S：儲存關卡",
+            "C：清空地圖",
+            "Esc：離開編輯器",
+        ]
+
+        for hint in hints:
+            surf = self.small_font.render(hint, True, COLORS["text_dim"])
+            self.screen.blit(surf, (20, y))
+            y += 20
