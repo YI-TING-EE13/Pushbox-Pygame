@@ -1,0 +1,9 @@
+{
+  "Level 1": {
+    "completed": false,
+    "best_moves": null,
+    "best_time": null,
+    "best_pushes": null,
+    "attempts": 0
+  }
+}

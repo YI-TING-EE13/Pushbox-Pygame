@@ -1,0 +1,210 @@
+"""Main game controller managing game flow."""
+
+from typing import Any, Callable, Optional
+
+import pygame
+
+from ..models.game_state import GameState
+from ..models.level import Level, LevelManager
+from ..models.save_manager import SaveManager
+from ..utils.audio import AudioManager
+from ..utils.config import Config
+from ..utils.constants import GameState as GameStateEnum
+from .input_handler import InputHandler
+
+
+class GameController:
+    """Main controller for the game."""
+
+    def __init__(self) -> None:
+        """Initialize game controller."""
+        # Initialize systems
+        self.config = Config()
+        self.audio = AudioManager()
+        self.save_manager = SaveManager()
+        self.level_manager = LevelManager()
+
+        # Initialize pygame
+        pygame.init()
+        self.audio.initialize()
+
+        # Game state
+        self.current_level: Optional[Level] = None
+        self.game_state: Optional[GameState] = None
+        self.input_handler = InputHandler(self.config)
+
+        # Callbacks
+        self._state_callbacks: dict[str, list[Callable[..., None]]] = {
+            "win": [],
+            "game_over": [],
+            "move": [],
+            "undo": [],
+            "reset": [],
+        }
+
+        # Setup input callbacks
+        self._setup_input_callbacks()
+
+    def _setup_input_callbacks(self) -> None:
+        """Setup input handler callbacks."""
+        self.input_handler.register_callback("move", self._on_move)
+        self.input_handler.register_callback("undo", self._on_undo)
+        self.input_handler.register_callback("redo", self._on_redo)
+        self.input_handler.register_callback("reset", self._on_reset)
+
+    def register_callback(self, event: str, callback: Callable[..., None]) -> None:
+        """Register a state change callback.
+
+        Args:
+            event: Event name.
+            callback: Function to call.
+        """
+        if event in self._state_callbacks:
+            self._state_callbacks[event].append(callback)
+
+    def _trigger_event(self, event: str, *args: object, **kwargs: object) -> None:
+        """Trigger event callbacks."""
+        for callback in self._state_callbacks.get(event, []):
+            try:
+                callback(*args, **kwargs)
+            except Exception as e:
+                print(f"Error in event callback {event}: {e}")
+
+    def load_level(self, level_name: str) -> bool:
+        """Load a level.
+
+        Args:
+            level_name: Name of the level to load.
+
+        Returns:
+            True if level loaded successfully.
+        """
+        level = self.level_manager.get_level(level_name)
+        if not level:
+            return False
+
+        self.current_level = level
+        self.game_state = GameState(level)
+        return True
+
+    def get_current_level_name(self) -> Optional[str]:
+        """Get current level name.
+
+        Returns:
+            Level name or None.
+        """
+        return self.current_level.name if self.current_level else None
+
+    def get_available_levels(self) -> list[str]:
+        """Get list of available level names.
+
+        Returns:
+            List of level names.
+        """
+        return self.level_manager.get_level_names()
+
+    def _on_move(self, direction: tuple[int, int]) -> None:
+        """Handle move input.
+
+        Args:
+            direction: Direction tuple (dr, dc).
+        """
+        if not self.game_state:
+            return
+
+        success = self.game_state.move(direction)
+        if success:
+            self._trigger_event("move", direction)
+
+            # Check for win/game over
+            if self.game_state.status == GameStateEnum.WON:
+                self._handle_win()
+            elif self.game_state.status == GameStateEnum.GAME_OVER:
+                self._trigger_event("game_over")
+
+    def _handle_win(self) -> None:
+        """Handle level completion."""
+        if not self.game_state or not self.current_level:
+            return
+
+        # Update save data
+        stats = self.game_state.get_stats()
+        is_record = self.save_manager.update_level_progress(
+            self.current_level.name,
+            stats["moves"],
+            stats["time_seconds"],
+            stats["pushes"],
+        )
+
+        # Trigger callback
+        self._trigger_event("win", stats, is_record)
+
+    def _on_undo(self) -> None:
+        """Handle undo input."""
+        if self.game_state and self.game_state.undo():
+            self._trigger_event("undo")
+
+    def _on_redo(self) -> None:
+        """Handle redo input."""
+        if self.game_state and self.game_state.redo():
+            pass
+
+    def _on_reset(self) -> None:
+        """Handle reset input."""
+        if self.game_state:
+            self.game_state.reset()
+            self._trigger_event("reset")
+
+    def get_level_stats(self) -> dict[str, Any]:
+        """Get current level statistics.
+
+        Returns:
+            Statistics dictionary.
+        """
+        if not self.game_state:
+            return {}
+        return self.game_state.get_stats()
+
+    def get_level_progress(self) -> dict[str, Any]:
+        """Get progress for current level.
+
+        Returns:
+            Progress dictionary.
+        """
+        if not self.current_level:
+            return {}
+        return self.save_manager.get_level_progress(self.current_level.name)
+
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle pygame event.
+
+        Args:
+            event: Pygame event.
+
+        Returns:
+            True if event was handled.
+        """
+        return self.input_handler.handle_event(event)
+
+    def update(self) -> None:
+        """Update game state."""
+        self.input_handler.update()
+
+        if self.game_state:
+            self.game_state.update_time()
+
+    def get_control_scheme(self) -> str:
+        """Get current control scheme name.
+
+        Returns:
+            Control scheme name.
+        """
+        return self.input_handler.get_control_scheme_name()
+
+    def toggle_control_scheme(self) -> str:
+        """Toggle control scheme.
+
+        Returns:
+            New scheme name.
+        """
+        return self.input_handler.toggle_control_scheme()
