@@ -1,11 +1,13 @@
 import os
 import sys
+from unittest.mock import MagicMock, patch
 
 import pygame
 
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from main import GameApp
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.game_state import GameState
 from src.pushbox.models.level import Level
@@ -265,3 +267,149 @@ def test_reset_callbacks_consistency():
     # Trigger button callback directly (as the UI reset button does)
     controller._on_reset()
     assert controller.game_state.move_count == 0
+
+
+def test_menu_navigation():
+    """Verify menu keyboard navigation (W/S, arrows, Enter/Space, wrap-around)."""
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
+
+    app = GameApp()
+    app.current_screen = "menu"
+    app.menu_selected_index = 0
+    btn_count = len(app.menu.buttons)
+    assert btn_count > 0
+
+    # Down arrow
+    evt_down = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+    with patch("pygame.event.get", return_value=[evt_down]):
+        app.handle_events()
+    assert app.menu_selected_index == 1
+
+    # S key
+    evt_s = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_s)
+    with patch("pygame.event.get", return_value=[evt_s]):
+        app.handle_events()
+    assert app.menu_selected_index == 2
+
+    # Up arrow
+    evt_up = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
+    with patch("pygame.event.get", return_value=[evt_up]):
+        app.handle_events()
+    assert app.menu_selected_index == 1
+
+    # W key
+    evt_w = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_w)
+    with patch("pygame.event.get", return_value=[evt_w]):
+        app.handle_events()
+    assert app.menu_selected_index == 0
+
+    # Wrap around UP (0 - 1 = btn_count - 1)
+    with patch("pygame.event.get", return_value=[evt_up]):
+        app.handle_events()
+    assert app.menu_selected_index == btn_count - 1
+
+    # Wrap around DOWN (back to 0)
+    with patch("pygame.event.get", return_value=[evt_down]):
+        app.handle_events()
+    assert app.menu_selected_index == 0
+
+    # Enter callback trigger
+    app.menu_selected_index = 0
+    mock_callback = MagicMock()
+    app.menu.buttons[0].callback = mock_callback
+    evt_enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
+    with patch("pygame.event.get", return_value=[evt_enter]):
+        app.handle_events()
+    mock_callback.assert_called_once()
+
+    # Space callback trigger
+    mock_callback_space = MagicMock()
+    app.menu.buttons[1].callback = mock_callback_space
+    app.menu_selected_index = 1
+    evt_space = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE)
+    with patch("pygame.event.get", return_value=[evt_space]):
+        app.handle_events()
+    mock_callback_space.assert_called_once()
+
+
+def test_help_overlay_dismissal():
+    """Verify help overlay closes on any key without triggering other actions."""
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
+
+    app = GameApp()
+    app.current_screen = "game"
+
+    app.controller = GameController()
+    grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
+    level = Level("Test Level", grid)
+    app.controller.current_level = level
+    app.controller.game_state = GameState(level)
+
+    # 1. Open help overlay
+    app.show_help = True
+    assert app.show_help is True
+
+    # 2. Press Right arrow. Help should close, but player should NOT move.
+    assert app.controller.game_state.level.get_player_position() == (1, 1)
+    evt_right = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
+    with patch("pygame.event.get", return_value=[evt_right]):
+        app.handle_events()
+    assert app.show_help is False
+    assert app.controller.game_state.level.get_player_position() == (1, 1)
+
+    # 3. Next keypress should move the player normally
+    with patch("pygame.event.get", return_value=[evt_right]):
+        app.handle_events()
+    assert app.controller.game_state.level.get_player_position() == (1, 2)
+
+    # 4. Open help overlay again and test Reset key (R). Should close help, not reset.
+    app.show_help = True
+    evt_r = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r)
+    with patch("pygame.event.get", return_value=[evt_r]):
+        app.handle_events()
+    assert app.show_help is False
+    assert app.controller.game_state.move_count == 1
+
+    # 5. Open help overlay again and test Pause key (P). Should close help, not pause.
+    app.show_help = True
+    assert not app.controller.is_paused
+    evt_p = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_p)
+    with patch("pygame.event.get", return_value=[evt_p]):
+        app.handle_events()
+    assert app.show_help is False
+    assert not app.controller.is_paused
+
+
+def test_quit_shortcut():
+    """Verify Ctrl+Q exits the game while Q alone does not, works everywhere."""
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
+
+    app = GameApp()
+    assert app.running is True
+
+    # 1. Single Q key should NOT quit
+    evt_q = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_q)
+    with patch("pygame.event.get", return_value=[evt_q]):
+        app.handle_events()
+    assert app.running is True
+
+    # 2. Ctrl+Q should quit on Main Menu
+    app.current_screen = "menu"
+    evt_ctrl_q = pygame.event.Event(
+        pygame.KEYDOWN, key=pygame.K_q, mod=pygame.KMOD_CTRL
+    )
+    with patch("pygame.event.get", return_value=[evt_ctrl_q]):
+        app.handle_events()
+    assert app.running is False
+
+    # 3. Ctrl+Q should quit during Pause or Help
+    app2 = GameApp()
+    app2.current_screen = "game"
+    app2.show_help = True
+    assert app2.running is True
+    with patch("pygame.event.get", return_value=[evt_ctrl_q]):
+        app2.handle_events()
+    assert app2.running is False
