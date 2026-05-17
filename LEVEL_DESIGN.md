@@ -135,34 +135,34 @@ The following table summarizes the design themes and intent for the 30 built-in 
 
 | Level | Difficulty | Theme | Boxes | Design Intent |
 | :---: | :---: | :---: | :---: | :--- |
-| **1** | Intro | Basic Route | 3 | Introduces basic movement, pushing, and 1-to-1 target matching. |
-| **2** | Intro | Cluster Pushes | 4 | Teaches player to push clustered boxes to nearby target slots. |
-| **3** | Intro+ | Target Row | 6 | Practices organizing a large number of boxes towards a single row of targets. |
-| **4** | Intermediate | Blocked Center | 5 | Introduces wall-separated columns requiring sequencing and path-finding. |
-| **5** | Intermediate | Compact Cluster | 5 | Introduces tight, compact rooms with high proximity box groupings. |
-| **6** | Intro | Twin Push | 2 | Simple two-box alignment exercise with wide spaces and easy recovery. |
-| **7** | Intro+ | Split Targets | 2 | Forces the player to separate boxes to opposite ends of the room. |
-| **8** | Intro+ | Three Columns | 3 | Teaches repeated vertical pushing and parallel lane routing. |
-| **9** | Intermediate | Obstacle Spacing | 3 | Adds simple interior wall pillars to affect player repositioning routes. |
-| **10** | Intermediate | Four-Box Grid | 4 | Combines vertical column push lanes with open movement areas. |
-| **11** | Intermediate | Offset Goals | 2 | Uses separated boxes and targets separated by a central divider block. |
-| **12** | Intermediate | Staggered Paths | 2 | Requires navigating boxes around staggered wall configurations. |
-| **13** | Intermediate+ | Tight Cluster | 3 | Places boxes close together in restricted spaces near blocked corridors. |
+| **1** | Intro | Twin Push | 2 | Simple two-box alignment exercise with wide spaces and easy recovery. |
+| **2** | Intro | Split Targets | 2 | Forces the player to separate boxes to opposite ends of the room. |
+| **3** | Intro+ | Three Columns | 3 | Teaches repeated vertical pushing and parallel lane routing. |
+| **4** | Intro+ | Cluster Pushes | 4 | Teaches player to push clustered boxes to nearby target slots. |
+| **5** | Intermediate | Four-Box Grid | 4 | Combines vertical column push lanes with open movement areas. |
+| **6** | Intermediate | Offset Goals | 2 | Uses separated boxes and targets separated by a central divider block. |
+| **7** | Intermediate | Staggered Paths | 2 | Requires navigating boxes around staggered wall configurations. |
+| **8** | Intermediate | Obstacle Spacing | 3 | Adds simple interior wall pillars to affect player repositioning routes. |
+| **9** | Intermediate+ | Target Row | 6 | Practices organizing a large number of boxes towards a single row of targets. |
+| **10** | Intermediate+ | Basic Route | 3 | Introduces basic movement, pushing, and 1-to-1 target matching. |
+| **11** | Intermediate+ | Tight Cluster | 3 | Places boxes close together in restricted spaces near blocked corridors. |
+| **12** | Intermediate+ | Blocked Center | 5 | Introduces wall-separated columns requiring sequencing and path-finding. |
+| **13** | Advanced | Compact Cluster | 5 | Introduces tight, compact rooms with high proximity box groupings. |
 | **14** | Advanced | Lane Control | 3 | Restricts player movement via interior wall columns and long lanes. |
-| **15** | Advanced | Mixed Columns | 4 | Combines multiple vertical corridors with central blocking segments. |
-| **16** | Advanced | L-Corridor | 2 | Focuses on 90-degree turning pushes and angled player access routes. |
-| **17** | Advanced | Split Warehouse | 3 | Connects distinct left and right rooms via a tight center corridor. |
+| **15** | Advanced | Two-Box Ordering Lock | 2 | Requires pushing box A completely out of the way before box B can navigate a tight bottleneck. |
+| **16** | Advanced | Mixed Columns | 4 | Combines multiple vertical corridors with central blocking segments. |
+| **17** | Advanced | L-Corridor | 2 | Focuses on 90-degree turning pushes and angled player access routes. |
 | **18** | Advanced | Central Island | 4 | Uses a central wall island to shape approach routes and force loops. |
-| **19** | Advanced+ | Small Rooms | 4 | Restricts progress by isolating targets behind narrow door frames. |
-| **20** | Advanced+ | Mixed Warehouse | 5 | Final challenge combining multiple boxes, wall partitions, and target slots. |
+| **19** | Advanced | Split Warehouse | 3 | Connects distinct left and right rooms via a tight center corridor. |
+| **20** | Advanced | Switchback Hall | 3 | Uses inner partitions to require route switching and player repositioning. |
 | **21** | Advanced | Long Reposition Route | 3 | Forces the player to walk long loops around outer paths to reposition behind boxes. |
-| **22** | Advanced | Two-Box Ordering Lock | 2 | Requires pushing box A completely out of the way before box B can navigate a tight bottleneck. |
-| **23** | Advanced+ | Three-Zone Warehouse | 4 | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
-| **24** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pushing boxes through tight doors while preserving recovery space. |
-| **25** | Advanced+ | Mixed Final Challenge | 5 | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5 boxes. |
-| **26** | Advanced | Switchback Hall | 3 | Uses inner partitions to require route switching and player repositioning. |
-| **27** | Advanced+ | Twin Courtyards | 4 | Connects two open courtyards with moderate box ordering requirements. |
-| **28** | Advanced+ | Central Spine | 4 | Uses a central wall spine to force side-to-side box routing and loop maneuvers. |
+| **22** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pushing boxes through tight doors while preserving recovery space. |
+| **23** | Advanced+ | Twin Courtyards | 4 | Connects two open courtyards with moderate box ordering requirements. |
+| **24** | Advanced+ | Central Spine | 4 | Uses a central wall spine to force side-to-side box routing and loop maneuvers. |
+| **25** | Advanced+ | Mixed Warehouse | 5 | Final challenge combining multiple boxes, wall partitions, and target slots. |
+| **26** | Advanced+ | Three-Zone Warehouse | 4 | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
+| **27** | Advanced+ | Small Rooms | 4 | Restricts progress by isolating targets behind narrow door frames. |
+| **28** | Advanced+ | Mixed Final Challenge | 5 | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5 boxes. |
 | **29** | Advanced+ | Offset Storage | 5 | Staggered storage chambers demanding mixed horizontal/vertical push orientations. |
 | **30** | Advanced+ | Final Warehouse | 6 | Absolute grand finale. Connects six boxes, complex target slots, and internal wall islands. |
 
