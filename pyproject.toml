@@ -1,7 +1,7 @@
 [project]
-name = "pushbox"
+name = "pushbox-pygame"
 version = "1.0.0"
-description = "A modern Sokoban puzzle game with pygame"
+description = "A Python/Pygame Sokoban game with built-in levels, custom level editor, undo/redo, progress saving, and documented testing workflows."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -21,6 +21,9 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pushbox"]
 
 [tool.uv]
 python-downloads = "automatic"

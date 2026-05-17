@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PushBox - A modern Sokoban puzzle game
+Pushbox-Pygame - A modern Sokoban puzzle game
 使用 Pygame 重新設計的推箱子遊戲
 
 控制方式:
@@ -35,7 +35,7 @@ class GameApp:
     def __init__(self) -> None:
         """Initialize the game application."""
         pygame.init()
-        pygame.display.set_caption("PushBox - 推箱子")
+        pygame.display.set_caption("Pushbox-Pygame - 推箱子")
 
         # Create window (Resizable)
         self.width = 800

@@ -1,4 +1,4 @@
-# Agent Guidelines for PushBox_v1
+# Agent Guidelines for Pushbox-Pygame
 
 This repository contains a Sokoban puzzle game implemented in Python with Pygame.
 

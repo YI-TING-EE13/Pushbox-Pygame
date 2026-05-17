@@ -1,13 +1,14 @@
-# PushBox
+# Pushbox-Pygame
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
 ![Pygame](https://img.shields.io/badge/Pygame-2.5%2B-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Tests](https://img.shields.io/badge/Tests-121%20passing-green.svg)
 ![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)
 
 ## Overview
 
-PushBox is a modern Sokoban puzzle game built with Python and Pygame. It offers a clean, fluid interface, robust keyboard/mouse controls, local progression saving, and a built-in custom level editor.
+Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It offers a clean, fluid interface, robust keyboard/mouse controls, local progression saving, and a built-in custom level editor.
 
 ## Key Features
 

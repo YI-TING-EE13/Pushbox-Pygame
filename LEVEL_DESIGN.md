@@ -1,6 +1,6 @@
-# PushBox Level Design Guidelines
+# Pushbox-Pygame Level Design Guidelines
 
-This document defines the core principles, structural rules, difficulty progression standards, and validation checklists for designing, reviewing, and extending default Sokoban levels in PushBox. Following these guidelines prevents repetitive grid designs, ensures predictable difficulty progression, and maintains high code and design quality.
+This document defines the core principles, structural rules, difficulty progression standards, and validation checklists for designing, reviewing, and extending default Sokoban levels in Pushbox-Pygame. Following these guidelines prevents repetitive grid designs, ensures predictable difficulty progression, and maintains high code and design quality.
 
 ---
 

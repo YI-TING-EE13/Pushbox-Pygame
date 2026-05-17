@@ -1,6 +1,6 @@
-# Testing Guide for PushBox
+# Testing Guide for Pushbox-Pygame
 
-This document outlines the testing procedures for the PushBox project, including automated checks and manual smoke tests.
+This document outlines the testing procedures for the Pushbox-Pygame project, including automated checks and manual smoke tests.
 
 ## 1. Automated Checks
 
