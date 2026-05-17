@@ -123,6 +123,9 @@ Avoid these design mistakes when adding or refining levels:
 * **Excessive Early Box Bloat:** Throwing 5+ boxes at a player before they have mastered basic 2-box and 3-box routing mechanics.
 * **Unpreventable Deadlocks:** Starting positions that force a deadlock on the very first push, leaving zero choice.
 * **Subjective Number-Based Difficulty:** Labeling a level as "Advanced" simply because it is numbered later in the progression list, without actually introducing complex design traits.
+* **Single-Cell Chokepoints Without Recovery:** Creating 1-cell narrow corridors or doorways without adjacent turnaround pockets or loop routes, preventing player repositioning.
+* **Pull-Only Targets:** Placing targets in pockets or corners that would require a box to be pulled (which is mechanically impossible).
+* **Inaccessible Push Faces:** Enclosing starting boxes with walls such that the player cannot reach the required push position behind the box.
 
 ---
 

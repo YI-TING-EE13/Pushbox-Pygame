@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pygame
+
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -71,3 +73,37 @@ def test_box_push():
     assert game.level.get_cell(1, 2) == CellType.PLAYER
     assert game.level.get_cell(1, 3) == CellType.BOX
     assert game.push_count == 1
+
+
+def test_renderer_hud_no_crash():
+    """Test that the gameplay HUD handles level names without crashing."""
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
+    pygame.font.init()
+
+    from src.pushbox.views.renderer import Renderer
+
+    # Create dummy surface
+    screen = pygame.Surface((800, 720))
+    renderer = Renderer(screen)
+
+    # 1. Test with default level (Level 23)
+    grid_default = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
+    level_default = Level("Level 23", grid_default)
+    state_default = GameState(level_default)
+    renderer.render_ui(state_default)
+
+    # 2. Test with normal custom level
+    level_custom_short = Level("對稱自訂圖", grid_default)
+    state_custom_short = GameState(level_custom_short)
+    renderer.render_ui(state_custom_short)
+
+    # 3. Test with very long custom level (truncation path)
+    level_custom_long = Level(
+        "ThisIsAVeryLongCustomLevelNameThatExceedsTwentyCharacters", grid_default
+    )
+    state_custom_long = GameState(level_custom_long)
+    renderer.render_ui(state_custom_long)
+
+    # Clean up
+    pygame.quit()

@@ -481,6 +481,13 @@ class Renderer:
                 return rect.right + 20
 
             x_pos = 20
+            level_name = game_state.level.name
+            if len(level_name) > 20:
+                display_text = level_name[:17] + "..."
+            else:
+                display_text = level_name
+            x_pos = draw_stat(display_text, x_pos, COLORS["text_highlight"])
+
             x_pos = draw_stat(f"步數: {stats['moves']}", x_pos)
             x_pos = draw_stat(f"推動: {stats['pushes']}", x_pos)
             x_pos = draw_stat(f"時間: {stats['time']}", x_pos)

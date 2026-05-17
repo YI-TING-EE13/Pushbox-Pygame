@@ -31,15 +31,19 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 1. **Startup**: Run `uv run python main.py`.
 2. **Tutorial**: Verify the tutorial screen appears on first launch or via the menu. Confirm it explains goals and controls.
 3. **Main Menu**: Navigate from the tutorial to the main menu.
-4. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
-5. **Start Game**: Select "開始遊戲" and verify the level loads.
-6. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
-7. **Pushing**: Push a box and verify it moves.
-8. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
-9. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
-10. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
-11. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
-12. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
+34. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
+35. **Start Game**: Select "開始遊戲" and verify the level loads.
+35a. **HUD Level Label Display**:
+    - Launch a default level (e.g., `Level 23`). Verify that `"Level 23"` is clearly displayed in a highlighted soft blue color in the top-left gameplay HUD.
+    - Confirm the label does not overlap move counts, timer, pause indicators, or help overlay.
+    - Launch a custom level (e.g., `"對稱自訂圖"`), and verify the custom name is correctly shown. Confirm long custom names are safely truncated.
+36. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
+37. **Pushing**: Push a box and verify it moves.
+38. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
+39. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
+40. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
+41. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
+42. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
 
 ### Level 16–25 Manual Playtest Startup Checks
 13. **Level 16 Startup**: Go to page 2 of the level selector, select "Level 16", and press Enter. Verify the level board centers correctly and standard controls work perfectly.
@@ -47,7 +51,7 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 15. **Level 18 Startup**: Select "Level 18" on page 2. Verify all targets and boxes are placed correctly.
 16. **Level 19 Startup**: Flip to page 3, select "Level 19" (index 0). Verify that board dimensions fit standard boundaries safely.
 17. **Level 20 Startup**: Select "Level 20" on page 3. Verify standard playability features (movement, undo, redo, timer) initialize successfully.
-18. **Level 21–25 Startup**: Select "Level 21" through "Level 25" on Page 3. Verify that metadata badges, bottom detail panel, grid scaling, and playability work correctly.
+18. **Level 21–25 Startup & Playability**: Select "Level 21" through "Level 25" on Page 3. Verify that metadata badges, bottom detail panel, grid scaling, and playability work correctly. Manually playtest Level 23–25 to confirm they are structurally valid, designed to reduce obvious deadlocks, and expected to be more practical to play.
 
 ### Win & Game Over Conditions
 18. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.

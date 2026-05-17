@@ -206,3 +206,15 @@ Before committing these levels to code in the next phase, they must pass this st
 
 * **Status:** Fully Implemented & Verified in Phase 21C.
 * **Release Target:** Included in default catalog.
+
+---
+
+## 8. Phase 21C-1 Playability Corrections
+
+Post-implementation review and manual playtesting identified starting deadlock risks and restricted player repositioning lanes in the initial drafts of Levels 23, 24, and 25. A focused playability correction pass was executed:
+
+* **Level 23 (Three-Zone Warehouse)**: The center wall block that obstructed the player from pushing boxes upward into the middle target pocket has been adjusted to allow proper vertical steering and corridor loops.
+* **Level 24 (Narrow Door Recovery)**: The box starting flush against the right boundary wall—which caused an immediate starting deadlock—has been shifted to allow behind-the-box repositioning. Corner targets were updated to avoid pocket deadlocks.
+* **Level 25 (Mixed Final Challenge)**: Right-lane blocking wall coordinates were adjusted to eliminate early deadlocks on starting pushes, providing open recovery loops and alternative paths to the target islands.
+
+These corrected layouts are structurally valid, designed to reduce obvious deadlocks, provide improved recovery space, and are expected to be more practical to play. Solvability has been manually verified.
