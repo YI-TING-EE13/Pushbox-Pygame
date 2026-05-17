@@ -25,7 +25,7 @@ puzzles.
 - Undo/redo history (up to 100 steps) and level reset
 - Move, push, and time statistics
 - In-game pause overlay (Esc/P) with resume, restart, and menu options
-- Level selector with per-level best move record
+- Level selector with 20 built-in default levels and per-level best move record
 - Deadlock feedback overlay with recovery options
 - Built-in level editor with mouse tools and shortcuts
 
