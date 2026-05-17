@@ -129,9 +129,9 @@ Avoid these design mistakes when adding or refining levels:
 
 ---
 
-## 8. Current Level 1–25 Design Intent Table
+## 8. Current Level 1–30 Design Intent Table
 
-The following table summarizes the design themes and intent for the 25 built-in default levels, acting as the pedagogical blueprint of the game.
+The following table summarizes the design themes and intent for the 30 built-in default levels, acting as the pedagogical blueprint of the game.
 
 | Level | Difficulty | Theme | Boxes | Design Intent |
 | :---: | :---: | :---: | :---: | :--- |
@@ -160,12 +160,17 @@ The following table summarizes the design themes and intent for the 25 built-in 
 | **23** | Advanced+ | Three-Zone Warehouse | 4 | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
 | **24** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pulling/pushing boxes out of tight doors without wedging them in the corner. |
 | **25** | Advanced+ | Mixed Final Challenge | 5 | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5 boxes. |
+| **26** | Advanced | Switchback Hall | 3 | Uses inner partitions to require route switching and player repositioning. |
+| **27** | Advanced+ | Twin Courtyards | 4 | Connects two open courtyards with moderate box ordering requirements. |
+| **28** | Advanced+ | Central Spine | 4 | Uses a central wall spine to force side-to-side box routing and loop maneuvers. |
+| **29** | Advanced+ | Offset Storage | 5 | Staggered storage chambers demanding mixed horizontal/vertical push orientations. |
+| **30** | Advanced+ | Final Warehouse | 6 | Absolute grand finale. Connects six boxes, complex target slots, and internal wall islands. |
 
 ---
 
-## 9. Guidelines for Future Level Expansion (26+)
+## 9. Guidelines for Future Level Expansion (31+)
 
-When the default level catalog is extended beyond 25 levels in future releases, designers should:
+When the default level catalog is extended beyond 30 levels in future releases, designers should:
 1. Maintain the progressive difficulty curve, introducing new mechanics (e.g. multi-box locks, tight corridors, visual symmetry) with limited box counts first.
 2. Avoid early box bloat, keeping the starting box count under 6 for gameplay performance and clarity.
 3. Validate all new draft grids against the [Review Checklist for New Levels](#10-review-checklist-for-new-levels) prior to implementation.
