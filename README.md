@@ -89,6 +89,8 @@ pushbox/
 ├── TESTING.md
 ├── DEVELOPMENT.md
 ├── AGENTS.md
+├── LEVEL_DESIGN.md
+├── RELEASE_NOTES.md
 ├── src/pushbox/
 │   ├── controllers/
 │   │   ├── game_controller.py

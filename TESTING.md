@@ -22,6 +22,9 @@ uv run mypy src/
 
 ## 2. Manual Smoke Test
 
+> [!NOTE]
+> When adding or refining default built-in levels, please check them against the design constraints, patterns, and checklists detailed in [LEVEL_DESIGN.md](file:///c:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox_v1/LEVEL_DESIGN.md).
+
 Since this is a graphical game, many UX elements must be verified manually. Follow these steps to ensure the core game loop is functional.
 
 ### Core Gameplay Flow
