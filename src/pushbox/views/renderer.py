@@ -10,27 +10,31 @@ from ..utils.constants import CELL_SIZE, COLORS, CellType, ColorLike
 
 
 class Animation:
-    """Base class for animations."""
+    """Base class for all transient screen animations."""
 
     def __init__(self, duration: float, start_time: float) -> None:
+        """Initialize the base animation with duration and start timestamp."""
         self.duration = duration
         self.start_time = start_time
         self.finished = False
 
     def update(self, current_time: float) -> None:
+        """Update animation status, checking if it has finished."""
         if current_time - self.start_time >= self.duration:
             self.finished = True
 
     def get_progress(self, current_time: float) -> float:
+        """Get the current progress of the animation (from 0.0 to 1.0)."""
         elapsed = current_time - self.start_time
         return min(1.0, elapsed / self.duration) if self.duration > 0 else 1.0
 
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
+        """Render the animation frame onto the screen canvas."""
         pass
 
 
 class MoveAnimation(Animation):
-    """Animation for player/box movement."""
+    """Animation for player and box movement interpolations."""
 
     def __init__(
         self,
@@ -40,6 +44,7 @@ class MoveAnimation(Animation):
         duration: float,
         start_time: float,
     ) -> None:
+        """Initialize a move animation with start/end positions and cell type."""
         super().__init__(duration, start_time)
         self.from_pos = from_pos
         self.to_pos = to_pos
@@ -71,14 +76,16 @@ class MoveAnimation(Animation):
 
 
 class WinAnimation(Animation):
-    """Victory celebration animation."""
+    """Victory celebration screen particle effect animation."""
 
     def __init__(self, start_time: float) -> None:
+        """Initialize the victory confetti animation."""
         super().__init__(3.0, start_time)
         self.particles: list[dict[str, Any]] = []
         self._init_particles()
 
     def _init_particles(self) -> None:
+        """Create random colored confetti particle descriptors."""
         import random
 
         colors = [COLORS["success"], COLORS["warning"], COLORS["target"]]
@@ -97,6 +104,7 @@ class WinAnimation(Animation):
             )
 
     def update(self, current_time: float) -> None:
+        """Update particles position, gravity, and life cycle decay."""
         super().update(current_time)
         for p in self.particles:
             p["x"] += p["vx"]
@@ -105,6 +113,7 @@ class WinAnimation(Animation):
             p["life"] -= p["decay"]
 
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
+        """Render all active fading particles onto the screen."""
         for p in self.particles:
             if p["life"] > 0:
                 # Fade out
@@ -119,11 +128,12 @@ class WinAnimation(Animation):
 
 
 class Renderer:
-    """Main game renderer."""
+    """Main game view rendering orchestrator using Pygame."""
 
     PLAYER_IMAGE: Optional[pygame.Surface] = None
 
     def __init__(self, screen: pygame.Surface) -> None:
+        """Initialize game board renderer, font systems, and graphics assets."""
         self.screen = screen
         self.font: Optional[pygame.font.Font] = None
         self.big_font: Optional[pygame.font.Font] = None
@@ -158,6 +168,7 @@ class Renderer:
             print(f"Failed to load player image: {e}")
 
     def _init_fonts(self) -> None:
+        """Initialize display and overlay fonts with fallbacks."""
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 20)
             self.big_font = pygame.font.SysFont("microsoftyahei", 48, bold=True)
@@ -166,9 +177,11 @@ class Renderer:
             self.big_font = pygame.font.Font(None, 64)
 
     def set_animation_enabled(self, enabled: bool) -> None:
+        """Enable or disable visual transition animations."""
         self.animation_enabled = enabled
 
     def add_animation(self, animation: Animation) -> None:
+        """Register a new screen animation to the execution loop."""
         if self.animation_enabled:
             self.animations.append(animation)
 
@@ -179,6 +192,7 @@ class Renderer:
         cell_type: int,
         duration: float = 0.15,
     ) -> None:
+        """Create and queue a move interpolation animation."""
         if self.animation_enabled:
             anim = MoveAnimation(
                 from_pos, to_pos, cell_type, duration, pygame.time.get_ticks() / 1000.0
@@ -186,11 +200,13 @@ class Renderer:
             self.add_animation(anim)
 
     def add_win_animation(self) -> None:
+        """Create and queue a win celebration confetti animation."""
         if self.animation_enabled:
             anim = WinAnimation(pygame.time.get_ticks() / 1000.0)
             self.add_animation(anim)
 
     def update_animations(self) -> None:
+        """Update and purge finished animation descriptors."""
         current_time = pygame.time.get_ticks() / 1000.0
         for anim in self.animations[:]:
             anim.update(current_time)
@@ -200,6 +216,7 @@ class Renderer:
     def render_game(
         self, game_state: GameState, offset_x: int = 0, offset_y: int = 0
     ) -> None:
+        """Render the complete game board, grid walls, floors, targets, and objects."""
         level = game_state.level
 
         # Draw background pattern first
@@ -263,11 +280,13 @@ class Renderer:
             anim.render(self.screen, offset_x, offset_y)
 
     def _draw_floor(self, x: int, y: int, is_light: bool) -> None:
+        """Draw flat checkerboard grid floor tiles."""
         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
         color = COLORS["floor_light"] if is_light else COLORS["floor"]
         pygame.draw.rect(self.screen, color, rect)
 
     def _draw_wall(self, x: int, y: int) -> None:
+        """Draw pseudo-3D grid wall blocks with shadows and highlights."""
         # Pseudo 3D Wall
         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
 
@@ -290,6 +309,7 @@ class Renderer:
         )
 
     def _draw_target(self, x: int, y: int) -> None:
+        """Draw circular target point tiles with glow borders."""
         center_x = x + CELL_SIZE // 2
         center_y = y + CELL_SIZE // 2
         radius = CELL_SIZE // 4
@@ -311,6 +331,7 @@ class Renderer:
     def draw_box(
         screen: pygame.Surface, x: int, y: int, on_target: bool = False
     ) -> None:
+        """Draw pseudo-3D crate objects with target coloring decorations."""
         # Pseudo 3D Box
         margin = 4
         size = CELL_SIZE - margin * 2
@@ -339,6 +360,7 @@ class Renderer:
 
     @staticmethod
     def draw_player(screen: pygame.Surface, x: int, y: int) -> None:
+        """Draw character models using loaded image files or cute fallbacks."""
         center_x = x + CELL_SIZE // 2
         center_y = y + CELL_SIZE // 2
 
@@ -429,6 +451,7 @@ class Renderer:
         show_help: bool = False,
         control_scheme: str = "",
     ) -> None:
+        """Render top statistics bar, controls scheme indicator, and help overlays."""
         stats = game_state.get_stats()
 
         # Top Bar Background
@@ -483,6 +506,7 @@ class Renderer:
             self._render_help_overlay()
 
     def _render_help_overlay(self) -> None:
+        """Draw a semi-transparent overlay and in-game shortcut card."""
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill(COLORS["overlay"])
         self.screen.blit(overlay, (0, 0))
@@ -529,6 +553,7 @@ class Renderer:
             y += 30
 
     def render_win_screen(self, stats: dict[str, Any], is_record: bool = False) -> None:
+        """Draw level clear panel overlay displaying moves, pushes, and record stats."""
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill(COLORS["overlay"])
         self.screen.blit(overlay, (0, 0))
@@ -585,7 +610,7 @@ class Renderer:
             self.screen.blit(hint_surf, hint_rect)
 
     def render_game_over_screen(self) -> None:
-        """Render deadlock / game-over overlay."""
+        """Render deadlock / game-over card overlay explaining stalemate state."""
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill(COLORS["overlay"])
         self.screen.blit(overlay, (0, 0))
@@ -631,7 +656,7 @@ class Renderer:
             self.screen.blit(hint_surf, hint_rect)
 
     def render_pause_screen(self) -> None:
-        """Render in-game pause overlay."""
+        """Render in-game pause card overlay offering restart or exit actions."""
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill(COLORS["overlay"])
         self.screen.blit(overlay, (0, 0))

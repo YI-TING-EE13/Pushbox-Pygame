@@ -38,44 +38,51 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 11. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
 12. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
 
+### Level 16–20 Manual Playtest Startup Checks
+13. **Level 16 Startup**: Go to page 2 of the level selector, select "Level 16", and press Enter. Verify the level board centers correctly and standard controls work perfectly.
+14. **Level 17 Startup**: Select "Level 17" on page 2. Verify grid scaling and ensure player is positioned correctly on the initial board state.
+15. **Level 18 Startup**: Select "Level 18" on page 2. Verify all targets and boxes are placed correctly.
+16. **Level 19 Startup**: Flip to page 3, select "Level 19" (index 0). Verify that board dimensions fit standard boundaries safely.
+17. **Level 20 Startup**: Select "Level 20" on page 3. Verify standard playability features (movement, undo, redo, timer) initialize successfully.
+
 ### Win & Game Over Conditions
-12. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
-13. **Win Screen Actions**: Test `N` (Next Level), `R` (Restart), and `M` (Menu) on the win screen.
-14. **Deadlock (Game Over)**: Push a box into a corner where it cannot be moved (e.g., against two perpendicular walls).
-15. **Game Over Overlay**: Verify the red "死鎖!" card appears.
-16. **Game Over Actions**: Test `Z` (Undo), `R` (Restart), and `M` (Menu) on the game over screen.
+18. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
+19. **Win Screen Actions**: Test `N` (Next Level), `R` (Restart), and `M` (Menu) on the win screen.
+20. **Deadlock (Game Over)**: Push a box into a corner where it cannot be moved (e.g., against two perpendicular walls).
+21. **Game Over Overlay**: Verify the red "死鎖!" card appears.
+22. **Game Over Actions**: Test `Z` (Undo), `R` (Restart), and `M` (Menu) on the game over screen.
 
 ### UI & Persistence
-17. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
-18. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
-19. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
+23. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
+24. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
+25. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
 
 ### Pause Screen Overlay
-20. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.
-21. **Gameplay Blocked**: While paused, try pressing movement keys or action buttons. Confirm that the player does not move, boxes cannot be pushed, and the game timer is completely frozen (does not increment).
-22. **Overlay Keys**: Verify the three available actions listed on the pause card work as expected:
+26. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.
+27. **Gameplay Blocked**: While paused, try pressing movement keys or action buttons. Confirm that the player does not move, boxes cannot be pushed, and the game timer is completely frozen (does not increment).
+28. **Overlay Keys**: Verify the three available actions listed on the pause card work as expected:
     - **Esc / P**: Continues gameplay exactly from the current state (timer resumes without jumping forward by the duration of the pause).
     - **R**: Resets the level state and immediately exits the pause screen to playing mode.
     - **M**: Safely exits the game screen back to the main menu (clearing the pause state).
-23. **Priority of Overlays**:
+29. **Priority of Overlays**:
     - **Help priority**: If the help overlay (`H`) is open, pressing `Esc` should close the help card instead of triggering the pause overlay.
     - **Ignore trigger**: Pressing `Esc` or `P` must have no effect when the green "Win" screen or the red "Deadlock" screen is active.
 
-### Keyboard Navigation & UX Polish (Phase 11A)
-24. **Main Menu Keyboard Navigation**:
+### Keyboard Navigation & UX Polish
+30. **Main Menu Keyboard Navigation**:
     - On the main menu, press `↓` or `S`. Verify that the highlight moves to the next option and the button lifts up slightly.
     - Press `↑` or `W`. Verify the highlight moves to the previous option.
     - Verify wrap-around: pressing `↑` or `W` on the first option wraps the highlight to the last option. Pressing `↓` or `S` on the last option wraps back to the first option.
     - Hover the mouse over any button. Verify the keyboard selection highlights that button, synchronizing the input states.
     - Press `Enter` or `Space` to activate the highlighted button callback.
-25. **Help Overlay Dismissal (Any Key)**:
+31. **Help Overlay Dismissal (Any Key)**:
     - During gameplay, press `H` to open the help overlay. Verify it displays `"按任意鍵返回遊戲"` at the bottom.
     - Press `R`, direction keys, or `P`. Verify that the help overlay closes, and that the key does not trigger its gameplay action (i.e., the level is not reset, the player does not move, and the game does not pause).
     - Press a gameplay key again. Verify that the subsequent keypress triggers normally.
-26. **Global Ctrl+Q Quit**:
+32. **Global Ctrl+Q Quit**:
     - On any screen (Main Menu, Gameplay, Level Selector, Tutorial, Editor, Pause overlay, Help overlay), press `Ctrl+Q`. Verify the game application closes immediately.
     - Verify that pressing `Q` alone does not exit.
-27. **Level Selector Keyboard Navigation & Pagination (Phase 17A)**:
+33. **Level Selector Keyboard Navigation & Pagination**:
     - Go to the "選擇關卡" screen. Verify that `Level 1` is highlighted by default.
     - Confirm the layout has spacious margins and zero overlaps at the default `800x720` resolution.
     - Confirm the helper prompt `"換頁：Tab / Shift+Tab 或 PageUp / PageDown"` is displayed in small grey text below the Page Indicator (`"頁面: 1 / 3"`).
@@ -120,7 +127,7 @@ The level editor allows creating and managing custom puzzles.
    - Try to save a level without boxes.
    - Try to save a level where the number of boxes does not match the number of targets.
    - **Verify**: Clear error messages appear in the status bar.
-5. **Sidebar Layout & Hints**: Confirm that all 6 lines of shortcut hints (左鍵/右鍵, 1-5, Z/Y/R, Ctrl+S, C, Esc) are visible on the default window size (800x720) without overlapping other controls (note: on extremely small heights below 720px, some bottom items may clip as expected).
+5. **Sidebar Layout & Hints**: Confirm that all 6 lines of shortcut hints (左鍵/右鍵, 1-5, Z/Y/R, Ctrl+S, C, Esc) are visible on the default window size (800x720) without overlapping other controls.
 6. **Saving**: Provide a name and save a valid level.
 7. **Custom Levels**: Verify the new level appears in the "選擇關卡" screen and can be played, edited, or deleted. Confirm the layout reduces the risk of custom level cards overlapping the back button.
 

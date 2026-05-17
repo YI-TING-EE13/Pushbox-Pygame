@@ -25,7 +25,7 @@ class ModernButton:
         text_color: ColorLike = COLORS["text_main"],
         icon: str = "",
     ) -> None:
-        """Initialize button."""
+        """Initialize modern UI button with dimensions, colors, and callback."""
         self.rect = pygame.Rect(x, y, width, height)
         self.original_y = y
         self.text = text
@@ -97,7 +97,7 @@ class ModernButton:
 
 
 class InputBox:
-    """Text input box for naming levels."""
+    """Text input box supporting keyboard input and IME (Chinese) input."""
 
     def __init__(
         self,
@@ -108,6 +108,7 @@ class InputBox:
         text: str = "",
         font: Optional[pygame.font.Font] = None,
     ) -> None:
+        """Initialize text input box with positions, active colors, and initial text."""
         self.rect = pygame.Rect(x, y, width, height)
         self.color_inactive = COLORS["grid_lines"]
         self.color_active = COLORS["text_highlight"]
@@ -119,6 +120,7 @@ class InputBox:
         self._render_text()
 
     def _render_text(self) -> None:
+        """Render text value or default placeholders to screen surfaces."""
         if self.font:
             # Handle empty text prompt
             display_text = self.text if self.text else "請輸入名稱..."
@@ -167,6 +169,7 @@ class InputBox:
         return False
 
     def draw(self, screen: pygame.Surface) -> None:
+        """Draw the input box with active border indicators."""
         # Draw background
         pygame.draw.rect(screen, COLORS["button_shadow"], self.rect, border_radius=5)
 
@@ -185,9 +188,10 @@ class InputBox:
 
 
 class Menu:
-    """Game menu screen."""
+    """Main game menu screen orchestrating selections and sub-screen transitions."""
 
     def __init__(self, screen: pygame.Surface, title: str = "推箱子") -> None:
+        """Initialize main menu with title, blank button lists, and animations."""
         self.screen = screen
         self.title = title
         self.buttons: list[ModernButton] = []
@@ -197,6 +201,7 @@ class Menu:
         self.time = 0.0
 
     def _init_fonts(self) -> None:
+        """Initialize SysFonts for buttons and big title layouts with fallbacks."""
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 24)
             self.big_font = pygame.font.SysFont("microsoftyahei", 64, bold=True)
@@ -207,6 +212,7 @@ class Menu:
     def add_button(
         self, text: str, callback: Callable[[], None], y_offset: int = 0
     ) -> ModernButton:
+        """Instantiate and position a new menu navigation button."""
         button_width = 240
         button_height = 56
         x = (self.screen.get_width() - button_width) // 2
@@ -219,6 +225,7 @@ class Menu:
         return button
 
     def handle_event(self, event: pygame.event.Event) -> bool:
+        """Dispatch screen interactions down to active buttons."""
         for button in self.buttons:
             if button.handle_event(event):
                 return True
@@ -229,6 +236,7 @@ class Menu:
         level_names: Optional[list[str]] = None,
         current_level: Optional[str] = None,
     ) -> None:
+        """Render the complete main menu screen, titles, and buttons."""
         self.screen.fill(COLORS["background"])
         self.time += 0.05
 
@@ -273,6 +281,7 @@ class Menu:
             button.draw(self.screen)
 
     def _draw_grid_bg(self) -> None:
+        """Draw background matrix grid lines."""
         width = self.screen.get_width()
         height = self.screen.get_height()
         spacing = 40
@@ -284,9 +293,10 @@ class Menu:
 
 
 class TutorialScreen:
-    """Tutorial screen for new players."""
+    """Tutorial overlay screen introducing gameplay concepts and control keys."""
 
     def __init__(self, screen: pygame.Surface) -> None:
+        """Initialize the tutorial screen frame and fonts."""
         self.screen = screen
         self.font: Optional[pygame.font.Font] = None
         self.title_font: Optional[pygame.font.Font] = None
@@ -294,6 +304,7 @@ class TutorialScreen:
         self.time = 0.0
 
     def _init_fonts(self) -> None:
+        """Initialize text fonts for instructions card."""
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 22)
             self.title_font = pygame.font.SysFont("microsoftyahei", 36, bold=True)
@@ -302,11 +313,13 @@ class TutorialScreen:
             self.title_font = pygame.font.Font(None, 48)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
+        """Dismiss the tutorial screen on any keypress or click."""
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
             return True
         return False
 
     def draw(self) -> None:
+        """Draw tutorials instruction card, targets, shortcuts, and progress prompts."""
         self.screen.fill(COLORS["background"])
         self.time += 0.05
 
@@ -386,9 +399,10 @@ class TutorialScreen:
 
 
 class LevelSelector:
-    """Level selection screen."""
+    """Multi-page level selector supporting pagination and custom maps."""
 
     def __init__(self, screen: pygame.Surface) -> None:
+        """Initialize the level selector page offsets, button lists, and callbacks."""
         self.screen = screen
         self.font: Optional[pygame.font.Font] = None
         self.small_font: Optional[pygame.font.Font] = None
@@ -416,6 +430,7 @@ class LevelSelector:
         self.nav_buttons: list[ModernButton] = []
 
     def _init_fonts(self) -> None:
+        """Initialize selector typography styles."""
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 20)
             self.small_font = pygame.font.SysFont("microsoftyahei", 14)
@@ -434,6 +449,7 @@ class LevelSelector:
         on_edit: Callable[[str], None],
         on_delete: Callable[[str], None],
     ) -> None:
+        """Configure page entries, selection indicators, and action callbacks."""
         self.level_buttons.clear()
         self.action_buttons.clear()
 
@@ -457,7 +473,7 @@ class LevelSelector:
         self._layout_buttons(level_names, progress)
 
     def _layout_buttons(self, level_names: list[str], progress: dict) -> None:
-        """Helper to layout buttons based on current screen size."""
+        """Position and colorize level selection grid cards and pagination items."""
         self.level_buttons.clear()
         self.action_buttons.clear()
 
@@ -611,6 +627,7 @@ class LevelSelector:
             self.nav_buttons = [prev_btn, next_btn]
 
     def handle_event(self, event: pygame.event.Event) -> bool:
+        """Process keyboard arrow navigation, boundary page flips, and mouse clicks."""
         if event.type == pygame.MOUSEMOTION:
             for idx, (button, _, _) in enumerate(self.level_buttons):
                 if button.rect.collidepoint(event.pos):
@@ -705,6 +722,7 @@ class LevelSelector:
         return False
 
     def draw(self, progress: dict) -> None:
+        """Render level selector grids, titles, pagination, and record stars."""
         self.screen.fill(COLORS["background"])
 
         if self.back_button:

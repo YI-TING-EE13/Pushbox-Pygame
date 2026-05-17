@@ -3,42 +3,39 @@
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
 ![Pygame](https://img.shields.io/badge/Pygame-2.5%2B-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Code%20Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)
+![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)
 
 ## Overview
 
-PushBox is a modern Sokoban puzzle game built with Python and Pygame. It focuses
-on a clean UI, keyboard-friendly controls, and a built-in level editor for custom
-puzzles.
-
-## Target Users / Use Cases
-
-- Puzzle players who enjoy classic Sokoban mechanics
-- Developers looking for a small, readable Pygame project
-- Designers who want to build and test custom levels quickly
+PushBox is a modern Sokoban puzzle game built with Python and Pygame. It offers a clean, fluid interface, robust keyboard/mouse controls, local progression saving, and a built-in custom level editor.
 
 ## Key Features
 
-- Modern dark UI with pseudo-3D wall and box rendering
-- Resizable window with responsive layout
-- Tutorial screen and in-game help overlay
-- Undo/redo history (up to 100 steps) and level reset
-- Move, push, and time statistics
-- In-game pause overlay (Esc/P) with resume, restart, and menu options
-- Level selector with 20 built-in default levels and per-level best move record
-- Deadlock feedback overlay with recovery options
-- Built-in level editor with mouse tools and shortcuts
+- **Built-in Levels**: 20 pre-configured default levels of graduating difficulty.
+- **Modern Dark UI**: Fluid layout design with pseudo-3D wall shadows and elegant box animations.
+- **Level Selector**: Fully paginated grid selection across 3 pages (9 levels per page) showing completion status and per-level best move stars.
+- **Fluid Keyboard Controls**: Dual-scheme movement (Arrow keys and WASD), with native menus and page navigation.
+- **Undo / Redo / Reset**: Infinite-depth undo stack (capped at 100 moves for performance) with full action recovery and level reset capabilities.
+- **In-Game Help Card**: Fast-dismiss help card overlay detailing game controls on demand.
+- **Pause System**: DIM-shaded game pause overlay screen that freezes gameplay state and time counters.
+- **Stalemate Detection**: Real-time deadlock monitoring and immediate "死鎖!" card overlay feedback when a puzzle enters an unsolvable state.
+- **Level Editor**: Built-in interactive map canvas supporting tool pickers (1-5), paint/erase, undo/redo, dynamic resizing (5x5 to 20x20), and canvas validation prior to local storage.
+- **Progression Persistence**: Local progression auto-save capability tracking attempts and high scores.
+- **Quality Assurance**: 100% passing test coverage suite verifying gameplay, inputs, editor, and save engines.
 
 ## Installation
 
-This project uses `uv` for dependency management.
+This project utilizes `uv` to manage environments and dependencies smoothly.
 
 ```bash
+# Sync dependencies
 uv sync
 uv sync --extra dev
 ```
 
 ## Usage
+
+Start the game from the workspace root directory:
 
 ```bash
 uv run python main.py
@@ -46,32 +43,41 @@ uv run python main.py
 
 ## Controls
 
-| Action | Keys | Notes |
-| --- | --- | --- |
-| Move | Arrow keys or WASD | In-game movement |
-| Menu Nav | Arrow keys or WASD | Navigates the main menu |
-| Menu Select | Enter or Space | Confirms selection in the main menu |
-| Level Selector Nav | Arrow keys or WASD | Navigates the level selection grid (moves between pages at boundaries) |
-| Level Selector Sel | Enter or Space | Confirms selection and enters the level |
-| Level Selector Back | Esc or M | Returns to main menu from level selector |
-| Level Selector Next | PageDown or Tab | Flips to the next page of levels |
-| Level Selector Prev | PageUp or Shift+Tab | Flips to the previous page of levels |
-| Undo | Z or Backspace | Also available via UI button |
-| Redo | Y or R | Also available via UI button |
-| Reset level | F5 or Delete | Also available via UI button |
-| Help overlay | H or F1 | In-game only |
-| Help Dismiss | Any key | Dismisses help overlay |
-| Pause | Esc or P | In-game only (Resume/Restart/Menu) |
-| Menu | M | Returns to main menu |
-| Next level | N | On win screen |
-| Restart | R | On win screen |
-| Global Quit | Ctrl+Q | Immediately exits the game from any screen |
-
-Level editor shortcuts:
-
-- 1-5: select tool (wall, floor, target, box, player)
-- Left click: paint, Right click: erase
-- Ctrl+S: save level, Z/Y: undo/redo, C: clear, Esc: exit
+| Category | Action | Key Shortcut | Notes / Interactions |
+| --- | --- | --- | --- |
+| **Global** | Quit Game | `Ctrl+Q` | Closes the application instantly from any screen |
+| **Main Menu** | Navigation | `↑` / `↓` / `W` / `S` | Moves menu selection button highlights with visual feedback |
+| | Activation | `Enter` / `Space` | Triggers the highlighted menu item action |
+| **Selector** | Navigation | Arrow keys or `WASD` | Moves selectors in a 3x3 grid; auto-flips pages at bounds |
+| | Prev Page | `PageUp` or `Shift+Tab` | Flips back to the previous page of levels |
+| | Next Page | `PageDown` or `Tab` | Flips forward to the next page of levels |
+| | Activation | `Enter` / `Space` | Selects and launches the highlighted level |
+| | Return to Menu | `Esc` or `M` | Exits the selector back to the main menu screen |
+| **In-Game** | Movement | Arrow keys or `WASD` | Moves the player character on the board |
+| | Undo Move | `Z` or `Backspace` | Reverts the last player step or box push (up to 100 steps) |
+| | Redo Move | `Y` or `R` | Re-applies the last undone step |
+| | Reset Level | `F5` or `Delete` | Reverts the map to its starting state and resets timer |
+| | Toggle Help | `H` or `F1` | Shows/hides the in-game control guide overlay card |
+| | Dismiss Help | Any keypress | Immediately hides the help overlay card |
+| | Pause Game | `Esc` or `P` | Enters pause mode; blocks inputs and freezes game timer |
+| | Menu Exit | `M` | Returns to the main menu screen directly |
+| **Pause Screen** | Resume | `Esc` or `P` | Exits pause mode and resumes timer |
+| | Restart | `R` | Restores starting map state and exits pause mode |
+| | Menu Exit | `M` | Returns to the main menu |
+| **Win Screen** | Next Level | `N` | Proceeds directly to the next level in sequence |
+| | Restart | `R` | Restarts the current level to try for a better record |
+| | Menu Exit | `M` | Returns to the main menu |
+| **Stalemate Screen**| Undo | `Z` or `Backspace` | Reverts the deadlock-inducing move to keep playing |
+| | Restart | `R` or `F5` | Restarts the level |
+| | Menu Exit | `M` | Returns to the main menu |
+| **Level Editor** | Select Tool | `1` - `5` | Selects drawing tiles: Wall (1), Floor (2), Target (3), Box (4), Player (5) |
+| | Mouse Draw | `Left Click` | Paints the selected tile onto the targeted grid cell |
+| | Mouse Erase | `Right Click` | Clears/erases the targeted grid cell |
+| | Undo Paint | `Z` | Undoes the last canvas modification step |
+| | Redo Paint | `Y` or `R` | Redoes the last undone canvas modification step |
+| | Clear Grid | `C` | Clears the entire drawing grid to start fresh |
+| | Save Map | `Ctrl+S` | Validates map layout rules and saves local custom level |
+| | Exit Editor | `Esc` | Exits the editor and returns to the main menu |
 
 ## Project Structure
 
@@ -79,59 +85,69 @@ Level editor shortcuts:
 pushbox/
 ├── main.py
 ├── pyproject.toml
+├── README.md
+├── TESTING.md
+├── DEVELOPMENT.md
+├── AGENTS.md
 ├── src/pushbox/
 │   ├── controllers/
+│   │   ├── game_controller.py
+│   │   └── input_handler.py
 │   ├── models/
+│   │   ├── game_state.py
+│   │   ├── level.py
+│   │   └── save_manager.py
 │   ├── utils/
+│   │   ├── audio.py
+│   │   ├── config.py
+│   │   └── constants.py
 │   └── views/
-├── levels/
+│       ├── level_editor.py
+│       ├── renderer.py
+│       └── ui_components.py
+├── tests/
+│   ├── test_game.py
+│   ├── test_game_state.py
+│   ├── test_input.py
+│   ├── test_level.py
+│   ├── test_pause.py
+│   └── test_save_manager.py
 ├── data/
-├── examples/
-└── assets/
+└── examples/
 ```
 
-## Development
+## Quality Assurance & Testing
+
+Run all standard quality assurance and unit tests locally:
 
 ```bash
-uv run pytest
+# Run unit tests
+uv run pytest -v
+
+# Run linting rules
 uv run ruff check .
-uv run ruff format .
+
+# Check file formatting
+uv run ruff format --check .
+
+# Validate static typing
 uv run mypy src/
 ```
 
-## Testing and Code Quality
+## Limitations
 
-- Tests: `uv run pytest`
-- Lint: `uv run ruff check .`
-- Format: `uv run ruff format .`
-- Type check: `uv run mypy src/`
+- **Sokoban Solvability**: Automated testing checks grid layouts, boundary integrity, and rule enforcement, but **does not mathematically prove or guarantee** that custom puzzles created in the editor are solvable. Solvability must be validated manually by the player or designer.
+- **Audio Stubs**: The audio manager contains stubs; full sound effects and ambient tracks are planned for future releases.
+- **Undo History Limit**: Moves history is capped at 100 steps to maintain runtime performance and bounds memory footprint.
+- **Local Progression Storage**: Player progress, statistics, and custom levels are saved locally in the `data/` and `levels/` directories and are omitted from version control.
+- **Desktop Session Required**: Pygame requires an active display server session (X11, Wayland, or Windows Desktop) to initialize the graphical display.
 
-## Requirements and Limitations
+## Future Development
 
-- Python 3.9+ and Pygame 2.5+ required
-- Audio is a stub (no sound output yet)
-- Undo/redo history is capped at 100 moves
-- Progress and score data are stored locally in `data/` and ignored by git
-  (see `examples/` for sample formats)
-- Settings shortcut is not implemented yet
-
-## Future Work
-
-- In-game settings screen
-- Audio playback (music and sound effects)
-- High score UI and history browser
-- Additional built-in levels and tutorial steps
-
-## Contributing
-
-Issues and pull requests are welcome. Please keep changes small and focused, and
-run the test and lint commands before submitting.
+- In-game options and configuration settings panel.
+- Rich sound effects and custom music tracks.
+- Online level sharing and cloud-sync achievements.
 
 ## License
 
-MIT License. See LICENSE.
-
-## Acknowledgements
-
-- Sokoban for the original puzzle concept
-- Pygame and NumPy communities
+This project is licensed under the MIT License. See `LICENSE` for details.

@@ -10,7 +10,12 @@ from .ui_components import InputBox, ModernButton
 
 
 class LevelEditor:
-    """Level editor tool."""
+    """Level editor interface for creating and modifying custom Sokoban levels.
+
+    Provides tools for placing walls, floors, targets, boxes, and the player,
+    supporting keyboard shortcuts, mouse paint/erase operations, undo/redo
+    stacks, map resizing, validation checks before saving, and local file storage.
+    """
 
     TOOLS = [
         ("牆壁 (1)", CellType.WALL, COLORS["wall"]),
@@ -23,6 +28,7 @@ class LevelEditor:
     def __init__(
         self, screen: pygame.Surface, existing_level: Optional[Level] = None
     ) -> None:
+        """Initialize the level editor with screen and optional existing level."""
         self.screen = screen
 
         # Grid Data
@@ -73,6 +79,7 @@ class LevelEditor:
         self._init_buttons()
 
     def _init_fonts(self) -> None:
+        """Initialize UI fonts for titles, labels, and status bar, with fallbacks."""
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 20)
             self.small_font = pygame.font.SysFont("microsoftyahei", 16)
@@ -83,6 +90,7 @@ class LevelEditor:
             self.title_font = pygame.font.Font(None, 40)
 
     def _init_buttons(self) -> None:
+        """Initialize editor UI buttons including grid resizing and action bar."""
         self.buttons = []
 
         # --- Map Size Controls (In Sidebar) ---
@@ -177,16 +185,20 @@ class LevelEditor:
         )
 
     def set_on_save(self, callback: Callable[[Level], None]) -> None:
+        """Set callback function for when the level is saved."""
         self.on_save = callback
 
     def set_on_exit(self, callback: Callable[[], None]) -> None:
+        """Set callback function for when the editor is exited."""
         self.on_exit = callback
 
     def show_status(self, message: str) -> None:
+        """Display a status message in the editor status bar."""
         self.status_message = message
         self.status_timer = 120
 
     def _save_state(self) -> None:
+        """Save the current grid state to the undo history stack."""
         current_state = [row[:] for row in self.grid]
         if self.history and self.history[-1] == current_state:
             return
@@ -196,6 +208,7 @@ class LevelEditor:
         self.redo_stack.clear()
 
     def _undo(self) -> None:
+        """Undo the last grid modification."""
         if len(self.history) > 1:
             current_state = self.history.pop()
             self.redo_stack.append(current_state)
@@ -205,6 +218,7 @@ class LevelEditor:
             self.show_status("撤銷")
 
     def _redo(self) -> None:
+        """Redo the last undone grid modification."""
         if self.redo_stack:
             next_state = self.redo_stack.pop()
             self.history.append(next_state)
@@ -213,11 +227,12 @@ class LevelEditor:
             self.show_status("重做")
 
     def _update_dimensions(self) -> None:
+        """Update rows and columns attributes based on the current grid shape."""
         self.rows = len(self.grid)
         self.cols = len(self.grid[0]) if self.rows > 0 else 0
 
     def _change_size(self, dimension: str, delta: int) -> None:
-        """Change map dimensions."""
+        """Change map grid size (rows or columns) within valid limits (5 to 20)."""
         if dimension == "rows":
             new_rows = self.rows + delta
             if 5 <= new_rows <= 20:
@@ -240,6 +255,7 @@ class LevelEditor:
         self._save_state()
 
     def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle Pygame events for inputs, buttons, paint, and shortcuts."""
         # 1. Handle Input Box - If active, it consumes input and BLOCKS other shortcuts
         if self.name_input.handle_event(event):
             return True
@@ -309,6 +325,7 @@ class LevelEditor:
         return False
 
     def _is_on_grid(self, pos: tuple[int, int]) -> bool:
+        """Check if a screen position is inside the editor grid area."""
         x, y = pos
         # Dynamic centering based on current screen size
         grid_width = self.cols * self.cell_size
@@ -326,6 +343,7 @@ class LevelEditor:
         return 0 <= grid_x < self.cols and 0 <= grid_y < self.rows
 
     def _check_tool_click(self, pos: tuple[int, int]) -> bool:
+        """Check if a sidebar tool selection button was clicked."""
         tool_x = 20
         tool_y = 130
         tool_height = 40
@@ -339,6 +357,7 @@ class LevelEditor:
         return False
 
     def _handle_paint(self, pos: tuple[int, int], erase: bool) -> None:
+        """Paint or erase cell elements on the grid based on selected tool."""
         x, y = pos
 
         # Re-calculate offsets (same logic as _is_on_grid)
@@ -371,6 +390,7 @@ class LevelEditor:
             self.grid[grid_y][grid_x] = target_val
 
     def _clear_grid(self) -> None:
+        """Clear all cells on the grid and reset player status."""
         self.grid = [
             [CellType.EMPTY for _ in range(self.cols)] for _ in range(self.rows)
         ]
@@ -378,6 +398,7 @@ class LevelEditor:
         self.show_status("網格已清除")
 
     def _save_level(self) -> None:
+        """Perform grid validation checks and invoke the save callback."""
         has_player = any(CellType.PLAYER in row for row in self.grid)
         if not has_player:
             self.show_status("錯誤: 必須放置玩家!")
@@ -406,6 +427,7 @@ class LevelEditor:
             self.on_save(level)
 
     def draw(self) -> None:
+        """Draw the entire editor interface including sidebar, tools, and grid."""
         self.screen.fill(COLORS["background"])
 
         # --- Draw Sidebar ---
@@ -485,6 +507,7 @@ class LevelEditor:
             self._draw_status()
 
     def _draw_tool_selector(self) -> None:
+        """Draw the sidebar tool selector showing available grid elements."""
         tool_x = 20
         tool_y = 130
         tool_height = 40
@@ -526,6 +549,7 @@ class LevelEditor:
                 )
 
     def _draw_size_controls(self) -> None:
+        """Draw grid size adjustment labels in the sidebar."""
         y_base = 390
         if self.font:
             label = self.font.render("地圖大小:", True, COLORS["text_dim"])
@@ -539,6 +563,7 @@ class LevelEditor:
             self.screen.blit(c_label, (55, y_base + 85))
 
     def _draw_grid(self) -> None:
+        """Draw the level grid and centered cell elements."""
         # Dynamic centering
         grid_width = self.cols * self.cell_size
         grid_height = self.rows * self.cell_size
@@ -596,6 +621,7 @@ class LevelEditor:
                 pygame.draw.rect(self.screen, COLORS["grid_lines"], rect, 1)
 
     def _draw_status(self) -> None:
+        """Draw the semi-transparent status message card."""
         if not self.status_message or not self.font:
             return
         surf = self.font.render(self.status_message, True, COLORS["text_main"])
