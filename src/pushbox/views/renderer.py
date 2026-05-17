@@ -423,7 +423,12 @@ class Renderer:
                 screen, (40, 40, 40), (center_x, center_y + int(radius * 0.15)), 2
             )
 
-    def render_ui(self, game_state: GameState, show_help: bool = False) -> None:
+    def render_ui(
+        self,
+        game_state: GameState,
+        show_help: bool = False,
+        control_scheme: str = "",
+    ) -> None:
         stats = game_state.get_stats()
 
         # Top Bar Background
@@ -463,6 +468,16 @@ class Renderer:
                 midright=(self.screen.get_width() - 20, bar_height // 2)
             )
             self.screen.blit(help_surf, help_rect)
+
+            # Control scheme indicator
+            if control_scheme:
+                scheme_surf = self.font.render(
+                    f"控制: {control_scheme}", True, COLORS["text_dim"]
+                )
+                scheme_rect = scheme_surf.get_rect(
+                    midright=(help_rect.left - 30, bar_height // 2)
+                )
+                self.screen.blit(scheme_surf, scheme_rect)
 
         if show_help and self.font:
             self._render_help_overlay()

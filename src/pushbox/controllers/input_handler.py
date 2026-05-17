@@ -119,6 +119,7 @@ class InputHandler:
             return self._handle_keydown(event.key)
         elif event.type == pygame.KEYUP:
             self._key_states[event.key] = False
+            self._last_key_time.pop(event.key, None)
 
         return False
 

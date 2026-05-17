@@ -435,7 +435,9 @@ class GameApp:
             # We want to keep the board above the controls
             self.renderer.render_game(self.controller.game_state, offset_y=60)
             self.renderer.render_ui(
-                self.controller.game_state, show_help=self.show_help
+                self.controller.game_state,
+                show_help=self.show_help,
+                control_scheme=self.controller.get_control_scheme(),
             )
 
             if self.controller.game_state.status == GameStateEnum.WON:
@@ -457,14 +459,6 @@ class GameApp:
                 # Draw ModernButtons
                 for btn in self.game_buttons:
                     btn.draw(self.screen)
-
-                # Current control scheme indicator
-                font = pygame.font.SysFont("microsoftyahei", 16) or pygame.font.Font(
-                    None, 20
-                )
-                scheme_text = f"控制: {self.controller.get_control_scheme()}"
-                scheme_surface = font.render(scheme_text, True, COLORS["text_dim"])
-                self.screen.blit(scheme_surface, (self.width - 120, 10))
 
     def run(self) -> None:
         """Main game loop."""
