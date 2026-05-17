@@ -31,66 +31,66 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 1. **Startup**: Run `uv run python main.py`.
 2. **Tutorial**: Verify the tutorial screen appears on first launch or via the menu. Confirm it explains goals and controls.
 3. **Main Menu**: Navigate from the tutorial to the main menu.
-34. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
-35. **Start Game**: Select "開始遊戲" and verify the level loads.
-35a. **HUD Level Label Display**:
-    - Launch a default level (e.g., `Level 23`). Verify that `"Level 23"` is clearly displayed in a highlighted soft blue color in the top-left gameplay HUD.
-    - Confirm the label does not overlap move counts, timer, pause indicators, or help overlay.
-    - Launch a custom level (e.g., `"對稱自訂圖"`), and verify the custom name is correctly shown. Confirm long custom names are safely truncated.
-36. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
-37. **Pushing**: Push a box and verify it moves.
-38. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
-39. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
-40. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
-41. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
-42. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
+4. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
+5. **Start Game**: Select "開始遊戲" and verify the level loads.
+6. **HUD Level Label Display**:
+   - Launch a default level (e.g., `Level 23`). Verify that `"Level 23"` is clearly displayed in a highlighted soft blue color in the top-left gameplay HUD.
+   - Confirm the label does not overlap move counts, timer, pause indicators, or help overlay.
+   - Launch a custom level (e.g., `"對稱自訂圖"`), and verify the custom name is correctly shown. Confirm long custom names are safely truncated.
+7. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
+8. **Pushing**: Push a box and verify it moves.
+9. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
+10. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
+11. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
+12. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
+13. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
 
 ### Level 16–30 Manual Playtest Startup Checks
-13. **Level 16 Startup**: Go to page 2 of the level selector, select "Level 16", and press Enter. Verify the level board centers correctly and standard controls work perfectly.
-14. **Level 17 Startup**: Select "Level 17" on page 2. Verify grid scaling and ensure player is positioned correctly on the initial board state.
-15. **Level 18 Startup**: Select "Level 18" on page 2. Verify all targets and boxes are placed correctly.
-16. **Level 19 Startup**: Flip to page 3, select "Level 19" (index 0). Verify that board dimensions fit standard boundaries safely.
-17. **Level 20 Startup**: Select "Level 20" on page 3. Verify standard playability features (movement, undo, redo, timer) initialize successfully.
-18. **Level 21–30 Startup & Playability**: Select "Level 21" through "Level 30" on Page 3 and Page 4. Verify that metadata badges, bottom detail panel, grid scaling, and playability work correctly. Manually playtest Level 26–30 to confirm they are structurally valid and designed to be playable.
+1. **Level 16 Startup**: Go to page 2 of the level selector, select "Level 16", and press Enter. Verify the level board centers correctly and standard controls work perfectly.
+2. **Level 17 Startup**: Select "Level 17" on page 2. Verify grid scaling and ensure player is positioned correctly on the initial board state.
+3. **Level 18 Startup**: Select "Level 18" on page 2. Verify all targets and boxes are placed correctly.
+4. **Level 19 Startup**: Flip to page 3, select "Level 19" (index 0). Verify that board dimensions fit standard boundaries safely.
+5. **Level 20 Startup**: Select "Level 20" on page 3. Verify standard playability features (movement, undo, redo, timer) initialize successfully.
+6. **Level 21–30 Startup & Playability**: Select "Level 21" through "Level 30" on Page 3 and Page 4. Verify that metadata badges, bottom detail panel, grid scaling, and playability work correctly. Manually playtest Level 26–30 to confirm they are structurally valid and designed to be playable.
 
 ### Win & Game Over Conditions
-18. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
-19. **Win Screen Actions**: Test `N` (Next Level), `R` (Restart), and `M` (Menu) on the win screen.
-20. **Deadlock (Game Over)**: Push a box into a corner where it cannot be moved (e.g., against two perpendicular walls).
-21. **Game Over Overlay**: Verify the red "死鎖!" card appears.
-22. **Game Over Actions**: Test `Z` (Undo), `R` (Restart), and `M` (Menu) on the game over screen.
+1. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
+2. **Win Screen Actions**: Test `N` (Next Level), `R` (Restart), and `M` (Menu) on the win screen.
+3. **Deadlock (Game Over)**: Push a box into a corner where it cannot be moved (e.g., against two perpendicular walls).
+4. **Game Over Overlay**: Verify the red "死鎖!" card appears.
+5. **Game Over Actions**: Test `Z` (Undo), `R` (Restart), and `M` (Menu) on the game over screen.
 
 ### UI & Persistence
-23. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
-24. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
-25. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
+1. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
+2. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
+3. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
 
 ### Pause Screen Overlay
-26. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.
-27. **Gameplay Blocked**: While paused, try pressing movement keys or action buttons. Confirm that the player does not move, boxes cannot be pushed, and the game timer is completely frozen (does not increment).
-28. **Overlay Keys**: Verify the three available actions listed on the pause card work as expected:
+1. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.
+2. **Gameplay Blocked**: While paused, try pressing movement keys or action buttons. Confirm that the player does not move, boxes cannot be pushed, and the game timer is completely frozen (does not increment).
+3. **Overlay Keys**: Verify the three available actions listed on the pause card work as expected:
     - **Esc / P**: Continues gameplay exactly from the current state (timer resumes without jumping forward by the duration of the pause).
     - **R**: Resets the level state and immediately exits the pause screen to playing mode.
     - **M**: Safely exits the game screen back to the main menu (clearing the pause state).
-29. **Priority of Overlays**:
+4. **Priority of Overlays**:
     - **Help priority**: If the help overlay (`H`) is open, pressing `Esc` should close the help card instead of triggering the pause overlay.
     - **Ignore trigger**: Pressing `Esc` or `P` must have no effect when the green "Win" screen or the red "Deadlock" screen is active.
 
 ### Keyboard Navigation & UX Polish
-30. **Main Menu Keyboard Navigation**:
+1. **Main Menu Keyboard Navigation**:
     - On the main menu, press `↓` or `S`. Verify that the highlight moves to the next option and the button lifts up slightly.
     - Press `↑` or `W`. Verify the highlight moves to the previous option.
     - Verify wrap-around: pressing `↑` or `W` on the first option wraps the highlight to the last option. Pressing `↓` or `S` on the last option wraps back to the first option.
     - Hover the mouse over any button. Verify the keyboard selection highlights that button, synchronizing the input states.
     - Press `Enter` or `Space` to activate the highlighted button callback.
-31. **Help Overlay Dismissal (Any Key)**:
+2. **Help Overlay Dismissal (Any Key)**:
     - During gameplay, press `H` to open the help overlay. Verify it displays `"按任意鍵返回遊戲"` at the bottom.
     - Press `R`, direction keys, or `P`. Verify that the help overlay closes, and that the key does not trigger its gameplay action (i.e., the level is not reset, the player does not move, and the game does not pause).
     - Press a gameplay key again. Verify that the subsequent keypress triggers normally.
-32. **Global Ctrl+Q Quit**:
+3. **Global Ctrl+Q Quit**:
     - On any screen (Main Menu, Gameplay, Level Selector, Tutorial, Editor, Pause overlay, Help overlay), press `Ctrl+Q`. Verify the game application closes immediately.
     - Verify that pressing `Q` alone does not exit.
-33. **Level Selector Keyboard Navigation & Pagination**:
+4. **Level Selector Keyboard Navigation & Pagination**:
     - Go to the "選擇關卡" screen. Verify that `Level 1` is highlighted by default.
     - Confirm the layout has spacious margins and zero overlaps at the default `800x720` resolution.
     - Confirm the helper prompt `"換頁：Tab / Shift+Tab 或 PageUp / PageDown"` is displayed in small grey text below the Page Indicator (`"頁面: 1 / 4"`).

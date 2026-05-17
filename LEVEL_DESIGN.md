@@ -49,7 +49,7 @@ To be eligible for inclusion in the default level catalog, every grid must adher
 3. **Mismatched Counts Blocked:** The number of starting boxes (`3`) must exactly equal the number of starting targets (`2`).
 4. **Rectangular Boundaries:** The grid layout must be a uniform rectangular list-of-lists. Empty padding regions should be filled with `0` or `1` appropriately.
 5. **Closed Outer Walls:** The playable area must be fully enclosed by outer walls (`1`) to prevent the player or boxes from exiting the grid borders.
-6. **Dimension Limits:** Grids must stay within the range of **5x5** (minimum) to **20x20** (maximum) to scale beautifully inside the standard window viewport.
+6. **Dimension Limits:** Grids must stay within the range of **5x5** (minimum) to **20x20** (maximum) to fit within the standard viewport after verification.
 7. **No Pre-placed Solved States:** Do not place solved boxes (`5` / `BOX_ON_TARGET`) in starting default levels unless explicitly teaching a specialized mechanic.
 8. **No Unreachable Segments:** All floor cells and target paths must be accessible by the player unless unreachable zones are explicitly documented for decorative symmetry.
 9. **No Early Stalemates:** Starting positions must not place boxes in immediate deadlocks (e.g. in corners or flush against double-corner walls) unless specifically demonstrating deadlock recovery.
@@ -158,7 +158,7 @@ The following table summarizes the design themes and intent for the 30 built-in 
 | **21** | Advanced | Long Reposition Route | 3 | Forces the player to walk long loops around outer paths to reposition behind boxes. |
 | **22** | Advanced | Two-Box Ordering Lock | 2 | Requires pushing box A completely out of the way before box B can navigate a tight bottleneck. |
 | **23** | Advanced+ | Three-Zone Warehouse | 4 | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
-| **24** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pulling/pushing boxes out of tight doors without wedging them in the corner. |
+| **24** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pushing boxes through tight doors while preserving recovery space. |
 | **25** | Advanced+ | Mixed Final Challenge | 5 | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5 boxes. |
 | **26** | Advanced | Switchback Hall | 3 | Uses inner partitions to require route switching and player repositioning. |
 | **27** | Advanced+ | Twin Courtyards | 4 | Connects two open courtyards with moderate box ordering requirements. |
@@ -198,12 +198,12 @@ Future developers and agents must check all new levels against this checklist be
 * [ ] **Metadata Consistency:** The `DEFAULT_LEVEL_METADATA` box count matches the exact box count in the grid.
 
 ### Verification Checks
-* [ ] **Tests Pass:** `uv run pytest -v` runs with 100% success.
+* [ ] **Tests Pass:** `uv run pytest -v` runs successfully.
 * [ ] **Linter Clean:** `uv run ruff check .` returns zero warnings or errors.
 * [ ] **Formatter Compliant:** `uv run ruff format --check .` passes.
 * [ ] **Mypy Clean:** `uv run mypy src/` returns zero type issues.
-* [ ] **Visual Launch:** The level launches safely and centers perfectly on the screen at `800x720`.
-* [ ] **Manual Playtest:** The level has been manually completed to guarantee it is solvable.
+* [ ] **Visual Launch:** The level launches safely and centers on the screen at `800x720`.
+* [ ] **Manual Playtest:** The level has been manually completed to provide practical confidence that it is solvable.
 
 ---
 
