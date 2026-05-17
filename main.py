@@ -135,9 +135,8 @@ class GameApp:
         self.menu.add_button("開始遊戲", self._start_game, -100)
         self.menu.add_button("選擇關卡", self._show_level_select, -30)
         self.menu.add_button("編輯器", lambda: self._show_editor(), 40)
-        self.menu.add_button("切換控制", self._toggle_controls, 110)
-        self.menu.add_button("教學說明", self._show_tutorial, 180)
-        self.menu.add_button("退出", self._quit, 250)
+        self.menu.add_button("教學說明", self._show_tutorial, 110)
+        self.menu.add_button("退出", self._quit, 180)
 
     def _start_game(self) -> None:
         """Start the game with current level."""

@@ -5,7 +5,7 @@ from typing import Callable
 import pygame
 
 from ..utils.config import Config
-from ..utils.constants import ControlScheme, Direction
+from ..utils.constants import Direction
 
 
 class InputHandler:
@@ -99,12 +99,9 @@ class InputHandler:
         Returns:
             Dictionary mapping keys to directions.
         """
-        scheme = self.config.get_control_scheme()
-
-        if scheme == ControlScheme.WASD:
-            return self.WASD_KEYS.copy()
-        else:  # Default to arrows
-            return self.ARROW_KEYS.copy()
+        keys = self.ARROW_KEYS.copy()
+        keys.update(self.WASD_KEYS)
+        return keys
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle a pygame event.
@@ -182,10 +179,7 @@ class InputHandler:
         Returns:
             Scheme name.
         """
-        scheme = self.config.get_control_scheme()
-        if scheme == ControlScheme.WASD:
-            return "WASD"
-        return "方向鍵"
+        return "方向鍵 / WASD"
 
     def toggle_control_scheme(self) -> str:
         """Toggle between control schemes.
@@ -193,11 +187,4 @@ class InputHandler:
         Returns:
             New scheme name.
         """
-        current = self.config.get_control_scheme()
-        new_scheme = (
-            ControlScheme.WASD
-            if current == ControlScheme.ARROWS
-            else ControlScheme.ARROWS
-        )
-        self.config.set_control_scheme(new_scheme)
-        return self.get_control_scheme_name()
+        return "方向鍵 / WASD"

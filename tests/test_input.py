@@ -13,10 +13,9 @@ from src.pushbox.utils.constants import ControlScheme
 from src.pushbox.utils.constants import GameState as GameStateEnum
 
 
-def test_arrow_keys_movement_in_arrows_mode():
-    """Test that arrow keys move the player when control scheme is ARROWS."""
+def test_arrow_keys_movement():
+    """Test that arrow keys move the player."""
     controller = GameController()
-    controller.config.set_control_scheme(ControlScheme.ARROWS)
 
     grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
     level = Level("Test Level", grid)
@@ -36,35 +35,17 @@ def test_arrow_keys_movement_in_arrows_mode():
     assert controller.game_state.move_count == 1
 
 
-def test_wasd_blocked_in_arrows_mode():
-    """Test that WASD keys do NOT move the player when control scheme is ARROWS."""
+def test_wasd_keys_movement():
+    """Test that WASD keys move the player."""
     controller = GameController()
-    controller.config.set_control_scheme(ControlScheme.ARROWS)
 
     grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
     level = Level("Test Level", grid)
     controller.current_level = level
     controller.game_state = GameState(level)
 
-    # Simulate pressing K_d (WASD Right)
-    event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_d)
-    handled = controller.handle_event(event)
-
-    assert handled is False
-    # Player position should still be (1, 2)
+    # Position starts at (1, 2)
     assert controller.game_state.level.get_player_position() == (1, 2)
-    assert controller.game_state.move_count == 0
-
-
-def test_wasd_keys_movement_in_wasd_mode():
-    """Test that WASD keys move the player when control scheme is WASD."""
-    controller = GameController()
-    controller.config.set_control_scheme(ControlScheme.WASD)
-
-    grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
-    controller.current_level = level
-    controller.game_state = GameState(level)
 
     # Simulate pressing K_d (WASD Right)
     event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_d)
@@ -76,24 +57,24 @@ def test_wasd_keys_movement_in_wasd_mode():
     assert controller.game_state.move_count == 1
 
 
-def test_arrows_blocked_in_wasd_mode():
-    """Test that arrow keys do NOT move the player when control scheme is WASD."""
+def test_movement_unaffected_by_legacy_control_scheme():
+    """Test both arrows and WASD are active, ignoring legacy config values."""
     controller = GameController()
-    controller.config.set_control_scheme(ControlScheme.WASD)
 
-    grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
+    grid = [[1, 1, 1, 1, 1, 1, 1], [1, 0, 4, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1]]
     level = Level("Test Level", grid)
     controller.current_level = level
     controller.game_state = GameState(level)
 
-    # Simulate pressing K_RIGHT
-    event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
-    handled = controller.handle_event(event)
+    # Check arrow key movement works
+    event_arrow = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
+    assert controller.handle_event(event_arrow) is True
+    assert controller.game_state.level.get_player_position() == (1, 3)
 
-    assert handled is False
-    # Player position should still be (1, 2)
-    assert controller.game_state.level.get_player_position() == (1, 2)
-    assert controller.game_state.move_count == 0
+    # Check WASD key movement works
+    event_wasd = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_d)
+    assert controller.handle_event(event_wasd) is True
+    assert controller.game_state.level.get_player_position() == (1, 4)
 
 
 def test_key_tap_twice_with_release_works():
