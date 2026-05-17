@@ -4,14 +4,16 @@ This document details the design plan and architectural specifications for the n
 
 > [!IMPORTANT]
 > This is a planning-only document. No level grids or metadata modifications are applied to the active game code in this phase. Actual implementation will occur in the subsequent phase after this plan is reviewed and approved.
+> 
+> *Note: Draft grids must still be manually playtested after implementation to verify actual solvability and player experience.*
 
 ---
 
 ## 1. Overview
 
-The primary goal of this planning document is to establish a rigorous, graduated difficulty framework for the final set of default levels. Expanding our default levels from 20 to 25 will complete the built-in default level catalog. 
+The primary goal of this planning document is to establish a graduated difficulty framework for the final set of default levels. Expanding our default levels from 20 to 25 will complete the built-in default level catalog. 
 
-By detailing themes, skill goals, grid shapes, and deadlocks in advance, we ensure that every new level is distinct, enjoyable, and mathematically valid, without introducing sudden difficulty spikes or layout collisions.
+By detailing themes, skill goals, grid shapes, and deadlocks in advance, we ensure that every new level is structurally distinct, enjoyable, and structurally valid, designed to reduce the risk of sudden difficulty spikes or layout collisions.
 
 ---
 
@@ -21,7 +23,7 @@ All planned levels strictly follow the standards defined in [LEVEL_DESIGN.md](fi
 * **Graduated Complexity:** Create a smooth curve from Level 20's Advanced+ difficulty into high-tier spatial challenges.
 * **Aesthetic & Structural Uniqueness:** Avoid reskinned clones of prior levels by utilizing diverse wall topologies and room layouts.
 * **Clear Pedagogical Skills:** Each level is engineered to teach or test a specific spatial reasoning skill (e.g. routing, ordering locks, zone transferring).
-* **Grid Safety Limits:** All draft grids center beautifully in `800x720` resolution and satisfy all structural checks.
+* **Grid Safety Limits:** All draft grids are expected to fit within `800x720` resolution after verification and satisfy all structural checks.
 
 ---
 
@@ -58,7 +60,7 @@ The following table summarizes the proposed specifications for the next five lev
   ```text
   1 1 1 1 1 1 1 1 1
   1 4 0 0 1 0 0 2 1
-  1 0 3 0 1 0 3 0 1
+  1 0 3 0 1 0 0 0 1
   1 0 0 0 1 0 0 0 1
   1 1 0 1 1 1 0 1 1
   1 0 0 0 1 0 0 0 1
@@ -183,7 +185,7 @@ Before committing these levels to code in the next phase, they must pass this st
 * [ ] **Type-Safe Metadata:** The new `DEFAULT_LEVEL_METADATA` structures must exactly compile with `LevelMetadata`.
 * [ ] **Uniqueness Check:** Compare the new grids against Levels 1–20 to ensure no accidental duplication.
 * [ ] **Dynamic Centering:** Launch each level in the game screen. Verify that the grid scales and centers safely at `800x720` without clipping the status bar or timer.
-* [ ] **Manual Playtest Check:** Complete every new level manually to prove they are solvability-verified.
+* [ ] **Manual Playtest Check:** Complete every new level manually; manual completion provides practical confidence of solvability and actual quality.
 * [ ] **Selector Pagination Stability:** Ensure that the newly added cards display their metadata badges, corner stars, and detail panels legibly across all selector pages.
 
 ---

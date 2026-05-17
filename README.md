@@ -21,7 +21,7 @@ PushBox is a modern Sokoban puzzle game built with Python and Pygame. It offers 
 - **Stalemate Detection**: Real-time deadlock monitoring and immediate "死鎖!" card overlay feedback when a puzzle enters an unsolvable state.
 - **Level Editor**: Built-in interactive map canvas supporting tool pickers (1-5), paint/erase, undo/redo, dynamic resizing (5x5 to 20x20), and canvas validation prior to local storage.
 - **Progression Persistence**: Local progression auto-save capability tracking attempts and high scores.
-- **Quality Assurance**: 100% passing test coverage suite verifying gameplay, inputs, editor, and save engines.
+- **Quality Assurance**: pytest, Ruff, and MyPy checks for gameplay, inputs, editor, save behavior, and code quality.
 
 ## Installation
 
