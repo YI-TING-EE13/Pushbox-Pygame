@@ -61,6 +61,21 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
     - **Help priority**: If the help overlay (`H`) is open, pressing `Esc` should close the help card instead of triggering the pause overlay.
     - **Ignore trigger**: Pressing `Esc` or `P` must have no effect when the green "Win" screen or the red "Deadlock" screen is active.
 
+### Keyboard Navigation & UX Polish (Phase 11A)
+24. **Main Menu Keyboard Navigation**:
+    - On the main menu, press `↓` or `S`. Verify that the highlight moves to the next option and the button lifts up slightly.
+    - Press `↑` or `W`. Verify the highlight moves to the previous option.
+    - Verify wrap-around: pressing `↑` or `W` on the first option wraps the highlight to the last option. Pressing `↓` or `S` on the last option wraps back to the first option.
+    - Hover the mouse over any button. Verify the keyboard selection highlights that button, synchronizing the input states.
+    - Press `Enter` or `Space` to activate the highlighted button callback.
+25. **Help Overlay Dismissal (Any Key)**:
+    - During gameplay, press `H` to open the help overlay. Verify it displays `"按任意鍵返回遊戲"` at the bottom.
+    - Press `R`, direction keys, or `P`. Verify that the help overlay closes, and that the key does not trigger its gameplay action (i.e., the level is not reset, the player does not move, and the game does not pause).
+    - Press a gameplay key again. Verify that the subsequent keypress triggers normally.
+26. **Global Ctrl+Q Quit**:
+    - On any screen (Main Menu, Gameplay, Level Selector, Tutorial, Editor, Pause overlay, Help overlay), press `Ctrl+Q`. Verify the game application closes immediately.
+    - Verify that pressing `Q` alone does not exit.
+
 ## 3. Editor Manual Test
 
 The level editor allows creating and managing custom puzzles.
