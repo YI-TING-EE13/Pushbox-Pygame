@@ -27,6 +27,8 @@ class InputHandler:
     }
 
     # Common action keys
+    # Note: Some actions (pause, settings, global editor shortcut) are defined here
+    # but the full UI flow for them is not yet implemented in v0.1.0.
     ACTION_KEYS = {
         "undo": [pygame.K_z, pygame.K_BACKSPACE],
         "redo": [pygame.K_y, pygame.K_r],

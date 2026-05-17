@@ -493,7 +493,6 @@ class Renderer:
             "重做: Y / R",
             "重置: F5",
             "選單: M",
-            "暫停: Esc",
         ]
 
         y = rect.top + 40
