@@ -1,7 +1,7 @@
 """Game constants and enumerations."""
 
 from enum import IntEnum
-from typing import Union
+from typing import TypedDict, Union
 
 Color = tuple[int, int, int]
 ColorWithAlpha = tuple[int, int, int, int]
@@ -290,4 +290,137 @@ DEFAULT_LEVELS = {
         [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ],
+}
+
+
+class LevelMetadata(TypedDict):
+    """Metadata dictionary schema for default built-in levels."""
+
+    difficulty: str
+    theme: str
+    boxes: int
+    note: str
+
+
+DEFAULT_LEVEL_METADATA: dict[str, LevelMetadata] = {
+    "Level 1": {
+        "difficulty": "Intro",
+        "theme": "Basic Route",
+        "boxes": 3,
+        "note": "Introduces movement, pushing, and target matching.",
+    },
+    "Level 2": {
+        "difficulty": "Intro",
+        "theme": "Cluster Pushes",
+        "boxes": 4,
+        "note": "Uses grouped boxes and nearby targets.",
+    },
+    "Level 3": {
+        "difficulty": "Intro+",
+        "theme": "Target Row",
+        "boxes": 6,
+        "note": "Practices organizing several boxes toward a shared target area.",
+    },
+    "Level 4": {
+        "difficulty": "Intermediate",
+        "theme": "Blocked Center",
+        "boxes": 5,
+        "note": "Adds wall-separated lanes and more careful ordering.",
+    },
+    "Level 5": {
+        "difficulty": "Intermediate",
+        "theme": "Compact Cluster",
+        "boxes": 5,
+        "note": "Uses a denser room with multiple nearby targets.",
+    },
+    "Level 6": {
+        "difficulty": "Intro",
+        "theme": "Twin Push",
+        "boxes": 2,
+        "note": "Simple two-box alignment practice.",
+    },
+    "Level 7": {
+        "difficulty": "Intro+",
+        "theme": "Split Targets",
+        "boxes": 2,
+        "note": "Introduces separated goals across a wider room.",
+    },
+    "Level 8": {
+        "difficulty": "Intro+",
+        "theme": "Three Columns",
+        "boxes": 3,
+        "note": "Practices repeated vertical alignment with three boxes.",
+    },
+    "Level 9": {
+        "difficulty": "Intermediate",
+        "theme": "Obstacle Spacing",
+        "boxes": 3,
+        "note": "Adds simple interior walls that affect positioning.",
+    },
+    "Level 10": {
+        "difficulty": "Intermediate",
+        "theme": "Four-Box Grid",
+        "boxes": 4,
+        "note": "Combines vertical push lanes with a larger open space.",
+    },
+    "Level 11": {
+        "difficulty": "Intermediate",
+        "theme": "Offset Goals",
+        "boxes": 2,
+        "note": "Uses separated boxes and targets with interior obstruction.",
+    },
+    "Level 12": {
+        "difficulty": "Intermediate",
+        "theme": "Staggered Paths",
+        "boxes": 2,
+        "note": "Requires navigating around staggered wall positions.",
+    },
+    "Level 13": {
+        "difficulty": "Intermediate+",
+        "theme": "Tight Cluster",
+        "boxes": 3,
+        "note": "Places boxes close together near blocked lanes.",
+    },
+    "Level 14": {
+        "difficulty": "Advanced",
+        "theme": "Lane Control",
+        "boxes": 3,
+        "note": "Uses separated lanes and interior walls to constrain movement.",
+    },
+    "Level 15": {
+        "difficulty": "Advanced",
+        "theme": "Mixed Columns",
+        "boxes": 4,
+        "note": "Combines multiple vertical lanes with central positioning.",
+    },
+    "Level 16": {
+        "difficulty": "Advanced",
+        "theme": "L-Corridor",
+        "boxes": 2,
+        "note": "Focuses on turning movement and angled access routes.",
+    },
+    "Level 17": {
+        "difficulty": "Advanced",
+        "theme": "Split Warehouse",
+        "boxes": 3,
+        "note": "Uses left and right sections connected through shared space.",
+    },
+    "Level 18": {
+        "difficulty": "Advanced",
+        "theme": "Central Island",
+        "boxes": 4,
+        "note": "Uses a central obstacle island to shape approach routes.",
+    },
+    "Level 19": {
+        "difficulty": "Advanced+",
+        "theme": "Small Rooms",
+        "boxes": 4,
+        "note": "Uses narrow doors and separated rooms to constrain order.",
+    },
+    "Level 20": {
+        "difficulty": "Advanced+",
+        "theme": "Mixed Warehouse",
+        "boxes": 5,
+        "note": "Combines multiple boxes, wall segments, and target regions.",
+    },
 }

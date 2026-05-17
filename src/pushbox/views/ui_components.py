@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 import pygame
 
-from ..utils.constants import COLORS, ColorLike
+from ..utils.constants import COLORS, DEFAULT_LEVEL_METADATA, ColorLike, LevelMetadata
 
 
 class ModernButton:
@@ -24,6 +24,8 @@ class ModernButton:
         hover_color: ColorLike = COLORS["button_hover"],
         text_color: ColorLike = COLORS["text_main"],
         icon: str = "",
+        metadata: Optional[LevelMetadata] = None,
+        small_font: Optional[pygame.font.Font] = None,
     ) -> None:
         """Initialize modern UI button with dimensions, colors, and callback."""
         self.rect = pygame.Rect(x, y, width, height)
@@ -43,6 +45,10 @@ class ModernButton:
         self.pressed = False
         self.hover_anim = 0.0  # 0.0 to 1.0
         self.selected = False
+
+        # Optional metadata rendering
+        self.metadata = metadata
+        self.small_font = small_font
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draw the button."""
@@ -72,9 +78,26 @@ class ModernButton:
 
         # Draw text
         if self.font:
-            text_surface = self.font.render(self.text, True, self.text_color)
-            text_rect = text_surface.get_rect(center=body_rect.center)
-            screen.blit(text_surface, text_rect)
+            if self.metadata and self.small_font:
+                # Card layout: show title on top and metadata badge on bottom
+                title_surf = self.font.render(self.text, True, self.text_color)
+                title_rect = title_surf.get_rect(
+                    centerx=body_rect.centerx, y=body_rect.y + 10
+                )
+                screen.blit(title_surf, title_rect)
+
+                diff = self.metadata.get("difficulty", "")
+                boxes = self.metadata.get("boxes", 0)
+                sub_text = f"{diff} · {boxes} boxes"
+                sub_surf = self.small_font.render(sub_text, True, COLORS["text_dim"])
+                sub_rect = sub_surf.get_rect(
+                    centerx=body_rect.centerx, y=body_rect.y + 32
+                )
+                screen.blit(sub_surf, sub_rect)
+            else:
+                text_surface = self.font.render(self.text, True, self.text_color)
+                text_rect = text_surface.get_rect(center=body_rect.center)
+                screen.blit(text_surface, text_rect)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle event."""
@@ -515,6 +538,8 @@ class LevelSelector:
                 if self.on_select:
                     self.on_select(name)
 
+            metadata = DEFAULT_LEVEL_METADATA.get(level_name) if not is_custom else None
+
             btn = ModernButton(
                 x,
                 y,
@@ -524,6 +549,8 @@ class LevelSelector:
                 handle_select,
                 self.font,
                 bg_color=bg_color,
+                metadata=metadata,
+                small_font=self.small_font,
             )
             self.level_buttons.append((btn, level_name, is_custom))
 

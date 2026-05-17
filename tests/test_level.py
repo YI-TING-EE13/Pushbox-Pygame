@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.pushbox.models.level import Level, LevelManager
-from src.pushbox.utils.constants import DEFAULT_LEVELS, CellType
+from src.pushbox.utils.constants import DEFAULT_LEVEL_METADATA, DEFAULT_LEVELS, CellType
 
 # ---------------------------------------------------------------------------
 # Level creation and basic properties
@@ -412,3 +412,40 @@ class TestDefaultLevelsIntegrity:
 
             # 8. Not complete initially
             assert not level.is_complete(), f"{name} is complete initially"
+
+
+class TestDefaultLevelsMetadata:
+    """Test that default level metadata is consistent and valid."""
+
+    def test_metadata_completeness(self):
+        # 1. exactly 20 metadata entries
+        assert len(DEFAULT_LEVEL_METADATA) == 20
+
+        # 2. every level in DEFAULT_LEVELS has metadata and vice versa
+        for name in DEFAULT_LEVELS:
+            assert name in DEFAULT_LEVEL_METADATA, f"{name} is missing metadata"
+        for name in DEFAULT_LEVEL_METADATA:
+            assert name in DEFAULT_LEVELS, (
+                f"Metadata entry {name} does not correspond to a default level"
+            )
+
+    def test_metadata_fields(self):
+        for name, meta in DEFAULT_LEVEL_METADATA.items():
+            # 3. metadata contains required fields
+            for field in ["difficulty", "theme", "boxes", "note"]:
+                assert field in meta, f"{name} metadata is missing field: {field}"
+
+            # 4. metadata strings are non-empty
+            assert (
+                isinstance(meta["difficulty"], str) and meta["difficulty"].strip() != ""
+            )
+            assert isinstance(meta["theme"], str) and meta["theme"].strip() != ""
+            assert isinstance(meta["note"], str) and meta["note"].strip() != ""
+            assert isinstance(meta["boxes"], int)
+
+            # 5. boxes equals actual number of CellType.BOX cells in that level
+            grid = DEFAULT_LEVELS[name]
+            box_count = sum(row.count(CellType.BOX) for row in grid)
+            assert meta["boxes"] == box_count, (
+                f"{name} metadata box count {meta['boxes']} != actual count {box_count}"
+            )

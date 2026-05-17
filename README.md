@@ -11,7 +11,7 @@ PushBox is a modern Sokoban puzzle game built with Python and Pygame. It offers 
 
 ## Key Features
 
-- **Built-in Levels**: 20 pre-configured default levels of graduating difficulty.
+- **Built-in Levels**: 20 pre-configured default levels of graduating difficulty, featuring concise difficulty, theme, and box count metadata badges visible in the Level Selector.
 - **Modern Dark UI**: Fluid layout design with pseudo-3D wall shadows and elegant box animations.
 - **Level Selector**: Fully paginated grid selection across 3 pages (9 levels per page) showing completion status and per-level best move stars.
 - **Fluid Keyboard Controls**: Dual-scheme movement (Arrow keys and WASD), with native menus and page navigation.
@@ -136,7 +136,7 @@ uv run mypy src/
 
 ## Limitations
 
-- **Sokoban Solvability**: Automated testing checks grid layouts, boundary integrity, and rule enforcement, but **does not mathematically prove or guarantee** that custom puzzles created in the editor are solvable. Solvability must be validated manually by the player or designer.
+- **Sokoban Solvability**: Automated testing checks grid layouts, level metadata consistency, and boundary integrity, but **does not mathematically prove or guarantee** that default or custom puzzles are solvable. Solvability must be validated manually. Difficulty labels are intended as lightweight player guidance and are not formal mathematical proofs of complexity.
 - **Audio Stubs**: The audio manager contains stubs; full sound effects and ambient tracks are planned for future releases.
 - **Undo History Limit**: Moves history is capped at 100 steps to maintain runtime performance and bounds memory footprint.
 - **Local Progression Storage**: Player progress, statistics, and custom levels are saved locally in the `data/` and `levels/` directories and are omitted from version control.
