@@ -28,14 +28,15 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 1. **Startup**: Run `uv run python main.py`.
 2. **Tutorial**: Verify the tutorial screen appears on first launch or via the menu. Confirm it explains goals and controls.
 3. **Main Menu**: Navigate from the tutorial to the main menu.
-4. **Start Game**: Select "開始遊戲" and verify the level loads.
-5. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
-6. **Pushing**: Push a box and verify it moves.
-7. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
-8. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
-9. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
-10. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
-11. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
+4. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
+5. **Start Game**: Select "開始遊戲" and verify the level loads.
+6. **Movement**: Test movement using both **Arrow Keys** and **WASD**.
+7. **Pushing**: Push a box and verify it moves.
+8. **Undo**: Move or push, then press `Z` or `Backspace`. Verify the state reverts correctly.
+9. **Redo**: After undoing, press `Y` or `R`. Verify the action is reapplied.
+10. **Reset**: Press `F5` or `Delete`. Verify the level restores to its initial state.
+11. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
+12. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
 
 ### Win & Game Over Conditions
 12. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
@@ -61,8 +62,9 @@ The level editor allows creating and managing custom puzzles.
    - Try to save a level without boxes.
    - Try to save a level where the number of boxes does not match the number of targets.
    - **Verify**: Clear error messages appear in the status bar.
-5. **Saving**: Provide a name and save a valid level.
-6. **Custom Levels**: Verify the new level appears in the "選擇關卡" screen and can be played, edited, or deleted.
+5. **Sidebar Layout & Hints**: Confirm that all 6 lines of shortcut hints (左鍵/右鍵, 1-5, Z/Y/R, Ctrl+S, C, Esc) are visible on the default window size (800x720) without overlapping other controls (note: on extremely small heights below 720px, some bottom items may clip as expected).
+6. **Saving**: Provide a name and save a valid level.
+7. **Custom Levels**: Verify the new level appears in the "選擇關卡" screen and can be played, edited, or deleted. Confirm the layout reduces the risk of custom level cards overlapping the back button.
 
 ## 4. Runtime Data Notes
 

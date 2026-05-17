@@ -39,7 +39,7 @@ class GameApp:
 
         # Create window (Resizable)
         self.width = 800
-        self.height = 650
+        self.height = 720
         self.screen = pygame.display.set_mode(
             (self.width, self.height), pygame.RESIZABLE
         )
@@ -241,6 +241,8 @@ class GameApp:
                 self._init_game_buttons()
                 if self.editor:
                     self.editor._init_buttons()  # Re-layout editor buttons
+                if self.current_screen == "menu":
+                    self._setup_menu()
                 if self.current_screen == "level_select":
                     # Re-layout level selector
                     levels = self.controller.get_available_levels()

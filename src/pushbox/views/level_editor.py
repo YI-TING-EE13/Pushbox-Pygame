@@ -87,7 +87,7 @@ class LevelEditor:
 
         # --- Map Size Controls (In Sidebar) ---
         # Rows
-        y_pos = 450
+        y_pos = 420
         self.buttons.append(
             ModernButton(
                 20, y_pos, 30, 30, "-", lambda: self._change_size("rows", -1), self.font
@@ -495,7 +495,7 @@ class LevelEditor:
 
         for i, (name, tool_type, color) in enumerate(self.TOOLS):
             btn_rect = pygame.Rect(
-                tool_x, tool_y + i * (tool_height + 10), 220, tool_height
+                tool_x, tool_y + i * (tool_height + 6), 220, tool_height
             )
 
             if tool_type == self.selected_tool:
@@ -526,7 +526,7 @@ class LevelEditor:
                 )
 
     def _draw_size_controls(self) -> None:
-        y_base = 420
+        y_base = 390
         if self.font:
             label = self.font.render("地圖大小:", True, COLORS["text_dim"])
             self.screen.blit(label, (20, y_base))
@@ -614,7 +614,7 @@ class LevelEditor:
         if not self.small_font:
             return
 
-        y = 545
+        y = 505
         # Line separator
         pygame.draw.line(
             self.screen,

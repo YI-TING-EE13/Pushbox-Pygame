@@ -442,9 +442,9 @@ class LevelSelector:
 
         cols = 3
         button_width = 200
-        button_height = 80
+        button_height = 65
         spacing_x = 40
-        spacing_y = 50
+        spacing_y = 40
 
         start_x = (
             self.screen.get_width() - (cols * (button_width + spacing_x) - spacing_x)
