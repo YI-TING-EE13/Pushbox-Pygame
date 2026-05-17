@@ -66,6 +66,7 @@ class GameApp:
         self.running = True
         self.control_feedback_timer = 0  # For showing control scheme change
         self.control_feedback_text = ""
+        self.menu_selected_index = 0
 
         # Setup callbacks
         self._setup_callbacks()
@@ -210,6 +211,7 @@ class GameApp:
         self.editor = None
         self.controller.is_paused = False
         self.controller.input_handler.clear_input_state()
+        self.menu_selected_index = 0
 
     def _quit(self) -> None:
         """Quit the game."""
@@ -227,6 +229,15 @@ class GameApp:
         """Handle pygame events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.running = False
+                return
+
+            # Global Ctrl+Q Quit shortcut
+            if (
+                event.type == pygame.KEYDOWN
+                and event.key == pygame.K_q
+                and (getattr(event, "mod", 0) & pygame.KMOD_CTRL)
+            ):
                 self.running = False
                 return
 
@@ -259,6 +270,11 @@ class GameApp:
 
             # Global shortcuts
             if event.type == pygame.KEYDOWN:
+                # Help overlay dismissal on any keypress (only KEYDOWN)
+                if self.current_screen == "game" and self.show_help:
+                    self.show_help = False
+                    continue
+
                 # If editing and typing, ignore global shortcuts
                 if (
                     self.current_screen == "editor"
@@ -287,6 +303,25 @@ class GameApp:
                     self.current_screen = "menu"
 
             elif self.current_screen == "menu":
+                if event.type == pygame.KEYDOWN:
+                    if self.menu.buttons:
+                        if event.key in [pygame.K_UP, pygame.K_w]:
+                            self.menu_selected_index = (
+                                self.menu_selected_index - 1
+                            ) % len(self.menu.buttons)
+                        elif event.key in [pygame.K_DOWN, pygame.K_s]:
+                            self.menu_selected_index = (
+                                self.menu_selected_index + 1
+                            ) % len(self.menu.buttons)
+                        elif event.key in [pygame.K_RETURN, pygame.K_SPACE]:
+                            if 0 <= self.menu_selected_index < len(self.menu.buttons):
+                                button = self.menu.buttons[self.menu_selected_index]
+                                if button.callback:
+                                    button.callback()
+                elif event.type == pygame.MOUSEMOTION:
+                    for idx, button in enumerate(self.menu.buttons):
+                        if button.rect.collidepoint(event.pos):
+                            self.menu_selected_index = idx
                 self.menu.handle_event(event)
 
             elif self.current_screen == "game":
@@ -382,6 +417,8 @@ class GameApp:
             self.tutorial.draw()
 
         elif self.current_screen == "menu":
+            for idx, button in enumerate(self.menu.buttons):
+                button.selected = idx == self.menu_selected_index
             current = self.controller.get_current_level_name() or "未選擇"
             self.menu.draw(self.controller.get_available_levels(), current)
             self._draw_feedback()
