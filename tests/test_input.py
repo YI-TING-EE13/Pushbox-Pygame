@@ -803,3 +803,30 @@ def test_level_selector_pagination_auto_cross_page():
     evt_enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
     assert selector.handle_event(evt_enter) is True
     assert selected_level == "Level 20"
+
+
+def test_level_selector_draw_with_completed_levels():
+    """Verify LevelSelector.draw runs successfully with completed levels."""
+    pygame.init()
+    screen = pygame.Surface((800, 720))
+    selector = LevelSelector(screen)
+
+    levels = ["Level 1", "Level 2", "Custom 1"]
+    progress = {
+        "Level 1": {"completed": True, "best_moves": 15},
+        "Level 2": {"completed": False},
+        "Custom 1": {"completed": True, "best_moves": 8},
+    }
+
+    selector.setup(
+        levels,
+        progress,
+        on_select=lambda x: None,
+        on_back=lambda: None,
+        on_edit=lambda x: None,
+        on_delete=lambda x: None,
+    )
+
+    # Run draw method with active progress dictionary.
+    # It must complete without raising any exceptions.
+    selector.draw(progress)

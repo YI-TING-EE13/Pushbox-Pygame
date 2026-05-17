@@ -116,11 +116,12 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
       - Create a custom level in the editor. Verify it appears on Page 3 (as the 3rd card), displaying `"編輯"` and `"刪除"` buttons correctly on its card, while default levels `Level 1` to `Level 20` never display them.
     - **Level Selector Metadata Badges**:
       - Navigate to the "選擇關卡" screen. Verify that default levels (Levels 1–20) display a clear metadata badge (e.g. `Intro · 3 boxes` or `Advanced · 2 boxes`) beneath the level title.
-      - Verify that custom levels do not display any metadata badges and do not cause the selector to crash.
+      - Verify that custom levels do not display any metadata badges on cards and do not cause the selector to crash.
       - Verify that default level cards do not show "編輯" (Edit) or "刪除" (Delete) buttons, whereas custom level cards display them correctly.
       - Confirm that there is no vertical or horizontal text overlap at the default resolution of `800x720`.
-      - Play and complete any default level. Return to the "選擇關卡" screen and verify that the level displays the completion star (`★ 最佳: X 步`) beautifully at the bottom of the card, with absolutely no overlap with the metadata badge.
-      - Check Page 3 and confirm that both `Level 19` and `Level 20` display their correct metadata badges safely and legibly.
+      - Play and complete any default level. Return to the "選擇關卡" screen and verify that the completed card displays a compact success-colored completion star (`★`) in its top-right corner, completely eliminating card-level overlaps.
+      - Highlight the completed level card and verify that the full metadata details (including `★ 最佳: X 步` and level description notes) appear cleanly and legibly in the spacious details panel below the grid without any overlaps.
+      - Check Page 3 and confirm that both `Level 19` and `Level 20` display their correct metadata badges safely and legibly on cards, and show detailed description notes below the grid when highlighted.
 
 ## 3. Editor Manual Test
 
