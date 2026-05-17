@@ -89,6 +89,7 @@ class GameController:
         self.current_level = level
         self.game_state = GameState(level)
         self.is_paused = False
+        self.input_handler.clear_input_state()
         return True
 
     def get_current_level_name(self) -> Optional[str]:
@@ -160,6 +161,7 @@ class GameController:
     def _on_reset(self) -> None:
         """Handle reset input."""
         self.is_paused = False
+        self.input_handler.clear_input_state()
         if self.game_state:
             self.game_state.reset()
             self._trigger_event("reset")
@@ -201,6 +203,7 @@ class GameController:
             return
 
         self.is_paused = not self.is_paused
+        self.input_handler.clear_input_state()
 
         if self.is_paused:
             self._pause_start_time = time.time()

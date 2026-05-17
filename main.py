@@ -210,6 +210,7 @@ class GameApp:
         self.current_screen = "menu"
         self.editor = None
         self.controller.is_paused = False
+        self.controller.input_handler.clear_input_state()
 
     def _quit(self) -> None:
         """Quit the game."""

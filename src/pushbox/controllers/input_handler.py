@@ -134,29 +134,32 @@ class InputHandler:
         """
         current_time = pygame.time.get_ticks()
 
-        # Check for key repeat
-        if key in self._last_key_time:
-            elapsed = current_time - self._last_key_time[key]
-            if elapsed < self._key_repeat_delay:
-                return False
-
-        self._last_key_time[key] = current_time
-        self._key_states[key] = True
-
-        # Check movement keys
+        # Check movement keys (subject to control scheme and repeat delays)
         movement_keys = self.get_movement_keys()
         if key in movement_keys:
+            if key in self._last_key_time:
+                elapsed = current_time - self._last_key_time[key]
+                if elapsed < self._key_repeat_delay:
+                    return False
+
+            self._last_key_time[key] = current_time
+            self._key_states[key] = True
             direction = movement_keys[key]
             self._trigger("move", direction)
             return True
 
-        # Check action keys
+        # Check action keys (exempt from repeat/control scheme filters)
         for action, keys in self.ACTION_KEYS.items():
             if key in keys:
                 self._trigger(action)
                 return True
 
         return False
+
+    def clear_input_state(self) -> None:
+        """Clear all active key repeat and state tracked variables."""
+        self._last_key_time.clear()
+        self._key_states.clear()
 
     def update(self) -> None:
         """Update input state (for continuous key handling)."""
