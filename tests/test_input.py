@@ -413,3 +413,127 @@ def test_quit_shortcut():
     with patch("pygame.event.get", return_value=[evt_ctrl_q]):
         app2.handle_events()
     assert app2.running is False
+
+
+def test_level_selector_keyboard_navigation():
+    """Test keyboard and mouse motion navigation in LevelSelector."""
+    from src.pushbox.views.ui_components import LevelSelector
+
+    pygame.init()
+    screen = pygame.Surface((800, 720))
+    selector = LevelSelector(screen)
+
+    selected_level = None
+    back_triggered = False
+
+    def on_select(name: str) -> None:
+        nonlocal selected_level
+        selected_level = name
+
+    def on_back() -> None:
+        nonlocal back_triggered
+        back_triggered = True
+
+    levels = [f"Level {i}" for i in range(1, 11)]  # 10 levels
+    progress = {}
+
+    selector.setup(
+        level_names=levels,
+        progress=progress,
+        on_select=on_select,
+        on_back=on_back,
+        on_edit=lambda x: None,
+        on_delete=lambda x: None,
+    )
+
+    # 1. Initial selected index is 0
+    assert selector.selected_index == 0
+
+    # 2. Right (D) moves to 1
+    evt_right = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
+    assert selector.handle_event(evt_right) is True
+    assert selector.selected_index == 1
+
+    evt_d = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_d)
+    assert selector.handle_event(evt_d) is True
+    assert selector.selected_index == 2
+
+    # 3. Down (S) moves to 5 (index + 3)
+    evt_down = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+    assert selector.handle_event(evt_down) is True
+    assert selector.selected_index == 5
+
+    evt_s = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_s)
+    assert selector.handle_event(evt_s) is True
+    assert selector.selected_index == 8
+
+    # 4. Left (A) moves to 7
+    evt_left = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT)
+    assert selector.handle_event(evt_left) is True
+    assert selector.selected_index == 7
+
+    evt_a = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_a)
+    assert selector.handle_event(evt_a) is True
+    assert selector.selected_index == 6
+
+    # 5. Up (W) moves to 3
+    evt_up = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
+    assert selector.handle_event(evt_up) is True
+    assert selector.selected_index == 3
+
+    evt_w = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_w)
+    assert selector.handle_event(evt_w) is True
+    assert selector.selected_index == 0
+
+    # 6. Bounds check: left when index is 0 should be no-op (not handled)
+    assert (
+        selector.handle_event(evt_left) is False
+    )  # selected_index - 1 >= 0 is false, not handled
+    assert selector.selected_index == 0
+
+    # Move to last item (index 9)
+    selector.selected_index = 9
+    # Right on index 9 should be no-op (not handled)
+    assert selector.handle_event(evt_right) is False
+    assert selector.selected_index == 9
+
+    # Down on index 9 should be no-op (not handled)
+    assert selector.handle_event(evt_down) is False
+    assert selector.selected_index == 9
+
+    # 7. Enter triggers callback
+    selector.selected_index = 5  # Level 6
+    evt_enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
+    assert selector.handle_event(evt_enter) is True
+    assert selected_level == "Level 6"
+
+    # 8. Space triggers callback
+    selected_level = None
+    selector.selected_index = 0  # Level 1
+    evt_space = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE)
+    assert selector.handle_event(evt_space) is True
+    assert selected_level == "Level 1"
+
+    # 9. Esc triggers back callback
+    evt_esc = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE)
+    assert selector.handle_event(evt_esc) is True
+    assert back_triggered is True
+
+    # M triggers back callback
+    back_triggered = False
+    evt_m = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m)
+    assert selector.handle_event(evt_m) is True
+    assert back_triggered is True
+
+    # 10. Mouse motion hover syncs selected_index
+    button, _, _ = selector.level_buttons[3]  # Index 3 (Level 4)
+    original_rect = button.rect
+    mock_rect = MagicMock()
+    mock_rect.collidepoint.return_value = True
+    button.rect = mock_rect
+
+    evt_mouse = pygame.event.Event(pygame.MOUSEMOTION, pos=(100, 100))
+    selector.handle_event(evt_mouse)
+    assert selector.selected_index == 3
+
+    button.rect = original_rect

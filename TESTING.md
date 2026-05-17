@@ -75,6 +75,15 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 26. **Global Ctrl+Q Quit**:
     - On any screen (Main Menu, Gameplay, Level Selector, Tutorial, Editor, Pause overlay, Help overlay), press `Ctrl+Q`. Verify the game application closes immediately.
     - Verify that pressing `Q` alone does not exit.
+27. **Level Selector Keyboard Navigation (Phase 14A)**:
+    - Go to the "選擇關卡" screen. Verify that the first level card is highlighted (`selected = True`) by default.
+    - Press `→` or `D` to navigate right, and `←` or `A` to navigate left. Verify the highlight card updates smoothly.
+    - Press `↓` or `S` to navigate down a row, and `↑` or `W` to navigate up a row.
+    - Try to navigate outside the grid boundaries (e.g., press `←` on the first card, or `↓` on the last row). Verify that the selected card remains in place and does not overflow or crash.
+    - Hover the mouse over a different level card. Verify that the highlight instantly synchronizes to the hovered card.
+    - Press `Enter` or `Space` to confirm selection and launch the highlighted level.
+    - Press `Esc` or `M` to exit the level selector and return to the main menu.
+    - Confirm that `Level 6` to `Level 10` do not show the "編輯" and "刪除" actions.
 
 ## 3. Editor Manual Test
 

@@ -51,6 +51,9 @@ uv run python main.py
 | Move | Arrow keys or WASD | In-game movement |
 | Menu Nav | Arrow keys or WASD | Navigates the main menu |
 | Menu Select | Enter or Space | Confirms selection in the main menu |
+| Level Selector Nav | Arrow keys or WASD | Navigates the level selection grid |
+| Level Selector Sel | Enter or Space | Confirms selection and enters the level |
+| Level Selector Back | Esc or M | Returns to main menu from level selector |
 | Undo | Z or Backspace | Also available via UI button |
 | Redo | Y or R | Also available via UI button |
 | Reset level | F5 or Delete | Also available via UI button |

@@ -406,6 +406,7 @@ class LevelSelector:
         self.on_select: Optional[Callable[[str], None]] = None
         self.on_edit: Optional[Callable[[str], None]] = None
         self.on_delete: Optional[Callable[[str], None]] = None
+        self.selected_index = 0
 
     def _init_fonts(self) -> None:
         try:
@@ -433,6 +434,7 @@ class LevelSelector:
         self.on_edit = on_edit
         self.on_delete = on_delete
         self.on_back_cb = on_back  # Store callback to rebuild button on draw if needed
+        self.selected_index = 0
 
         # Initial layout setup
         self._layout_buttons(level_names, progress)
@@ -548,6 +550,44 @@ class LevelSelector:
         )
 
     def handle_event(self, event: pygame.event.Event) -> bool:
+        # Handle mouse motion for syncing selection index
+        if event.type == pygame.MOUSEMOTION:
+            for idx, (button, _, _) in enumerate(self.level_buttons):
+                if button.rect.collidepoint(event.pos):
+                    self.selected_index = idx
+                    break
+
+        # Handle Keyboard Events
+        elif event.type == pygame.KEYDOWN:
+            if self.level_buttons:
+                if event.key in [pygame.K_RIGHT, pygame.K_d]:
+                    if self.selected_index + 1 < len(self.level_buttons):
+                        self.selected_index += 1
+                        return True
+                elif event.key in [pygame.K_LEFT, pygame.K_a]:
+                    if self.selected_index - 1 >= 0:
+                        self.selected_index -= 1
+                        return True
+                elif event.key in [pygame.K_DOWN, pygame.K_s]:
+                    if self.selected_index + 3 < len(self.level_buttons):
+                        self.selected_index += 3
+                        return True
+                elif event.key in [pygame.K_UP, pygame.K_w]:
+                    if self.selected_index - 3 >= 0:
+                        self.selected_index -= 3
+                        return True
+                elif event.key in [pygame.K_RETURN, pygame.K_SPACE]:
+                    if 0 <= self.selected_index < len(self.level_buttons):
+                        btn, _, _ = self.level_buttons[self.selected_index]
+                        if btn.callback:
+                            btn.callback()
+                            return True
+            if event.key in [pygame.K_ESCAPE, pygame.K_m]:
+                if self.on_back_cb:
+                    self.on_back_cb()
+                    return True
+
+        # Mouse clicks / motion dispatch to individual buttons
         for button, _, _ in self.level_buttons:
             if button.handle_event(event):
                 return True
@@ -562,11 +602,6 @@ class LevelSelector:
         self.screen.fill(COLORS["background"])
 
         # Simple relayout check - could be optimized
-        # Re-layout on every draw is expensive, but okay for this simple menu
-        # Ideally only on resize event.
-        # For now, let's assume setup is called or we trust current layout.
-        # But to support resizing, we need to re-center.
-        # Let's just update the back button position at least.
         if self.back_button:
             self.back_button.rect.centerx = self.screen.get_width() // 2
             self.back_button.rect.bottom = self.screen.get_height() - 30
@@ -576,7 +611,8 @@ class LevelSelector:
             title_rect = title.get_rect(centerx=self.screen.get_width() // 2, y=40)
             self.screen.blit(title, title_rect)
 
-        for button, level_name, _ in self.level_buttons:
+        for idx, (button, level_name, _) in enumerate(self.level_buttons):
+            button.selected = idx == self.selected_index
             button.draw(self.screen)
 
             level_progress = progress.get(level_name, {})
