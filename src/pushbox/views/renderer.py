@@ -508,17 +508,25 @@ class Renderer:
             "重做: Y / R",
             "重置: F5",
             "選單: M",
+            "退出: Ctrl+Q",
+            "",
+            "按任意鍵返回遊戲",
         ]
 
-        y = rect.top + 40
+        y = rect.top + 30
         for i, line in enumerate(lines):
             if not self.font:
                 break
-            color = COLORS["text_highlight"] if i == 0 else COLORS["text_main"]
+            if i == 0:
+                color = COLORS["text_highlight"]
+            elif i == len(lines) - 1:
+                color = COLORS["text_dim"]
+            else:
+                color = COLORS["text_main"]
             surf = self.font.render(line, True, color)
             x = rect.centerx - surf.get_width() // 2
             self.screen.blit(surf, (x, y))
-            y += 35
+            y += 30
 
     def render_win_screen(self, stats: dict[str, Any], is_record: bool = False) -> None:
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
