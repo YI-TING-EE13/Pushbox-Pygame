@@ -13,6 +13,7 @@ from src.pushbox.models.game_state import GameState
 from src.pushbox.models.level import Level
 from src.pushbox.utils.constants import ControlScheme
 from src.pushbox.utils.constants import GameState as GameStateEnum
+from src.pushbox.views.ui_components import LevelSelector
 
 
 def test_arrow_keys_movement():
@@ -666,3 +667,93 @@ def test_level_selector_pagination():
     # Move Down again on last row index 6 should be clamped (not handled)
     assert selector.handle_event(evt_down) is False
     assert selector.selected_index == 6
+
+
+def test_level_selector_pagination_auto_cross_page():
+    """Verify keyboard direction keys transition pages dynamically at boundaries."""
+    pygame.init()
+    screen = pygame.display.set_mode((800, 720))
+
+    selected_level = None
+
+    def on_select(name):
+        nonlocal selected_level
+        selected_level = name
+
+    # 15 default levels + 1 custom level = 16 levels total
+    # (Page 1 has 9 levels, Page 2 has 7 levels)
+    level_names = [f"Level {i}" for i in range(1, 16)] + ["Custom 1"]
+    progress = {}
+
+    selector = LevelSelector(screen)
+    selector.setup(
+        level_names,
+        progress,
+        on_select=on_select,
+        on_back=lambda: None,
+        on_edit=lambda x: None,
+        on_delete=lambda x: None,
+    )
+
+    # Starts on page 0 (Page 1) with selected_index = 0
+    assert selector.current_page == 0
+    assert selector.selected_index == 0
+
+    # 1. UP/W boundary check on Page 1 first row
+    evt_up = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
+    assert selector.handle_event(evt_up) is False
+    assert selector.current_page == 0
+    assert selector.selected_index == 0
+
+    # LEFT/A boundary check on Page 1 first item
+    evt_left = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT)
+    assert selector.handle_event(evt_left) is False
+    assert selector.current_page == 0
+    assert selector.selected_index == 0
+
+    # 2. Down on last row of Page 1 (index 7 corresponds to Level 8, column 1)
+    selector.selected_index = 7
+    evt_down = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+    assert selector.handle_event(evt_down) is True
+    assert selector.current_page == 1  # Flipped to Page 2
+    assert selector.selected_index == 1  # Retained column 1 (Level 11)
+
+    # 3. Up on first row of Page 2 (index 1 corresponds to Level 11, column 1)
+    assert selector.current_page == 1
+    assert selector.selected_index == 1
+    assert selector.handle_event(evt_up) is True
+    assert selector.current_page == 0  # Flipped back to Page 1
+    assert selector.selected_index == 7  # Column 1, last row (index 7)
+
+    # 4. Right on last item of Page 1 (index 8 corresponds to Level 9)
+    selector.selected_index = 8
+    evt_right = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
+    assert selector.handle_event(evt_right) is True
+    assert selector.current_page == 1  # Flipped to Page 2
+    assert selector.selected_index == 0  # Reset to first item of Page 2 (Level 10)
+
+    # 5. Left on first item of Page 2 (index 0 corresponds to Level 10)
+    assert selector.current_page == 1
+    assert selector.selected_index == 0
+    assert selector.handle_event(evt_left) is True
+    assert selector.current_page == 0  # Flipped back to Page 1
+    assert selector.selected_index == 8  # Last item of Page 1 (index 8)
+
+    # 6. Down/S boundary check on Page 2 last row (index 6 is Custom 1)
+    selector.current_page = 1
+    selector._layout_buttons(level_names, progress)
+    selector.selected_index = 6
+    assert selector.handle_event(evt_down) is False
+    assert selector.current_page == 1
+    assert selector.selected_index == 6
+
+    # Right/D boundary check on Page 2 last item (index 6 is Custom 1)
+    assert selector.handle_event(evt_right) is False
+    assert selector.current_page == 1
+    assert selector.selected_index == 6
+
+    # 7. Enter launches correct level after cross-page transitions
+    selector.selected_index = 1  # Level 11 on Page 2
+    evt_enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
+    assert selector.handle_event(evt_enter) is True
+    assert selected_level == "Level 11"
