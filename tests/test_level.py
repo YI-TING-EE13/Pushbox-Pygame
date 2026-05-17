@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.pushbox.models.level import Level, LevelManager
-from src.pushbox.utils.constants import CellType
+from src.pushbox.utils.constants import DEFAULT_LEVELS, CellType
 
 # ---------------------------------------------------------------------------
 # Level creation and basic properties
@@ -355,3 +355,60 @@ class TestLevelManager:
         mgr = LevelManager(levels_dir=str(levels_dir))
         # Default levels should still be there
         assert "Level 1" in mgr.get_level_names()
+
+
+class TestDefaultLevelsIntegrity:
+    """Test all default levels meet game-design constraints."""
+
+    def test_default_levels_exist_and_are_valid(self):
+        # 1. 10 default levels exist
+        assert len(DEFAULT_LEVELS) == 10
+        for i in range(1, 11):
+            assert f"Level {i}" in DEFAULT_LEVELS
+
+        for name, grid in DEFAULT_LEVELS.items():
+            level = Level(name, grid)
+            # 2. Rectangular check
+            rows = len(grid)
+            cols = len(grid[0])
+            for row in grid:
+                assert len(row) == cols, f"{name} is not rectangular"
+
+            # 3. Outer borders are walls
+            for c in range(cols):
+                assert grid[0][c] == CellType.WALL, (
+                    f"{name} top border has non-wall at col {c}"
+                )
+                assert grid[rows - 1][c] == CellType.WALL, (
+                    f"{name} bottom border has non-wall at col {c}"
+                )
+            for r in range(rows):
+                assert grid[r][0] == CellType.WALL, (
+                    f"{name} left border has non-wall at row {r}"
+                )
+                assert grid[r][cols - 1] == CellType.WALL, (
+                    f"{name} right border has non-wall at row {r}"
+                )
+
+            # 4. Exactly one player
+            player_count = sum(row.count(CellType.PLAYER) for row in grid)
+            assert player_count == 1, (
+                f"{name} has {player_count} players (expected exactly 1)"
+            )
+
+            # 5. At least one box
+            box_count = sum(row.count(CellType.BOX) for row in grid)
+            assert box_count > 0, f"{name} has 0 boxes (expected at least 1)"
+
+            # 6. Box count equals target count
+            target_count = sum(row.count(CellType.TARGET) for row in grid)
+            assert box_count == target_count, (
+                f"{name} has box count {box_count} != target count {target_count}"
+            )
+
+            # 7. No initial BOX_ON_TARGET
+            bot_count = sum(row.count(CellType.BOX_ON_TARGET) for row in grid)
+            assert bot_count == 0, f"{name} has initial BOX_ON_TARGET"
+
+            # 8. Not complete initially
+            assert not level.is_complete(), f"{name} is complete initially"

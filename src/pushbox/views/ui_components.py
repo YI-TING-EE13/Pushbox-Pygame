@@ -460,13 +460,21 @@ class LevelSelector:
             x = start_x + col * (button_width + spacing_x)
             y = start_y + row * (button_height + spacing_y)
 
-            is_custom = level_name.startswith("Custom") or level_name not in [
+            default_level_names = {
                 "Level 1",
                 "Level 2",
                 "Level 3",
                 "Level 4",
                 "Level 5",
-            ]
+                "Level 6",
+                "Level 7",
+                "Level 8",
+                "Level 9",
+                "Level 10",
+            }
+            is_custom = (
+                level_name.startswith("Custom") or level_name not in default_level_names
+            )
 
             level_prog = progress.get(level_name, {})
             bg_color = COLORS["button_default"]
