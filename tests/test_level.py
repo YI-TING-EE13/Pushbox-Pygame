@@ -361,9 +361,9 @@ class TestDefaultLevelsIntegrity:
     """Test all default levels meet game-design constraints."""
 
     def test_default_levels_exist_and_are_valid(self):
-        # 1. 20 default levels exist
-        assert len(DEFAULT_LEVELS) == 20
-        for i in range(1, 21):
+        # 1. 25 default levels exist
+        assert len(DEFAULT_LEVELS) == 25
+        for i in range(1, 26):
             assert f"Level {i}" in DEFAULT_LEVELS
 
         for name, grid in DEFAULT_LEVELS.items():
@@ -418,8 +418,8 @@ class TestDefaultLevelsMetadata:
     """Test that default level metadata is consistent and valid."""
 
     def test_metadata_completeness(self):
-        # 1. exactly 20 metadata entries
-        assert len(DEFAULT_LEVEL_METADATA) == 20
+        # 1. exactly 25 metadata entries
+        assert len(DEFAULT_LEVEL_METADATA) == 25
 
         # 2. every level in DEFAULT_LEVELS has metadata and vice versa
         for name in DEFAULT_LEVELS:

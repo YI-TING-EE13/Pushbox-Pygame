@@ -126,9 +126,9 @@ Avoid these design mistakes when adding or refining levels:
 
 ---
 
-## 8. Current Level 1–20 Design Intent Table
+## 8. Current Level 1–25 Design Intent Table
 
-The following table summarizes the design themes and intent for the 20 built-in default levels, acting as the pedagogical blueprint of the game.
+The following table summarizes the design themes and intent for the 25 built-in default levels, acting as the pedagogical blueprint of the game.
 
 | Level | Difficulty | Theme | Boxes | Design Intent |
 | :---: | :---: | :---: | :---: | :--- |
@@ -152,22 +152,20 @@ The following table summarizes the design themes and intent for the 20 built-in 
 | **18** | Advanced | Central Island | 4 | Uses a central wall island to shape approach routes and force loops. |
 | **19** | Advanced+ | Small Rooms | 4 | Restricts progress by isolating targets behind narrow door frames. |
 | **20** | Advanced+ | Mixed Warehouse | 5 | Final challenge combining multiple boxes, wall partitions, and target slots. |
+| **21** | Advanced | Long Reposition Route | 3 | Forces the player to walk long loops around outer paths to reposition behind boxes. |
+| **22** | Advanced | Two-Box Ordering Lock | 2 | Requires pushing box A completely out of the way before box B can navigate a tight bottleneck. |
+| **23** | Advanced+ | Three-Zone Warehouse | 4 | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
+| **24** | Advanced+ | Narrow Door Recovery | 3 | Focuses on pulling/pushing boxes out of tight doors without wedging them in the corner. |
+| **25** | Advanced+ | Mixed Final Challenge | 5 | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5 boxes. |
 
 ---
 
-## 9. Guidelines for Adding Level 21–25
+## 9. Guidelines for Future Level Expansion (26+)
 
-*Note: This section constitutes future planning guidelines. Do not implement or add these levels to the code yet.*
-
-When the default level catalog is extended to 25 levels in future phases, the following blueprint should be used to maintain graduated difficulty:
-
-| Planned Level | Proposed Theme | Intended Skill / Pedagogical Goal |
-| :---: | :---: | :--- |
-| **Level 21** | Long Reposition Route | Forces the player to walk long loops around outer paths to reposition behind boxes. |
-| **Level 22** | Two-Box Ordering Lock | Requires pushing box A completely out of the way before box B can navigate a tight bottleneck. |
-| **Level 23** | Three-Zone Warehouse | Connects three distinct chambers in a linear sequence, forcing multi-stage box transfers. |
-| **Level 24** | Narrow Door Recovery | Focuses on pulling/pushing boxes out of tight doors without wedging them in the corner. |
-| **Level 25** | Mixed Final Challenge | Grand finale. Large scale, multiple room islands, high sequencing dependencies, and 5+ boxes. |
+When the default level catalog is extended beyond 25 levels in future releases, designers should:
+1. Maintain the progressive difficulty curve, introducing new mechanics (e.g. multi-box locks, tight corridors, visual symmetry) with limited box counts first.
+2. Avoid early box bloat, keeping the starting box count under 6 for gameplay performance and clarity.
+3. Validate all new draft grids against the [Review Checklist for New Levels](#10-review-checklist-for-new-levels) prior to implementation.
 
 ---
 

@@ -41,12 +41,13 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 11. **Help Overlay**: Press `H` during gameplay. Verify the help card appears and correctly lists controls.
 12. **Return to Menu**: Press `M` during gameplay or after winning. Verify it returns to the main menu.
 
-### Level 16–20 Manual Playtest Startup Checks
+### Level 16–25 Manual Playtest Startup Checks
 13. **Level 16 Startup**: Go to page 2 of the level selector, select "Level 16", and press Enter. Verify the level board centers correctly and standard controls work perfectly.
 14. **Level 17 Startup**: Select "Level 17" on page 2. Verify grid scaling and ensure player is positioned correctly on the initial board state.
 15. **Level 18 Startup**: Select "Level 18" on page 2. Verify all targets and boxes are placed correctly.
 16. **Level 19 Startup**: Flip to page 3, select "Level 19" (index 0). Verify that board dimensions fit standard boundaries safely.
 17. **Level 20 Startup**: Select "Level 20" on page 3. Verify standard playability features (movement, undo, redo, timer) initialize successfully.
+18. **Level 21–25 Startup**: Select "Level 21" through "Level 25" on Page 3. Verify that metadata badges, bottom detail panel, grid scaling, and playability work correctly.
 
 ### Win & Game Over Conditions
 18. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
@@ -89,7 +90,7 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
     - Go to the "選擇關卡" screen. Verify that `Level 1` is highlighted by default.
     - Confirm the layout has spacious margins and zero overlaps at the default `800x720` resolution.
     - Confirm the helper prompt `"換頁：Tab / Shift+Tab 或 PageUp / PageDown"` is displayed in small grey text below the Page Indicator (`"頁面: 1 / 3"`).
-    - Page 1 must list exactly `Level 1` to `Level 9`. Page 2 lists exactly `Level 10` to `Level 18`. Page 3 lists exactly `Level 19` and `Level 20` (plus custom levels if any).
+    - Page 1 must list exactly `Level 1` to `Level 9`. Page 2 lists exactly `Level 10` to `Level 18`. Page 3 lists exactly `Level 19` to `Level 25` (plus custom levels if any).
     - **Cross-page keyboard navigation (Down/S)**:
       - Navigate to the bottom row on Page 1 (e.g., `Level 8` at index 7).
       - Press `↓` or `S`. Verify that the page switches automatically to Page 2, and the selection correctly focuses on `Level 11` (retaining column 1).
@@ -106,7 +107,7 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
       - Press `←` or `A` on `Level 10`. Verify that the page switches back to Page 1, focusing on `Level 9`.
     - **Page boundary clamping**:
       - Navigate to `Level 1` (Page 1, index 0). Press `↑`/`W` or `←`/`A`. Confirm you stay on Page 1 safely.
-      - Navigate to the last item on Page 3 (`Level 20` or a custom level). Press `↓`/`S` or `→`/`D`. Confirm you stay on Page 3 safely and the selection highlight clamps without any crashes.
+      - Navigate to the last item on Page 3 (`Level 25` or a custom level). Press `↓`/`S` or `→`/`D`. Confirm you stay on Page 3 safely and the selection highlight clamps without any crashes.
     - **Tab / PageDown / Shift+Tab / PageUp**:
       - Confirm Tab or PageDown transitions to Page 2 (Level 10 highlighted), and pressing it again transitions to Page 3 (Level 19 highlighted).
       - Confirm Shift+Tab or PageUp transitions back Page-by-Page, resetting highlight correctly.
@@ -114,11 +115,11 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
       - Click the `"◀ 上一頁"` and `"下一頁 ▶"` mouse buttons at the bottom. Verify they transition pages correctly without causing text overlays.
       - Click the `"返回"` button at the bottom. Verify it returns to the main menu.
     - **Correct Level Launching**:
-      - Navigate to Page 3, highlight `Level 19` or `Level 20`, and press `Enter` or `Space`. Verify the level starts correctly and is fully playable.
+      - Navigate to Page 3, highlight `Level 19` through `Level 25`, and press `Enter` or `Space`. Verify the level starts correctly and is fully playable.
     - **Custom Levels Preservation**:
-      - Create a custom level in the editor. Verify it appears on Page 3 (as the 3rd card), displaying `"編輯"` and `"刪除"` buttons correctly on its card, while default levels `Level 1` to `Level 20` never display them.
+      - Create a custom level in the editor. Verify it appears on Page 3 (as the 8th card), displaying `"編輯"` and `"刪除"` buttons correctly on its card, while default levels `Level 1` to `Level 25` never display them.
     - **Level Selector Metadata Badges & Polished Details Panel**:
-      - Navigate to the "選擇關卡" screen. Verify that default levels (Levels 1–20) display a clear metadata badge (e.g. `Intro · 3 boxes` or `Advanced · 2 boxes`) beneath the level title.
+      - Navigate to the "選擇關卡" screen. Verify that default levels (Levels 1–25) display a clear metadata badge (e.g. `Intro · 3 boxes` or `Advanced · 2 boxes`) beneath the level title.
       - Verify that custom levels do not display any metadata badges on cards and do not cause the selector to crash.
       - Verify that default level cards do not show "編輯" (Edit) or "刪除" (Delete) buttons, whereas custom level cards display them correctly.
       - Confirm that there is no vertical or horizontal text overlap at the default resolution of `800x720`.

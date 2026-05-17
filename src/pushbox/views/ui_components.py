@@ -516,7 +516,7 @@ class LevelSelector:
         ) // 2
         start_y = 110
 
-        default_level_names = {f"Level {i}" for i in range(1, 21)}
+        default_level_names = set(DEFAULT_LEVEL_METADATA.keys())
 
         for i, level_name in enumerate(page_levels):
             col = i % cols
