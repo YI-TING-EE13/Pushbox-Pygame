@@ -748,6 +748,101 @@ class LevelSelector:
             return True
         return False
 
+    def _draw_selected_level_details(
+        self, screen: pygame.Surface, progress: dict
+    ) -> None:
+        """Draw metadata and progress details for the selected level."""
+        if (
+            not (0 <= self.selected_index < len(self.level_buttons))
+            or not self.font
+            or not self.small_font
+        ):
+            return
+
+        _, level_name, is_custom = self.level_buttons[self.selected_index]
+        level_progress = progress.get(level_name, {})
+
+        if not is_custom and level_name in DEFAULT_LEVEL_METADATA:
+            meta = DEFAULT_LEVEL_METADATA[level_name]
+            theme = meta.get("theme", "")
+            diff = meta.get("difficulty", "")
+            boxes = meta.get("boxes", 0)
+            note = meta.get("note", "")
+
+            # Truncate note if too long (max 65 chars for safety)
+            if len(note) > 65:
+                note = note[:62] + "..."
+
+            # Line 1: Basic Info (Name, Difficulty, Theme, Box count)
+            info_text = f"{level_name} · {diff} · {theme} · {boxes} boxes"
+            info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
+            info_rect = info_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 280,
+            )
+            screen.blit(info_surf, info_rect)
+
+            # Line 2: Note Description
+            note_text = f"說明: {note}"
+            note_surf = self.small_font.render(note_text, True, COLORS["text_dim"])
+            note_rect = note_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 252,
+            )
+            screen.blit(note_surf, note_rect)
+
+            # Line 3: Completion status & Best record
+            if level_progress.get("completed"):
+                best_moves = level_progress.get("best_moves", "-")
+                status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
+                status_color = COLORS["success"]
+            else:
+                status_text = "狀態: 未完成"
+                status_color = COLORS["text_dim"]
+
+            status_surf = self.small_font.render(status_text, True, status_color)
+            status_rect = status_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 224,
+            )
+            screen.blit(status_surf, status_rect)
+
+        else:
+            # Custom level info
+            # Line 1: Custom Level Name
+            info_text = level_name
+            info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
+            info_rect = info_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 270,
+            )
+            screen.blit(info_surf, info_rect)
+
+            # Line 2: Type indicator
+            type_text = "類型: 自訂關卡"
+            type_surf = self.small_font.render(type_text, True, COLORS["text_dim"])
+            type_rect = type_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 242,
+            )
+            screen.blit(type_surf, type_rect)
+
+            # Line 3: Completion status & Best record
+            if level_progress.get("completed"):
+                best_moves = level_progress.get("best_moves", "-")
+                status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
+                status_color = COLORS["success"]
+            else:
+                status_text = "狀態: 未完成"
+                status_color = COLORS["text_dim"]
+
+            status_surf = self.small_font.render(status_text, True, status_color)
+            status_rect = status_surf.get_rect(
+                centerx=screen.get_width() // 2,
+                centery=screen.get_height() - 214,
+            )
+            screen.blit(status_surf, status_rect)
+
     def draw(self, progress: dict) -> None:
         """Render level selector grids, titles, pagination, and record stars."""
         self.screen.fill(COLORS["background"])
@@ -775,54 +870,7 @@ class LevelSelector:
                 self.screen.blit(star_surf, star_rect)
 
         # Draw selected level details (metadata notes, theme, best moves record)
-        if (
-            0 <= self.selected_index < len(self.level_buttons)
-            and self.font
-            and self.small_font
-        ):
-            _, level_name, is_custom = self.level_buttons[self.selected_index]
-            level_progress = progress.get(level_name, {})
-
-            if not is_custom and level_name in DEFAULT_LEVEL_METADATA:
-                meta = DEFAULT_LEVEL_METADATA[level_name]
-                theme = meta.get("theme", "")
-                diff = meta.get("difficulty", "")
-                boxes = meta.get("boxes", 0)
-                note = meta.get("note", "")
-
-                info_text = f"{level_name} · {theme} ({diff}) · {boxes} boxes"
-                if level_progress.get("completed"):
-                    best_moves = level_progress.get("best_moves", "-")
-                    info_text += f" · ★ 最佳: {best_moves} 步"
-
-                # Render metadata details
-                info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
-                info_rect = info_surf.get_rect(
-                    centerx=self.screen.get_width() // 2,
-                    centery=self.screen.get_height() - 265,
-                )
-                self.screen.blit(info_surf, info_rect)
-
-                note_text = f"說明: {note}"
-                note_surf = self.small_font.render(note_text, True, COLORS["text_dim"])
-                note_rect = note_surf.get_rect(
-                    centerx=self.screen.get_width() // 2,
-                    centery=self.screen.get_height() - 235,
-                )
-                self.screen.blit(note_surf, note_rect)
-            else:
-                # Custom level info
-                info_text = level_name
-                if level_progress.get("completed"):
-                    best_moves = level_progress.get("best_moves", "-")
-                    info_text += f" · ★ 最佳: {best_moves} 步"
-
-                info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
-                info_rect = info_surf.get_rect(
-                    centerx=self.screen.get_width() // 2,
-                    centery=self.screen.get_height() - 250,
-                )
-                self.screen.blit(info_surf, info_rect)
+        self._draw_selected_level_details(self.screen, progress)
 
         for button in self.action_buttons:
             button.draw(self.screen)
