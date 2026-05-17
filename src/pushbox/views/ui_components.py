@@ -42,11 +42,12 @@ class ModernButton:
         self.hovered = False
         self.pressed = False
         self.hover_anim = 0.0  # 0.0 to 1.0
+        self.selected = False
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draw the button."""
         # Animation logic
-        target_anim = 1.0 if self.hovered else 0.0
+        target_anim = 1.0 if (self.hovered or self.selected) else 0.0
         self.hover_anim += (target_anim - self.hover_anim) * 0.2
 
         # Calculate visual position (lift up when hovered)
@@ -63,7 +64,7 @@ class ModernButton:
         body_rect = self.rect.copy()
         body_rect.y += offset_y
 
-        color = self.hover_color if self.hovered else self.bg_color
+        color = self.hover_color if (self.hovered or self.selected) else self.bg_color
         pygame.draw.rect(screen, color, body_rect, border_radius=8)
 
         # Draw Border (subtle highlight)
@@ -353,6 +354,7 @@ class TutorialScreen:
                     "Z / Backspace 撤銷",
                     "Y / R 重做",
                     "F5 重置關卡",
+                    "Ctrl+Q 退出遊戲",
                 ],
             ),
             ("💡 提示", ["點擊下方按鈕也可操作", "按 H 隨時查看說明"]),
