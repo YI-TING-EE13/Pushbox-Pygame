@@ -49,14 +49,18 @@ uv run python main.py
 | Action | Keys | Notes |
 | --- | --- | --- |
 | Move | Arrow keys or WASD | In-game movement |
+| Menu Nav | Arrow keys or WASD | Navigates the main menu |
+| Menu Select | Enter or Space | Confirms selection in the main menu |
 | Undo | Z or Backspace | Also available via UI button |
 | Redo | Y or R | Also available via UI button |
 | Reset level | F5 or Delete | Also available via UI button |
 | Help overlay | H or F1 | In-game only |
+| Help Dismiss | Any key | Dismisses help overlay |
 | Pause | Esc or P | In-game only (Resume/Restart/Menu) |
 | Menu | M | Returns to main menu |
 | Next level | N | On win screen |
 | Restart | R | On win screen |
+| Global Quit | Ctrl+Q | Immediately exits the game from any screen |
 
 Level editor shortcuts:
 
