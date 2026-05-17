@@ -50,6 +50,17 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 18. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
 19. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
 
+### Pause Screen Overlay
+20. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.
+21. **Gameplay Blocked**: While paused, try pressing movement keys or action buttons. Confirm that the player does not move, boxes cannot be pushed, and the game timer is completely frozen (does not increment).
+22. **Overlay Keys**: Verify the three available actions listed on the pause card work as expected:
+    - **Esc / P**: Continues gameplay exactly from the current state (timer resumes without jumping forward by the duration of the pause).
+    - **R**: Resets the level state and immediately exits the pause screen to playing mode.
+    - **M**: Safely exits the game screen back to the main menu (clearing the pause state).
+23. **Priority of Overlays**:
+    - **Help priority**: If the help overlay (`H`) is open, pressing `Esc` should close the help card instead of triggering the pause overlay.
+    - **Ignore trigger**: Pressing `Esc` or `P` must have no effect when the green "Win" screen or the red "Deadlock" screen is active.
+
 ## 3. Editor Manual Test
 
 The level editor allows creating and managing custom puzzles.

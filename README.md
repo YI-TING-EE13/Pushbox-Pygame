@@ -24,6 +24,7 @@ puzzles.
 - Tutorial screen and in-game help overlay
 - Undo/redo history (up to 100 steps) and level reset
 - Move, push, and time statistics
+- In-game pause overlay (Esc/P) with resume, restart, and menu options
 - Level selector with per-level best move record
 - Deadlock feedback overlay with recovery options
 - Built-in level editor with mouse tools and shortcuts
@@ -52,6 +53,7 @@ uv run python main.py
 | Redo | Y or R | Also available via UI button |
 | Reset level | F5 or Delete | Also available via UI button |
 | Help overlay | H or F1 | In-game only |
+| Pause | Esc or P | In-game only (Resume/Restart/Menu) |
 | Menu | M | Returns to main menu |
 | Next level | N | On win screen |
 | Restart | R | On win screen |
@@ -102,11 +104,11 @@ uv run mypy src/
 - Undo/redo history is capped at 100 moves
 - Progress and score data are stored locally in `data/` and ignored by git
   (see `examples/` for sample formats)
-- Pause/settings shortcuts are not implemented yet
+- Settings shortcut is not implemented yet
 
 ## Future Work
 
-- Pause menu and settings screen
+- In-game settings screen
 - Audio playback (music and sound effects)
 - High score UI and history browser
 - Additional built-in levels and tutorial steps

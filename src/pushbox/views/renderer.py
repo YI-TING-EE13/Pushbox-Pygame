@@ -606,3 +606,51 @@ class Renderer:
                 centerx=rect.centerx, bottom=rect.bottom - 30
             )
             self.screen.blit(hint_surf, hint_rect)
+
+    def render_pause_screen(self) -> None:
+        """Render in-game pause overlay."""
+        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        overlay.fill(COLORS["overlay"])
+        self.screen.blit(overlay, (0, 0))
+
+        # Pause Card
+        w, h = 500, 320
+        rect = pygame.Rect(
+            (self.screen.get_width() - w) // 2,
+            (self.screen.get_height() - h) // 2,
+            w,
+            h,
+        )
+
+        # Glow (using warning color)
+        glow_rect = rect.inflate(20, 20)
+        pygame.draw.rect(
+            self.screen, (*COLORS["warning"], 50), glow_rect, border_radius=20
+        )
+
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], rect, border_radius=15)
+        pygame.draw.rect(self.screen, COLORS["warning"], rect, 3, border_radius=15)
+
+        if self.big_font:
+            title = self.big_font.render("暫停", True, COLORS["warning"])
+            title_rect = title.get_rect(centerx=rect.centerx, y=rect.y + 40)
+            self.screen.blit(title, title_rect)
+
+        if self.font:
+            # Explanation
+            msg = self.font.render("遊戲已暫停", True, COLORS["text_main"])
+            msg_rect = msg.get_rect(centerx=rect.centerx, y=rect.y + 120)
+            self.screen.blit(msg, msg_rect)
+
+            # Details/Hints
+            y = rect.y + 170
+            hints = [
+                "Esc / P : 繼續遊戲 (Resume)",
+                "R : 重置關卡 (Restart)",
+                "M : 返回主選單 (Main Menu)",
+            ]
+            for hint in hints:
+                surf = self.font.render(hint, True, COLORS["text_dim"])
+                surf_rect = surf.get_rect(centerx=rect.centerx, y=y)
+                self.screen.blit(surf, surf_rect)
+                y += 35

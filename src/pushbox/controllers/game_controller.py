@@ -1,5 +1,6 @@
 """Main game controller managing game flow."""
 
+import time
 from typing import Any, Callable, Optional
 
 import pygame
@@ -32,6 +33,7 @@ class GameController:
         self.current_level: Optional[Level] = None
         self.game_state: Optional[GameState] = None
         self.input_handler = InputHandler(self.config)
+        self.is_paused = False
 
         # Callbacks
         self._state_callbacks: dict[str, list[Callable[..., None]]] = {
@@ -51,6 +53,7 @@ class GameController:
         self.input_handler.register_callback("undo", self._on_undo)
         self.input_handler.register_callback("redo", self._on_redo)
         self.input_handler.register_callback("reset", self._on_reset)
+        self.input_handler.register_callback("pause", self.toggle_pause)
 
     def register_callback(self, event: str, callback: Callable[..., None]) -> None:
         """Register a state change callback.
@@ -85,6 +88,7 @@ class GameController:
 
         self.current_level = level
         self.game_state = GameState(level)
+        self.is_paused = False
         return True
 
     def get_current_level_name(self) -> Optional[str]:
@@ -109,7 +113,7 @@ class GameController:
         Args:
             direction: Direction tuple (dr, dc).
         """
-        if not self.game_state:
+        if not self.game_state or self.is_paused:
             return
 
         success = self.game_state.move(direction)
@@ -141,16 +145,21 @@ class GameController:
 
     def _on_undo(self) -> None:
         """Handle undo input."""
+        if self.is_paused:
+            return
         if self.game_state and self.game_state.undo():
             self._trigger_event("undo")
 
     def _on_redo(self) -> None:
         """Handle redo input."""
+        if self.is_paused:
+            return
         if self.game_state and self.game_state.redo():
             pass
 
     def _on_reset(self) -> None:
         """Handle reset input."""
+        self.is_paused = False
         if self.game_state:
             self.game_state.reset()
             self._trigger_event("reset")
@@ -186,11 +195,25 @@ class GameController:
         """
         return self.input_handler.handle_event(event)
 
+    def toggle_pause(self) -> None:
+        """Toggle the pause state of the game."""
+        if not self.game_state or self.game_state.status != GameStateEnum.PLAYING:
+            return
+
+        self.is_paused = not self.is_paused
+
+        if self.is_paused:
+            self._pause_start_time = time.time()
+        else:
+            if hasattr(self, "_pause_start_time"):
+                pause_duration = time.time() - self._pause_start_time
+                self.game_state.start_time += pause_duration
+
     def update(self) -> None:
         """Update game state."""
         self.input_handler.update()
 
-        if self.game_state:
+        if self.game_state and not self.is_paused:
             self.game_state.update_time()
 
     def get_control_scheme(self) -> str:

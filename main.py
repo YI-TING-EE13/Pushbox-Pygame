@@ -209,6 +209,7 @@ class GameApp:
         """Return to main menu."""
         self.current_screen = "menu"
         self.editor = None
+        self.controller.is_paused = False
 
     def _quit(self) -> None:
         """Quit the game."""
@@ -268,12 +269,17 @@ class GameApp:
                 else:
                     if event.key == pygame.K_F1 or event.key == pygame.K_h:
                         if self.current_screen == "game":
-                            self.show_help = not self.show_help
+                            if not self.controller.is_paused:
+                                self.show_help = not self.show_help
                         continue
                     elif event.key == pygame.K_m:
                         if self.current_screen != "tutorial":
                             self._back_to_menu()
                         continue
+                    elif event.key == pygame.K_ESCAPE:
+                        if self.current_screen == "game" and self.show_help:
+                            self.show_help = False
+                            continue
 
             # Screen-specific event handling
             if self.current_screen == "tutorial":
@@ -294,12 +300,17 @@ class GameApp:
                     and self.controller.game_state.status == GameStateEnum.GAME_OVER
                 ):
                     self._handle_game_over_input(event)
+                elif self.controller.is_paused:
+                    self._handle_pause_screen_input(event)
                 else:
-                    self.controller.handle_event(event)
-                    # Handle ModernButtons
-                    for btn in self.game_buttons:
-                        if btn.handle_event(event):
-                            break
+                    if self.show_help:
+                        pass
+                    else:
+                        self.controller.handle_event(event)
+                        # Handle ModernButtons
+                        for btn in self.game_buttons:
+                            if btn.handle_event(event):
+                                break
 
             elif self.current_screen == "level_select":
                 self.level_selector.handle_event(event)
@@ -342,6 +353,17 @@ class GameApp:
                 self.controller._on_undo()
             elif event.key == pygame.K_r or event.key == pygame.K_F5:
                 self.controller._on_reset()
+            elif event.key == pygame.K_m:
+                self._back_to_menu()
+
+    def _handle_pause_screen_input(self, event) -> None:
+        """Handle input when the game is paused."""
+        if event.type == pygame.KEYDOWN:
+            if event.key in [pygame.K_ESCAPE, pygame.K_p]:
+                self.controller.toggle_pause()
+            elif event.key == pygame.K_r:
+                self.controller.toggle_pause()  # Unpause first
+                self.controller._on_reset()  # Reset level
             elif event.key == pygame.K_m:
                 self._back_to_menu()
 
@@ -429,6 +451,8 @@ class GameApp:
                     self.renderer.render_win_screen(stats, is_record)
             elif self.controller.game_state.status == GameStateEnum.GAME_OVER:
                 self.renderer.render_game_over_screen()
+            elif self.controller.is_paused:
+                self.renderer.render_pause_screen()
             else:
                 # Draw ModernButtons
                 for btn in self.game_buttons:
