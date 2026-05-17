@@ -361,9 +361,9 @@ class TestDefaultLevelsIntegrity:
     """Test all default levels meet game-design constraints."""
 
     def test_default_levels_exist_and_are_valid(self):
-        # 1. 10 default levels exist
-        assert len(DEFAULT_LEVELS) == 10
-        for i in range(1, 11):
+        # 1. 15 default levels exist
+        assert len(DEFAULT_LEVELS) == 15
+        for i in range(1, 16):
             assert f"Level {i}" in DEFAULT_LEVELS
 
         for name, grid in DEFAULT_LEVELS.items():

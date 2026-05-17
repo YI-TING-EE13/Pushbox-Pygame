@@ -434,7 +434,7 @@ def test_level_selector_keyboard_navigation():
         nonlocal back_triggered
         back_triggered = True
 
-    levels = [f"Level {i}" for i in range(1, 11)]  # 10 levels
+    levels = [f"Level {i}" for i in range(1, 10)]  # 9 levels (fills exactly 1 page)
     progress = {}
 
     selector.setup(
@@ -491,15 +491,15 @@ def test_level_selector_keyboard_navigation():
     )  # selected_index - 1 >= 0 is false, not handled
     assert selector.selected_index == 0
 
-    # Move to last item (index 9)
-    selector.selected_index = 9
-    # Right on index 9 should be no-op (not handled)
+    # Move to last item (index 8)
+    selector.selected_index = 8
+    # Right on index 8 should be no-op (not handled)
     assert selector.handle_event(evt_right) is False
-    assert selector.selected_index == 9
+    assert selector.selected_index == 8
 
-    # Down on index 9 should be no-op (not handled)
+    # Down on index 8 should be no-op (not handled)
     assert selector.handle_event(evt_down) is False
-    assert selector.selected_index == 9
+    assert selector.selected_index == 8
 
     # 7. Enter triggers callback
     selector.selected_index = 5  # Level 6
@@ -537,3 +537,132 @@ def test_level_selector_keyboard_navigation():
     assert selector.selected_index == 3
 
     button.rect = original_rect
+
+
+def test_level_selector_pagination():
+    """Verify LevelSelector pagination bounds, custom levels, reset states.
+
+    Also verify page transition key triggers.
+    """
+    from src.pushbox.views.ui_components import LevelSelector
+
+    pygame.init()
+    screen = pygame.Surface((800, 720))
+    selector = LevelSelector(screen)
+
+    selected_level = None
+    on_edit_called = False
+    on_delete_called = False
+
+    def on_select(name: str) -> None:
+        nonlocal selected_level
+        selected_level = name
+
+    def on_edit(name: str) -> None:
+        nonlocal on_edit_called
+        on_edit_called = True
+
+    def on_delete(name: str) -> None:
+        nonlocal on_delete_called
+        on_delete_called = True
+
+    # 15 default levels + 1 custom level = 16 levels total (requires exactly 2 pages)
+    levels = [f"Level {i}" for i in range(1, 16)] + ["Custom 1"]
+    progress = {}
+
+    selector.setup(
+        level_names=levels,
+        progress=progress,
+        on_select=on_select,
+        on_back=lambda: None,
+        on_edit=on_edit,
+        on_delete=on_delete,
+    )
+
+    # A. Initial state checks (Page 1 / Page 0-indexed)
+    assert selector.current_page == 0
+    assert len(selector.level_buttons) == 9  # exactly 9 items on Page 0
+    assert selector.selected_index == 0
+
+    # Ensure no action buttons exist for default levels on Page 0
+    for _, _name, is_custom in selector.level_buttons:
+        assert is_custom is False
+    assert len(selector.action_buttons) == 0
+
+    # B. Flip to Page 2 using PageDown
+    evt_pagedown = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_PAGEDOWN)
+    assert selector.handle_event(evt_pagedown) is True
+    assert selector.current_page == 1
+    assert selector.selected_index == 0
+    assert len(selector.level_buttons) == 7  # Level 10-15 (6) + Custom 1 (1) = 7 items
+
+    # C. Verify built-in vs custom classification on Page 2
+    # Verify Level 10-15 are built-in (is_custom is False) and Custom 1 is custom
+    for idx, (_, name, is_custom) in enumerate(selector.level_buttons):
+        if name == "Custom 1":
+            assert is_custom is True
+            assert idx == 6
+        else:
+            assert is_custom is False
+
+    # Ensure custom action buttons (Edit/Delete) exist exactly
+    # for the custom level on Page 2
+    assert len(selector.action_buttons) == 2  # Edit + Delete buttons
+
+    # D. Return to Page 1 using Shift+Tab
+    evt_shift_tab = pygame.event.Event(
+        pygame.KEYDOWN, key=pygame.K_TAB, mod=pygame.KMOD_SHIFT
+    )
+    assert selector.handle_event(evt_shift_tab) is True
+    assert selector.current_page == 0
+    assert selector.selected_index == 0
+
+    # E. Flip to Page 2 using Tab (without Shift)
+    evt_tab = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_TAB, mod=0)
+    assert selector.handle_event(evt_tab) is True
+    assert selector.current_page == 1
+    assert selector.selected_index == 0
+
+    # F. Bounds verification: cannot go past the last page
+    assert (
+        selector.handle_event(evt_pagedown) is False
+    )  # Already on last page, not handled
+    assert selector.current_page == 1
+
+    # G. Returns to Page 1 using PageUp
+    evt_pageup = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_PAGEUP)
+    assert selector.handle_event(evt_pageup) is True
+    assert selector.current_page == 0
+
+    # H. Bounds verification: cannot go before first page
+    assert (
+        selector.handle_event(evt_pageup) is False
+    )  # Already on first page, not handled
+    assert selector.current_page == 0
+
+    # I. Launching selection on Page 2
+    # Advance to Page 2 again
+    selector.handle_event(evt_pagedown)
+    assert selector.current_page == 1
+
+    # Select Level 10 (index 0 on page 2) and press Enter
+    selector.selected_index = 0
+    evt_enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
+    assert selector.handle_event(evt_enter) is True
+    assert selected_level == "Level 10"
+
+    # J. Navigation bounds on Page 2 (7 items total)
+    assert selector.selected_index == 0
+    evt_down = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+
+    # Move Down (index 0 + 3 = 3) -> Level 13
+    assert selector.handle_event(evt_down) is True
+    assert selector.selected_index == 3
+
+    # Move Down (index 3 + 3 = 6) -> Custom 1
+    assert selector.handle_event(evt_down) is True
+    assert selector.selected_index == 6
+
+    # Move Down again on last row index 6 should be clamped (not handled)
+    assert selector.handle_event(evt_down) is False
+    assert selector.selected_index == 6

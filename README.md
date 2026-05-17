@@ -54,6 +54,8 @@ uv run python main.py
 | Level Selector Nav | Arrow keys or WASD | Navigates the level selection grid |
 | Level Selector Sel | Enter or Space | Confirms selection and enters the level |
 | Level Selector Back | Esc or M | Returns to main menu from level selector |
+| Level Selector Next | PageDown or Tab | Flips to the next page of levels |
+| Level Selector Prev | PageUp or Shift+Tab | Flips to the previous page of levels |
 | Undo | Z or Backspace | Also available via UI button |
 | Redo | Y or R | Also available via UI button |
 | Reset level | F5 or Delete | Also available via UI button |

@@ -408,6 +408,13 @@ class LevelSelector:
         self.on_delete: Optional[Callable[[str], None]] = None
         self.selected_index = 0
 
+        # Pagination fields
+        self.level_names_all: list[str] = []
+        self.progress_all: dict = {}
+        self.current_page = 0
+        self.levels_per_page = 9
+        self.nav_buttons: list[ModernButton] = []
+
     def _init_fonts(self) -> None:
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 20)
@@ -434,7 +441,17 @@ class LevelSelector:
         self.on_edit = on_edit
         self.on_delete = on_delete
         self.on_back_cb = on_back  # Store callback to rebuild button on draw if needed
-        self.selected_index = 0
+
+        # Preserve current_page if it remains within bounds, otherwise reset to 0
+        total_pages = max(
+            1, (len(level_names) + self.levels_per_page - 1) // self.levels_per_page
+        )
+        if self.current_page >= total_pages:
+            self.current_page = 0
+            self.selected_index = 0
+
+        self.level_names_all = level_names
+        self.progress_all = progress
 
         # Initial layout setup
         self._layout_buttons(level_names, progress)
@@ -443,6 +460,11 @@ class LevelSelector:
         """Helper to layout buttons based on current screen size."""
         self.level_buttons.clear()
         self.action_buttons.clear()
+
+        # Page slicing
+        start_idx = self.current_page * self.levels_per_page
+        end_idx = min(start_idx + self.levels_per_page, len(level_names))
+        page_levels = level_names[start_idx:end_idx]
 
         cols = 3
         button_width = 200
@@ -455,25 +477,15 @@ class LevelSelector:
         ) // 2
         start_y = 120
 
-        for i, level_name in enumerate(level_names):
+        default_level_names = {f"Level {i}" for i in range(1, 16)}
+
+        for i, level_name in enumerate(page_levels):
             col = i % cols
             row = i // cols
 
             x = start_x + col * (button_width + spacing_x)
             y = start_y + row * (button_height + spacing_y)
 
-            default_level_names = {
-                "Level 1",
-                "Level 2",
-                "Level 3",
-                "Level 4",
-                "Level 5",
-                "Level 6",
-                "Level 7",
-                "Level 8",
-                "Level 9",
-                "Level 10",
-            }
             is_custom = (
                 level_name.startswith("Custom") or level_name not in default_level_names
             )
@@ -549,6 +561,55 @@ class LevelSelector:
             hover_color=(80, 50, 50),
         )
 
+        # Page navigation buttons layout
+        self.nav_buttons.clear()
+        total_pages = max(
+            1,
+            (len(self.level_names_all) + self.levels_per_page - 1)
+            // self.levels_per_page,
+        )
+        if total_pages > 1:
+            nav_y = self.screen.get_height() - 120
+            btn_w = 100
+            btn_h = 30
+            center_x = self.screen.get_width() // 2
+
+            def handle_prev() -> None:
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    self.selected_index = 0
+                    self._layout_buttons(self.level_names_all, self.progress_all)
+
+            def handle_next() -> None:
+                if self.current_page < total_pages - 1:
+                    self.current_page += 1
+                    self.selected_index = 0
+                    self._layout_buttons(self.level_names_all, self.progress_all)
+
+            prev_btn = ModernButton(
+                center_x - 140,
+                nav_y,
+                btn_w,
+                btn_h,
+                "◀ 上一頁",
+                handle_prev,
+                self.small_font,
+                bg_color=(50, 50, 50) if self.current_page > 0 else (30, 30, 30),
+            )
+            next_btn = ModernButton(
+                center_x + 40,
+                nav_y,
+                btn_w,
+                btn_h,
+                "下一頁 ▶",
+                handle_next,
+                self.small_font,
+                bg_color=(50, 50, 50)
+                if self.current_page < total_pages - 1
+                else (30, 30, 30),
+            )
+            self.nav_buttons = [prev_btn, next_btn]
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         # Handle mouse motion for syncing selection index
         if event.type == pygame.MOUSEMOTION:
@@ -559,6 +620,27 @@ class LevelSelector:
 
         # Handle Keyboard Events
         elif event.type == pygame.KEYDOWN:
+            total_pages = max(
+                1,
+                (len(self.level_names_all) + self.levels_per_page - 1)
+                // self.levels_per_page,
+            )
+            # Safe Shift+Tab detection using event modifiers
+            is_shift = bool(getattr(event, "mod", 0) & pygame.KMOD_SHIFT)
+
+            if event.key == pygame.K_PAGEUP or (event.key == pygame.K_TAB and is_shift):
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    self.selected_index = 0
+                    self._layout_buttons(self.level_names_all, self.progress_all)
+                    return True
+            elif event.key == pygame.K_PAGEDOWN or event.key == pygame.K_TAB:
+                if self.current_page < total_pages - 1:
+                    self.current_page += 1
+                    self.selected_index = 0
+                    self._layout_buttons(self.level_names_all, self.progress_all)
+                    return True
+
             if self.level_buttons:
                 if event.key in [pygame.K_RIGHT, pygame.K_d]:
                     if self.selected_index + 1 < len(self.level_buttons):
@@ -594,6 +676,9 @@ class LevelSelector:
         for button in self.action_buttons:
             if button.handle_event(event):
                 return True
+        for button in self.nav_buttons:
+            if button.handle_event(event):
+                return True
         if self.back_button and self.back_button.handle_event(event):
             return True
         return False
@@ -611,6 +696,7 @@ class LevelSelector:
             title_rect = title.get_rect(centerx=self.screen.get_width() // 2, y=40)
             self.screen.blit(title, title_rect)
 
+        # Draw Level Buttons on current page
         for idx, (button, level_name, _) in enumerate(self.level_buttons):
             button.selected = idx == self.selected_index
             button.draw(self.screen)
@@ -627,8 +713,28 @@ class LevelSelector:
                 )
                 self.screen.blit(info_surface, info_rect)
 
+        # Draw Custom Action Buttons (Edit/Delete) on current page
         for button in self.action_buttons:
             button.draw(self.screen)
 
+        # Draw Page indicator text and nav buttons
+        total_pages = max(
+            1,
+            (len(self.level_names_all) + self.levels_per_page - 1)
+            // self.levels_per_page,
+        )
+        if total_pages > 1:
+            for button in self.nav_buttons:
+                button.draw(self.screen)
+            if self.font:
+                page_text = f"頁面: {self.current_page + 1} / {total_pages}"
+                page_surface = self.font.render(page_text, True, COLORS["text_main"])
+                page_rect = page_surface.get_rect(
+                    centerx=self.screen.get_width() // 2,
+                    centery=self.screen.get_height() - 105,
+                )
+                self.screen.blit(page_surface, page_rect)
+
+        # Draw Back Button
         if self.back_button:
             self.back_button.draw(self.screen)

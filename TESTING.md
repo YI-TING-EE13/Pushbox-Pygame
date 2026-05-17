@@ -75,15 +75,20 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 26. **Global Ctrl+Q Quit**:
     - On any screen (Main Menu, Gameplay, Level Selector, Tutorial, Editor, Pause overlay, Help overlay), press `Ctrl+Q`. Verify the game application closes immediately.
     - Verify that pressing `Q` alone does not exit.
-27. **Level Selector Keyboard Navigation (Phase 14A)**:
-    - Go to the "選擇關卡" screen. Verify that the first level card is highlighted (`selected = True`) by default.
-    - Press `→` or `D` to navigate right, and `←` or `A` to navigate left. Verify the highlight card updates smoothly.
-    - Press `↓` or `S` to navigate down a row, and `↑` or `W` to navigate up a row.
-    - Try to navigate outside the grid boundaries (e.g., press `←` on the first card, or `↓` on the last row). Verify that the selected card remains in place and does not overflow or crash.
-    - Hover the mouse over a different level card. Verify that the highlight instantly synchronizes to the hovered card.
-    - Press `Enter` or `Space` to confirm selection and launch the highlighted level.
+27. **Level Selector Keyboard Navigation & Pagination (Phase 15B)**:
+    - Go to the "選擇關卡" screen. Verify that `Level 1` is highlighted by default.
+    - Confirm the page indicator displays `"頁面: 1 / 2"` at the bottom, and that Page 1 lists exactly `Level 1` to `Level 9`.
+    - Press `→`/`D`, `←`/`A`, `↓`/`S`, and `↑`/`W` to navigate the grid. Verify that the highlight card moves correctly and is strictly clamped within current page grid boundaries.
+    - Press `PageDown` or `Tab` (without Shift). Verify that the screen switches to Page 2, the page indicator updates to `"頁面: 2 / 2"`, and the highlight resets to `Level 10` (the first element on Page 2).
+    - Confirm Page 2 lists exactly `Level 10` to `Level 15` (and any custom levels, if they exist).
+    - Press `PageUp` or `Shift+Tab` to switch back to Page 1, confirming the highlight resets to `Level 1`.
+    - Verify page boundary clamping:
+      - Press `PageUp` or `Shift+Tab` while on Page 1. Confirm the page does not change.
+      - Press `PageDown` or `Tab` while on Page 2. Confirm the page does not change.
+    - Click the `"◀ 上一頁"` and `"下一頁 ▶"` mouse buttons at the bottom. Verify that they flip pages correctly in sync with keyboard controls.
+    - Navigate to `Level 11` on Page 2 and press `Enter` or `Space` to confirm selection. Verify the level launches successfully and is fully playable.
+    - Verify custom levels (if any exist) appear correctly on the corresponding page with `"編輯"` and `"刪除"` buttons visible, while default levels `Level 1` to `Level 15` never display them.
     - Press `Esc` or `M` to exit the level selector and return to the main menu.
-    - Confirm that `Level 6` to `Level 10` do not show the "編輯" and "刪除" actions.
 
 ## 3. Editor Manual Test
 
