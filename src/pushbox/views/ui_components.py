@@ -311,7 +311,7 @@ class TutorialScreen:
         self.time += 0.05
 
         card_width = 600
-        card_height = 500
+        card_height = 560
         card_x = (self.screen.get_width() - card_width) // 2
         card_y = (self.screen.get_height() - card_height) // 2
 
@@ -328,13 +328,13 @@ class TutorialScreen:
 
         if self.title_font:
             title = self.title_font.render("遊戲教學", True, COLORS["text_highlight"])
-            title_rect = title.get_rect(centerx=card_rect.centerx, y=card_rect.y + 30)
+            title_rect = title.get_rect(centerx=card_rect.centerx, y=card_rect.y + 25)
             self.screen.blit(title, title_rect)
             pygame.draw.line(
                 self.screen,
                 COLORS["grid_lines"],
-                (card_rect.left + 50, title_rect.bottom + 10),
-                (card_rect.right - 50, title_rect.bottom + 10),
+                (card_rect.left + 50, title_rect.bottom + 8),
+                (card_rect.right - 50, title_rect.bottom + 8),
                 2,
             )
 
@@ -344,34 +344,34 @@ class TutorialScreen:
                 [
                     "將所有箱子推到目標點上",
                     "箱子只能推，不能拉",
-                    "仔細規劃路線，避免卡住",
+                    "精準規劃路線，避免卡死",
                 ],
             ),
             (
                 "🎮 控制方式",
                 [
-                    "方向鍵 或 WASD 移動",
-                    "Z / Backspace 撤銷",
-                    "Y / R 重做",
-                    "F5 重置關卡",
-                    "Ctrl+Q 退出遊戲",
+                    "方向鍵 / WASD：移動",
+                    "Z / Backspace：撤銷",
+                    "Y / R：重做",
+                    "F5 / Delete：重置",
+                    "Ctrl+Q：退出遊戲",
                 ],
             ),
-            ("💡 提示", ["點擊下方按鈕也可操作", "按 H 隨時查看說明"]),
+            ("💡 提示", ["點擊按鈕亦可操作", "按 H 鍵查看說明"]),
         ]
 
-        y = card_rect.y + 100
+        y = card_rect.y + 85
         for section_title, items in sections:
             if self.font:
                 t_surf = self.font.render(section_title, True, COLORS["text_main"])
                 self.screen.blit(t_surf, (card_rect.left + 60, y))
-                y += 30
+                y += 28
 
                 for item in items:
                     i_surf = self.font.render("• " + item, True, COLORS["text_dim"])
                     self.screen.blit(i_surf, (card_rect.left + 80, y))
-                    y += 25
-                y += 15
+                    y += 23
+                y += 12
 
         if self.font:
             alpha = int((math.sin(self.time * 0.1) + 1) * 127.5)
@@ -380,7 +380,7 @@ class TutorialScreen:
             )
             prompt.set_alpha(alpha)
             prompt_rect = prompt.get_rect(
-                centerx=card_rect.centerx, bottom=card_rect.bottom - 30
+                centerx=card_rect.centerx, bottom=card_rect.bottom - 25
             )
             self.screen.blit(prompt, prompt_rect)
 
