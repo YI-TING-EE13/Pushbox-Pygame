@@ -207,20 +207,22 @@ gantt
     PyInstaller EXE Packaging, Theme System, SFX Integration : 2026-06-11, 2026-06-20
 ```
 
-### 🎯 v0.7.0 — 交互反饋與關卡進度鏈
-* 實作 Level Editor「一鍵試玩 (Play Test)」與「未儲存防呆警告」。
-* 實作無效操作「畫面微震動（Screen Shake）」與歸位「發光粒子（Cell Particle Spark）」。
-* 實作預設 30 個關卡的「循序解鎖鏈」，未解鎖關卡呈現灰色加鎖狀態。
+### 🎯 v0.7.0 — 交互反饋、多主題與平滑動畫 (當前版本)
+* 實作 Level Editor「一鍵試玩 (Play Test)」與「未儲存防呆警告」。 [已完成]
+* 實作無效操作「畫面微震動（Screen Shake）」與歸位「發光粒子（Cell Particle Spark）」。 [已完成]
+* 實作預設 30 個關卡的「循序解鎖鏈」與「微縮關卡預覽 (Minimap Preview)」。 [已完成]
+* 實作「多套主題配色包 (Visual Theme Packs)」實時換色。 [已完成]
+* 實作「時光倒流插值平滑 (Smooth Undo/Redo)」100ms 短動畫。 [已完成]
 
-### 🎯 v0.8.0 — 智慧提示系統與社群分享
+### 🎯 v0.8.0 — 智慧提示系統、互動教學與社群分享 (下一步規劃)
 * 實作 **後台 A* / BFS 推箱子智慧求解引擎**，在卡關時提供💡提示發光路徑。
-* 實作關卡選擇器的 **關卡 Minimap 微縮圖預覽**。
+* 實作 **互動式 Onboarding 新手教學關卡**，以引導式操作取代靜態圖卡說明。
 * 支援自訂關卡匯出為 JSON 字串一鍵複製，或匯入 JSON 檔分享給其他玩家。
 
 ### 🎯 v1.0.0 — 發布級獨立遊戲 (Release Candidate)
 * 透過 PyInstaller 封裝為 **Windows 獨立執行檔 (`.exe`)**，具備定制化桌面圖標。
-* 提供「Dracula 暗色」與「Nord 亮雪」多套 UI 主題切換。
-* 音效系統底層（SFX & BGM）正式實作與音量調整實裝。
+* 音效系統底層（SFX & BGM）整合實裝與 UI 音效/音樂開關。
+* 各主題（極光冰川、經典綠、德古拉暗紫）特有地面細節與視覺微裝飾。
 
 ---
 
@@ -277,27 +279,38 @@ graph TD
 
 ---
 
-## 六、本次 Session 任務紀錄標題建議
+## 六、下一步工作規劃 (Future Roadmap & Next Steps)
 
-以下為您整理數個偏向正式軟體開發、工程紀錄風格的 Session 標題，供您在記錄、提交或彙報時選擇：
+為了從 `v0.7.0` 跨越至 `v0.8.0` 並順利進軍 `v1.0.0` 發布版本，以下是接下來的具體執行路徑與規劃：
 
-### 🔧 標題方向 A：架構優化與體驗升級 (最推薦，全面且專業)
-> **`Feature/UX-Polish: Implement SettingsScreen, Dynamic Cell Sizing, FadeTransitions & Comprehensive UI/UX Audit (v0.6.0)`**
->
-> *特點*：清晰列出 v0.6.0 實作的技術要點與進行的深度產品體驗審計，適合 Git Commit 或是 Sprint 開發日誌。
+### 6.1 任務 1：互動式新手引導關卡 (Onboarding Level)
+* **目標**：用 100% 互動的操作引導，取代目前的靜態教學卡。
+* **做法**：
+  - 在 `DEFAULT_LEVELS` 中預置一個 `Level 0`「互動引導關」（包含一個箱子、一個目標與最少牆面）。
+  - 當 `show_tutorial` 為 `True` 時，遊戲啟動後不是展示 `TutorialScreen` 靜態圖，而是直接載入 `Level 0`。
+  - 在地圖上方以半透明文字渲染動態操作說明：「使用 WASD 移動」、「推動箱子到目標上」。
+  - 完成後，調用 `Config.set("show_tutorial", False)` 並帶領玩家進入主選單，徹底優化留存體驗。
 
-### 🎨 標題方向 B：以產品工程師與設計師角度命名的任務
-> **「推箱子遊戲化改造：完成自適應格線縮放、轉場淡入淡出與 9 維度產品 UI/UX 深度審查」**
->
-> *特點*：中文敘事，強調了「自適應」與「9維度審計」，凸顯體驗層面的巨大提升。
+### 6.2 任務 2：A* / BFS 求解器與💡提示系統 (Solver & Hint System)
+* **目標**：解決玩家卡關退遊的問題，提供即時、精準的最短路徑步驟提示。
+* **做法**：
+  - 在後台使用 Breadth-First Search (BFS) 實作一個 Sokoban 求解器，計算當前關卡從當前狀態到獲勝的最短路徑。
+  - 當玩家點擊 HUD 的「💡 提示」按鈕時，如果可解，在地圖上為下一個應推動的箱子和玩家的走法以虛線或發光粒子路徑高亮顯示 1.5 秒。
+  - 每日限制使用次裝（例如 3 次），維持挑戰度。
 
-### ⚙️ 標題方向 C：偏向技術架構與品質保障 (QA/Testing)
-> **`Refactor/Productivity: Settings Config Binding, Headless Smoke Test Script & Casual Game Roadmap Formulation`**
->
-> *特點*：聚焦於 Config 系統綁定、無頭自動化測試（Headless Smoke Test）的建構，以及後續發展路線圖的制定，工程感極強。
+### 6.3 任務 3：自訂關卡 JSON 匯出/匯入與社群分享
+* **目標**：賦予自訂關卡傳播屬性，建立社群玩家的自製關卡分享鏈。
+* **做法**：
+  - 在 `Level Editor` 保存地圖時，支持「匯出關卡」按鈕，生成一串壓縮的 JSON Base64 字串，玩家可一鍵複製分享。
+  - 在 `Level Selector` 的自訂關卡分頁中，新增「匯入關卡」輸入框，貼上分享字串即可解密載入並儲存，0 成本拓寬遊戲可玩性。
 
-### 🎮 標題方向 D：簡潔的版本里程碑宣告
-> **`Milestone: Elevating Pushbox-Pygame from Technical Demo to Casual Game MVP (v0.6.0)`**
->
-> *特點*：大氣、目標導向，宣告專案正式從功能技術 Demo 升級為一款具備高水準可用性的休閒遊戲 MVP。
+### 6.4 任務 4：音效系統實裝 (SFX & BGM Integration)
+* **目標**：啟動 Stub 狀態的 `AudioManager`，為移動、撞牆、推箱子、通關、暫停實裝清脆的像素級音效與柔和背景樂。
+* **做法**：
+  - 將音訊檔案放置於 `assets/sounds/` 與 `assets/music/`。
+  - 使用 `pygame.mixer` 實作音量淡入淡出、播放與淡出。
+  - 與 `SettingsScreen` 的音效及音樂音量拉桿連動，提供完美聽覺沉浸感。
+
+
+
 
