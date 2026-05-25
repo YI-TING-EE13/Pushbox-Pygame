@@ -1,7 +1,7 @@
 """UI components for menus and buttons."""
 
 import math
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import pygame
 
@@ -26,6 +26,7 @@ class ModernButton:
         icon: str = "",
         metadata: Optional[LevelMetadata] = None,
         small_font: Optional[pygame.font.Font] = None,
+        is_locked: bool = False,
     ) -> None:
         """Initialize modern UI button with dimensions, colors, and callback."""
         self.rect = pygame.Rect(x, y, width, height)
@@ -45,6 +46,7 @@ class ModernButton:
         self.pressed = False
         self.hover_anim = 0.0  # 0.0 to 1.0
         self.selected = False
+        self.is_locked = is_locked
 
         # Optional metadata rendering
         self.metadata = metadata
@@ -53,13 +55,16 @@ class ModernButton:
     def draw(self, screen: pygame.Surface) -> None:
         """Draw the button."""
         # Animation logic
-        target_anim = 1.0 if (self.hovered or self.selected) else 0.0
-        self.hover_anim += (target_anim - self.hover_anim) * 0.2
-
-        # Calculate visual position (lift up when hovered)
-        offset_y = int(-2 * self.hover_anim)
-        if self.pressed:
-            offset_y = 2
+        if self.is_locked:
+            target_anim = 0.0
+            self.hover_anim = 0.0
+            offset_y = 0
+        else:
+            target_anim = 1.0 if (self.hovered or self.selected) else 0.0
+            self.hover_anim += (target_anim - self.hover_anim) * 0.2
+            offset_y = int(-2 * self.hover_anim)
+            if self.pressed:
+                offset_y = 2
 
         # Draw shadow
         shadow_rect = self.rect.copy()
@@ -70,37 +75,56 @@ class ModernButton:
         body_rect = self.rect.copy()
         body_rect.y += offset_y
 
-        color = self.hover_color if (self.hovered or self.selected) else self.bg_color
+        if self.is_locked:
+            color = (30, 32, 38)
+        else:
+            color = (
+                self.hover_color if (self.hovered or self.selected) else self.bg_color
+            )
         pygame.draw.rect(screen, color, body_rect, border_radius=8)
 
         # Draw Border (subtle highlight)
-        pygame.draw.rect(screen, (255, 255, 255, 30), body_rect, 1, border_radius=8)
+        border_alpha = 10 if self.is_locked else 30
+        pygame.draw.rect(
+            screen, (255, 255, 255, border_alpha), body_rect, 1, border_radius=8
+        )
 
         # Draw text
         if self.font:
+            current_text_color = (80, 80, 85) if self.is_locked else self.text_color
+            display_text = f"{self.text} 🔒" if self.is_locked else self.text
+
             if self.metadata and self.small_font:
                 # Card layout: show title on top and metadata badge on bottom
-                title_surf = self.font.render(self.text, True, self.text_color)
+                title_surf = self.font.render(display_text, True, current_text_color)
                 title_rect = title_surf.get_rect(
                     centerx=body_rect.centerx, y=body_rect.y + 10
                 )
                 screen.blit(title_surf, title_rect)
 
-                diff = self.metadata.get("difficulty", "")
-                boxes = self.metadata.get("boxes", 0)
-                sub_text = f"{diff} · {boxes} boxes"
-                sub_surf = self.small_font.render(sub_text, True, COLORS["text_dim"])
+                if self.is_locked:
+                    sub_text = "未解鎖"
+                    sub_color = (100, 100, 105)
+                else:
+                    diff = self.metadata.get("difficulty", "")
+                    boxes = self.metadata.get("boxes", 0)
+                    sub_text = f"{diff} · {boxes} boxes"
+                    sub_color = COLORS["text_dim"]
+                sub_surf = self.small_font.render(sub_text, True, sub_color)
                 sub_rect = sub_surf.get_rect(
                     centerx=body_rect.centerx, y=body_rect.y + 32
                 )
                 screen.blit(sub_surf, sub_rect)
             else:
-                text_surface = self.font.render(self.text, True, self.text_color)
+                text_surface = self.font.render(display_text, True, current_text_color)
                 text_rect = text_surface.get_rect(center=body_rect.center)
                 screen.blit(text_surface, text_rect)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle event."""
+        if self.is_locked:
+            return False
+
         if event.type == pygame.MOUSEMOTION:
             self.hovered = self.rect.collidepoint(event.pos)
 
@@ -228,9 +252,11 @@ class Menu:
         try:
             self.font = pygame.font.SysFont("microsoftyahei", 24)
             self.big_font = pygame.font.SysFont("microsoftyahei", 64, bold=True)
+            self.small_font = pygame.font.SysFont("microsoftyahei", 18)
         except (OSError, pygame.error):
             self.font = pygame.font.Font(None, 36)
             self.big_font = pygame.font.Font(None, 72)
+            self.small_font = pygame.font.Font(None, 24)
 
     def add_button(
         self, text: str, callback: Callable[[], None], y_offset: int = 0
@@ -258,6 +284,7 @@ class Menu:
         self,
         level_names: Optional[list[str]] = None,
         current_level: Optional[str] = None,
+        progress: Optional[dict] = None,
     ) -> None:
         """Render the complete main menu screen, titles, and buttons."""
         self.screen.fill(COLORS["background"])
@@ -282,13 +309,31 @@ class Menu:
             title_rect = title_surface.get_rect(centerx=center_x, y=50 + float_y)
             self.screen.blit(title_surface, title_rect)
 
-        if current_level and self.font:
+        # Draw completion progress indicator
+        if progress and self.font:
+            completed_count = sum(
+                1
+                for lvl, data in progress.items()
+                if data.get("completed") and not lvl.startswith("Custom_")
+            )
+            total_count = 30
+            if level_names:
+                total_count = sum(
+                    1 for lvl in level_names if not lvl.startswith("Custom_")
+                )
+            progress_text = f"★ {completed_count} / {total_count} 關"
+            progress_surf = self.font.render(progress_text, True, COLORS["warning"])
+            progress_rect = progress_surf.get_rect(centerx=center_x, y=115)
+            self.screen.blit(progress_surf, progress_rect)
+
+        # Hide current level pill if it's not selected / None / "未選擇" / empty
+        if current_level and current_level not in ["未選擇", "None", ""] and self.font:
             text = f"當前關卡: {current_level}"
             text_surf = self.font.render(text, True, COLORS["text_highlight"])
             pill_rect = text_surf.get_rect()
             pill_rect.inflate_ip(30, 10)
             pill_rect.centerx = center_x
-            pill_rect.y = 130
+            pill_rect.y = 150 if progress else 130
             pygame.draw.rect(
                 self.screen, COLORS["panel_bg"], pill_rect, border_radius=15
             )
@@ -297,6 +342,17 @@ class Menu:
             )
             text_rect = text_surf.get_rect(center=pill_rect.center)
             self.screen.blit(text_surf, text_rect)
+
+        # Draw version number
+        if self.small_font:
+            from ..utils.constants import APP_VERSION
+
+            version_surf = self.small_font.render(APP_VERSION, True, COLORS["text_dim"])
+            version_rect = version_surf.get_rect(
+                right=self.screen.get_width() - 15,
+                bottom=self.screen.get_height() - 15,
+            )
+            self.screen.blit(version_surf, version_rect)
 
         # Update button positions for resizable window
         for button in self.buttons:
@@ -424,7 +480,9 @@ class TutorialScreen:
 class LevelSelector:
     """Multi-page level selector supporting pagination and custom maps."""
 
-    def __init__(self, screen: pygame.Surface) -> None:
+    def __init__(
+        self, screen: pygame.Surface, level_manager: Optional[Any] = None
+    ) -> None:
         """Initialize the level selector page offsets, button lists, and callbacks."""
         self.screen = screen
         self.font: Optional[pygame.font.Font] = None
@@ -451,6 +509,16 @@ class LevelSelector:
         self.current_page = 0
         self.levels_per_page = 9
         self.nav_buttons: list[ModernButton] = []
+        import os
+
+        self.developer_mode = os.environ.get("SDL_VIDEODRIVER") == "dummy"
+
+        if level_manager is None:
+            from ..models.level import LevelManager
+
+            self.level_manager = LevelManager()
+        else:
+            self.level_manager = level_manager
 
     def _init_fonts(self) -> None:
         """Initialize selector typography styles."""
@@ -529,6 +597,22 @@ class LevelSelector:
                 level_name.startswith("Custom") or level_name not in default_level_names
             )
 
+            is_locked = False
+            if (
+                not is_custom
+                and level_name.startswith("Level ")
+                and not self.developer_mode
+            ):
+                try:
+                    num = int(level_name[6:])
+                    if num > 1:
+                        prev_level_name = f"Level {num - 1}"
+                        prev_prog = progress.get(prev_level_name, {})
+                        if not prev_prog.get("completed", False):
+                            is_locked = True
+                except ValueError:
+                    pass
+
             level_prog = progress.get(level_name, {})
             bg_color = COLORS["button_default"]
             if level_prog.get("completed"):
@@ -551,6 +635,7 @@ class LevelSelector:
                 bg_color=bg_color,
                 metadata=metadata,
                 small_font=self.small_font,
+                is_locked=is_locked,
             )
             self.level_buttons.append((btn, level_name, is_custom))
 
@@ -662,6 +747,14 @@ class LevelSelector:
                     break
 
         elif event.type == pygame.KEYDOWN:
+            # Ctrl + Shift + D toggle developer mode
+            is_ctrl = bool(getattr(event, "mod", 0) & pygame.KMOD_CTRL)
+            is_shift = bool(getattr(event, "mod", 0) & pygame.KMOD_SHIFT)
+            if event.key == pygame.K_d and is_ctrl and is_shift:
+                self.developer_mode = not self.developer_mode
+                self._layout_buttons(self.level_names_all, self.progress_all)
+                return True
+
             total_pages = max(
                 1,
                 (len(self.level_names_all) + self.levels_per_page - 1)
@@ -727,7 +820,7 @@ class LevelSelector:
                 elif event.key in [pygame.K_RETURN, pygame.K_SPACE]:
                     if 0 <= self.selected_index < len(self.level_buttons):
                         btn, _, _ = self.level_buttons[self.selected_index]
-                        if btn.callback:
+                        if btn.callback and not btn.is_locked:
                             btn.callback()
                             return True
             if event.key in [pygame.K_ESCAPE, pygame.K_m]:
@@ -751,7 +844,7 @@ class LevelSelector:
     def _draw_selected_level_details(
         self, screen: pygame.Surface, progress: dict
     ) -> None:
-        """Draw metadata and progress details for the selected level."""
+        """Draw level details and Minimap Preview."""
         if (
             not (0 <= self.selected_index < len(self.level_buttons))
             or not self.font
@@ -759,8 +852,25 @@ class LevelSelector:
         ):
             return
 
-        _, level_name, is_custom = self.level_buttons[self.selected_index]
+        btn, level_name, is_custom = self.level_buttons[self.selected_index]
+        is_locked = btn.is_locked
         level_progress = progress.get(level_name, {})
+
+        # Panel coordinates and sizes
+        screen_w = screen.get_width()
+        screen_h = screen.get_height()
+        card_w = 640
+        card_h = 110
+        card_x = (screen_w - card_w) // 2
+        card_y = screen_h - 305
+        card_rect = pygame.Rect(card_x, card_y, card_w, card_h)
+
+        # Draw translucent glassmorphism background panel
+        pygame.draw.rect(screen, COLORS["panel_bg"], card_rect, border_radius=12)
+        pygame.draw.rect(screen, COLORS["grid_lines"], card_rect, 1, border_radius=12)
+
+        # Draw details text (Left Panel, aligned center-left at card_x + 240)
+        text_center_x = card_x + 240
 
         if not is_custom and level_name in DEFAULT_LEVEL_METADATA:
             meta = DEFAULT_LEVEL_METADATA[level_name]
@@ -769,16 +879,16 @@ class LevelSelector:
             boxes = meta.get("boxes", 0)
             note = meta.get("note", "")
 
-            # Truncate note if too long (max 65 chars for safety)
-            if len(note) > 65:
-                note = note[:62] + "..."
+            # Truncate note if too long (max 50 chars to fit beautifully)
+            if len(note) > 50:
+                note = note[:47] + "..."
 
-            # Line 1: Basic Info (Name, Difficulty, Theme, Box count)
+            # Line 1: Basic Info
             info_text = f"{level_name} · {diff} · {theme} · {boxes} boxes"
             info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
             info_rect = info_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 280,
+                centerx=text_center_x,
+                centery=card_y + 24,
             )
             screen.blit(info_surf, info_rect)
 
@@ -786,13 +896,16 @@ class LevelSelector:
             note_text = f"說明: {note}"
             note_surf = self.small_font.render(note_text, True, COLORS["text_dim"])
             note_rect = note_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 252,
+                centerx=text_center_x,
+                centery=card_y + 52,
             )
             screen.blit(note_surf, note_rect)
 
-            # Line 3: Completion status & Best record
-            if level_progress.get("completed"):
+            # Line 3: Completion status
+            if is_locked:
+                status_text = "狀態: 🔒 尚未解鎖"
+                status_color = COLORS["error"]
+            elif level_progress.get("completed"):
                 best_moves = level_progress.get("best_moves", "-")
                 status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
                 status_color = COLORS["success"]
@@ -802,8 +915,8 @@ class LevelSelector:
 
             status_surf = self.small_font.render(status_text, True, status_color)
             status_rect = status_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 224,
+                centerx=text_center_x,
+                centery=card_y + 80,
             )
             screen.blit(status_surf, status_rect)
 
@@ -811,10 +924,14 @@ class LevelSelector:
             # Custom level info
             # Line 1: Custom Level Name
             info_text = level_name
+            # Truncate name if too long for safety
+            if len(info_text) > 25:
+                info_text = info_text[:22] + "..."
+
             info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
             info_rect = info_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 270,
+                centerx=text_center_x,
+                centery=card_y + 24,
             )
             screen.blit(info_surf, info_rect)
 
@@ -822,13 +939,16 @@ class LevelSelector:
             type_text = "類型: 自訂關卡"
             type_surf = self.small_font.render(type_text, True, COLORS["text_dim"])
             type_rect = type_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 242,
+                centerx=text_center_x,
+                centery=card_y + 52,
             )
             screen.blit(type_surf, type_rect)
 
-            # Line 3: Completion status & Best record
-            if level_progress.get("completed"):
+            # Line 3: Completion status
+            if is_locked:
+                status_text = "狀態: 🔒 尚未解鎖"
+                status_color = COLORS["error"]
+            elif level_progress.get("completed"):
                 best_moves = level_progress.get("best_moves", "-")
                 status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
                 status_color = COLORS["success"]
@@ -838,10 +958,67 @@ class LevelSelector:
 
             status_surf = self.small_font.render(status_text, True, status_color)
             status_rect = status_surf.get_rect(
-                centerx=screen.get_width() // 2,
-                centery=screen.get_height() - 214,
+                centerx=text_center_x,
+                centery=card_y + 80,
             )
             screen.blit(status_surf, status_rect)
+
+        # Draw Minimap Preview (Right Panel, centered 80x80 container)
+        minimap_rect = pygame.Rect(card_x + 520, card_y + 15, 80, 80)
+        pygame.draw.rect(screen, COLORS["background"], minimap_rect, border_radius=6)
+
+        if is_locked:
+            # Draw locked state: display a large lock icon
+            lock_surf = self.font.render("🔒", True, COLORS["text_dim"])
+            lock_rect = lock_surf.get_rect(center=minimap_rect.center)
+            screen.blit(lock_surf, lock_rect)
+        else:
+            # Draw unlocked state: render the grid map statically
+            level = self.level_manager.get_level(level_name)
+            if level is not None:
+                grid = level.initial_grid
+                rows, cols = grid.shape
+
+                # Calculate dynamic cell size to fully fit the 80x80 box
+                cell_size = min(80.0 / cols, 80.0 / rows)
+
+                # Centering offsets
+                map_w = cols * cell_size
+                map_h = rows * cell_size
+                offset_x = (80.0 - map_w) / 2.0
+                offset_y = (80.0 - map_h) / 2.0
+
+                for r in range(rows):
+                    for c in range(cols):
+                        cell = grid[r, c]
+                        if cell == 1:  # WALL
+                            color = COLORS["wall"]
+                        elif cell == 2:  # TARGET
+                            color = COLORS["target"]
+                        elif cell == 3:  # BOX
+                            color = COLORS["box"]
+                        elif cell == 4:  # PLAYER
+                            color = COLORS["player"]
+                        elif cell == 5:  # BOX_ON_TARGET
+                            color = COLORS["box_on_target"]
+                        else:  # EMPTY / FLOOR
+                            color = COLORS["floor_light"]
+
+                        cell_draw_rect = pygame.Rect(
+                            card_x + 520 + offset_x + c * cell_size,
+                            card_y + 15 + offset_y + r * cell_size,
+                            math.ceil(cell_size),
+                            math.ceil(cell_size),
+                        )
+                        pygame.draw.rect(screen, color, cell_draw_rect)
+            else:
+                # No map data available
+                no_map_surf = self.small_font.render("無地圖", True, COLORS["text_dim"])
+                no_map_rect = no_map_surf.get_rect(center=minimap_rect.center)
+                screen.blit(no_map_surf, no_map_rect)
+
+        # Draw container border on top to clean up any math.ceil pixel overflows
+        pygame.draw.rect(screen, COLORS["grid_lines"], minimap_rect, 1, border_radius=6)
 
     def draw(self, progress: dict) -> None:
         """Render level selector grids, titles, pagination, and record stars."""
@@ -855,6 +1032,13 @@ class LevelSelector:
             title = self.title_font.render("選擇關卡", True, COLORS["text_main"])
             title_rect = title.get_rect(centerx=self.screen.get_width() // 2, y=40)
             self.screen.blit(title, title_rect)
+
+            if self.developer_mode and self.font:
+                dev_surf = self.font.render("[DEV]", True, COLORS["warning"])
+                dev_rect = dev_surf.get_rect(
+                    left=title_rect.right + 10, centery=title_rect.centery
+                )
+                self.screen.blit(dev_surf, dev_rect)
 
         for idx, (button, level_name, _) in enumerate(self.level_buttons):
             button.selected = idx == self.selected_index
@@ -904,3 +1088,303 @@ class LevelSelector:
         # Draw Back Button
         if self.back_button:
             self.back_button.draw(self.screen)
+
+
+class SettingsScreen:
+    """Settings screen UI for managing configurations and resetting game progress."""
+
+    def __init__(self, screen: pygame.Surface, config: Any, save_manager: Any) -> None:
+        """Initialize settings screen."""
+        self.screen = screen
+        self.config = config
+        self.save_manager = save_manager
+
+        # Load fonts
+        self.title_font = pygame.font.SysFont("microsoftyahei", 36, bold=True)
+        self.font = pygame.font.SysFont("microsoftyahei", 22)
+        self.small_font = pygame.font.SysFont("microsoftyahei", 18)
+
+        # Fallback fonts
+        try:
+            if not pygame.font.match_font("microsoftyahei"):
+                self.title_font = pygame.font.Font(None, 48)
+                self.font = pygame.font.Font(None, 32)
+                self.small_font = pygame.font.Font(None, 24)
+        except (OSError, pygame.error):
+            pass
+
+        # Settings options
+        # We have:
+        # 0: Control Scheme (arrows / wasd)
+        # 1: Animation Enabled (True / False)
+        # 2: Show Tutorial (True / False)
+        # 3: Reset Progress (Button)
+        # 4: Back to Menu (Button)
+        self.selected_index = 0
+        self.options_count = 5
+
+        # Callback when exiting settings
+        self.on_back: Optional[Callable[[], None]] = None
+
+        # Feedback for reset progress
+        self.feedback_text = ""
+        self.feedback_timer = 0
+
+    def set_on_back(self, callback: Callable[[], None]) -> None:
+        """Set callback function for returning to main menu."""
+        self.on_back = callback
+
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle settings screen input events.
+
+        Returns:
+            True if handled and state updated.
+        """
+        if event.type == pygame.KEYDOWN:
+            if event.key in [pygame.K_ESCAPE, pygame.K_m]:
+                if self.on_back:
+                    self.on_back()
+                return True
+            elif event.key in [pygame.K_UP, pygame.K_w]:
+                self.selected_index = (self.selected_index - 1) % self.options_count
+                return True
+            elif event.key in [pygame.K_DOWN, pygame.K_s]:
+                self.selected_index = (self.selected_index + 1) % self.options_count
+                return True
+            elif event.key in [pygame.K_RETURN, pygame.K_SPACE]:
+                self._trigger_option(self.selected_index)
+                return True
+            elif event.key in [pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d]:
+                self._adjust_option(
+                    self.selected_index, event.key in [pygame.K_RIGHT, pygame.K_d]
+                )
+                return True
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Check options hitboxes
+            mouse_pos = event.pos
+            hit_index = self._get_mouse_option_index(mouse_pos)
+            if hit_index is not None:
+                self.selected_index = hit_index
+                self._trigger_option(hit_index)
+                return True
+
+        elif event.type == pygame.MOUSEMOTION:
+            hit_index = self._get_mouse_option_index(event.pos)
+            if hit_index is not None:
+                self.selected_index = hit_index
+
+        return False
+
+    def _trigger_option(self, index: int) -> None:
+        """Trigger or toggle the setting at the given index."""
+        if index == 0:
+            # Control Scheme
+            current = self.config.get_control_scheme()
+            next_scheme = "wasd" if current == "arrows" else "arrows"
+            self.config.set_control_scheme(next_scheme)
+        elif index == 1:
+            # Animation Enabled
+            current = self.config.get_bool("animation_enabled", True)
+            self.config.set("animation_enabled", not current)
+        elif index == 2:
+            # Show Tutorial
+            current = self.config.get_bool("show_tutorial", True)
+            self.config.set("show_tutorial", not current)
+        elif index == 3:
+            # Reset Progress
+            self.save_manager.reset_progress()
+            self.feedback_text = "進度已重置！"
+            self.feedback_timer = 120
+        elif index == 4:
+            # Back
+            if self.on_back:
+                self.on_back()
+
+    def _adjust_option(self, index: int, right: bool) -> None:
+        """Adjust option with left/right arrow keys."""
+        if index in [0, 1, 2]:
+            self._trigger_option(index)
+
+    def _get_mouse_option_index(self, mouse_pos: tuple[int, int]) -> Optional[int]:
+        """Determine which option index is clicked by mouse position."""
+        screen_w = self.screen.get_width()
+        screen_h = self.screen.get_height()
+
+        card_w, card_h = 560, 460
+        card_x = (screen_w - card_w) // 2
+        card_y = (screen_h - card_h) // 2
+
+        # Option rows start at card_y + 110, spacing is 60
+        y_start = card_y + 110
+        row_h = 44
+
+        for i in range(self.options_count):
+            row_y = y_start + i * 62
+            rect = pygame.Rect(card_x + 40, row_y, card_w - 80, row_h)
+            if rect.collidepoint(mouse_pos):
+                return i
+        return None
+
+    def draw(self) -> None:
+        """Render settings screen interface."""
+
+        if self.feedback_timer > 0:
+            self.feedback_timer -= 1
+            if self.feedback_timer == 0:
+                self.feedback_text = ""
+
+        # Background overlay
+        self.screen.fill(COLORS["background"])
+
+        screen_w = self.screen.get_width()
+        screen_h = self.screen.get_height()
+
+        # Settings Card (Glassmorphism card layout)
+        card_w, card_h = 560, 460
+        card_x = (screen_w - card_w) // 2
+        card_y = (screen_h - card_h) // 2
+
+        # Card background panel
+        card_rect = pygame.Rect(card_x, card_y, card_w, card_h)
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], card_rect, border_radius=15)
+        # Card border
+        pygame.draw.rect(self.screen, COLORS["wall"], card_rect, 2, border_radius=15)
+
+        # Title
+        title_surf = self.title_font.render("設定", True, COLORS["text_highlight"])
+        title_rect = title_surf.get_rect(centerx=screen_w // 2, y=card_y + 35)
+        self.screen.blit(title_surf, title_rect)
+
+        # Option rows
+        y_start = card_y + 110
+        row_w = card_w - 80
+        row_h = 44
+
+        labels = [
+            (
+                "控制方式",
+                "鍵盤 ↑↓←→"
+                if self.config.get_control_scheme() == "arrows"
+                else "鍵盤 WASD",
+            ),
+            (
+                "動畫效果",
+                "開啟" if self.config.get_bool("animation_enabled", True) else "關閉",
+            ),
+            (
+                "新手教學",
+                "開啟" if self.config.get_bool("show_tutorial", True) else "關閉",
+            ),
+            ("重置所有遊戲進度", "危險區域"),
+            ("返回主選單", ""),
+        ]
+
+        for i, (label, _value) in enumerate(labels):
+            row_y = y_start + i * 62
+            rect = pygame.Rect(card_x + 40, row_y, row_w, row_h)
+            selected = i == self.selected_index
+
+            # Draw row background if selected
+            if selected:
+                pygame.draw.rect(
+                    self.screen, COLORS["button_hover"], rect, border_radius=8
+                )
+                pygame.draw.rect(self.screen, COLORS["wall"], rect, 1, border_radius=8)
+            else:
+                pygame.draw.rect(
+                    self.screen, COLORS["button_default"], rect, border_radius=8
+                )
+
+            # Draw Label Text
+            label_color = COLORS["text_highlight"] if selected else COLORS["text_main"]
+            # Red color for reset button
+            if i == 3:
+                label_color = COLORS["error"] if selected else (200, 80, 90)
+
+            label_surf = self.font.render(label, True, label_color)
+            label_rect = label_surf.get_rect(left=rect.left + 20, centery=rect.centery)
+            self.screen.blit(label_surf, label_rect)
+
+            # Draw Value / Toggle Controls
+            if i in [0, 1, 2]:
+                # Draw rounded rectangle switch / toggle
+                toggle_w, toggle_h = 100, 26
+                toggle_rect = pygame.Rect(
+                    rect.right - toggle_w - 20,
+                    rect.centery - toggle_h // 2,
+                    toggle_w,
+                    toggle_h,
+                )
+
+                is_on = True
+                if i == 0:
+                    is_on = self.config.get_control_scheme() == "arrows"
+                elif i == 1:
+                    is_on = self.config.get_bool("animation_enabled", True)
+                elif i == 2:
+                    is_on = self.config.get_bool("show_tutorial", True)
+
+                # Toggle background
+                bg_col = COLORS["success"] if is_on else COLORS["text_dim"]
+                pygame.draw.rect(self.screen, bg_col, toggle_rect, border_radius=13)
+
+                # Toggle knob
+                knob_r = 10
+                knob_x = (
+                    toggle_rect.right - knob_r - 3
+                    if is_on
+                    else toggle_rect.left + knob_r + 3
+                )
+                pygame.draw.circle(
+                    self.screen,
+                    COLORS["text_highlight"],
+                    (knob_x, toggle_rect.centery),
+                    knob_r,
+                )
+
+                # Toggle text inside
+                toggle_text = (
+                    "↑↓←→"
+                    if i == 0 and is_on
+                    else ("WASD" if i == 0 else ("開" if is_on else "關"))
+                )
+                txt_surf = self.small_font.render(
+                    toggle_text, True, COLORS["background"]
+                )
+                txt_rect = txt_surf.get_rect()
+                if i == 0:
+                    txt_rect.center = toggle_rect.center
+                else:
+                    txt_rect.center = (
+                        (toggle_rect.left + 35, toggle_rect.centery)
+                        if is_on
+                        else (toggle_rect.right - 35, toggle_rect.centery)
+                    )
+                self.screen.blit(txt_surf, txt_rect)
+
+            elif i == 3:
+                # Danger button text / status
+                danger_surf = self.small_font.render(
+                    "重置進度", True, COLORS["text_highlight"]
+                )
+                danger_rect = danger_surf.get_rect(
+                    right=rect.right - 20, centery=rect.centery
+                )
+                self.screen.blit(danger_surf, danger_rect)
+
+            elif i == 4:
+                # Back button arrow
+                back_surf = self.small_font.render("Back", True, COLORS["text_dim"])
+                back_rect = back_surf.get_rect(
+                    right=rect.right - 20, centery=rect.centery
+                )
+                self.screen.blit(back_surf, back_rect)
+
+        # Draw feedback (e.g. progress reset)
+        if self.feedback_text:
+            fb_surf = self.small_font.render(
+                self.feedback_text, True, COLORS["success"]
+            )
+            fb_rect = fb_surf.get_rect(centerx=screen_w // 2, y=card_y + card_h - 40)
+            self.screen.blit(fb_surf, fb_rect)

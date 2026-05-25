@@ -34,6 +34,7 @@ class GameController:
         self.game_state: Optional[GameState] = None
         self.input_handler = InputHandler(self.config)
         self.is_paused = False
+        self.is_playtest = False
 
         # Callbacks
         self._state_callbacks: dict[str, list[Callable[..., None]]] = {
@@ -42,6 +43,7 @@ class GameController:
             "move": [],
             "undo": [],
             "reset": [],
+            "invalid_move": [],
         }
 
         # Setup input callbacks
@@ -89,8 +91,22 @@ class GameController:
         self.current_level = level
         self.game_state = GameState(level)
         self.is_paused = False
+        self.is_playtest = False
         self.input_handler.clear_input_state()
         return True
+
+    def load_level_instance(self, level: Level, is_playtest: bool = False) -> None:
+        """Directly load a Level instance (useful for level editor playtest).
+
+        Args:
+            level: Level instance to load.
+            is_playtest: Whether this is a playtest session.
+        """
+        self.current_level = level
+        self.game_state = GameState(level)
+        self.is_paused = False
+        self.is_playtest = is_playtest
+        self.input_handler.clear_input_state()
 
     def get_current_level_name(self) -> Optional[str]:
         """Get current level name.
@@ -126,6 +142,9 @@ class GameController:
                 self._handle_win()
             elif self.game_state.status == GameStateEnum.GAME_OVER:
                 self._trigger_event("game_over")
+        else:
+            if self.game_state.status == GameStateEnum.PLAYING:
+                self._trigger_event("invalid_move")
 
     def _handle_win(self) -> None:
         """Handle level completion."""
@@ -134,12 +153,14 @@ class GameController:
 
         # Update save data
         stats = self.game_state.get_stats()
-        is_record = self.save_manager.update_level_progress(
-            self.current_level.name,
-            stats["moves"],
-            stats["time_seconds"],
-            stats["pushes"],
-        )
+        is_record = False
+        if not self.is_playtest:
+            is_record = self.save_manager.update_level_progress(
+                self.current_level.name,
+                stats["moves"],
+                stats["time_seconds"],
+                stats["pushes"],
+            )
 
         # Trigger callback
         self._trigger_event("win", stats, is_record)

@@ -7,6 +7,8 @@ Color = tuple[int, int, int]
 ColorWithAlpha = tuple[int, int, int, int]
 ColorLike = Union[Color, ColorWithAlpha]
 
+APP_VERSION = "v0.6.0"
+
 
 class CellType(IntEnum):
     """Cell types in the game grid."""

@@ -64,6 +64,11 @@ class LevelEditor:
 
         self.on_save: Optional[Callable[[Level], None]] = None
         self.on_exit: Optional[Callable[[], None]] = None
+        self.on_playtest: Optional[Callable[[Level], None]] = None
+
+        self.original_grid = [row[:] for row in self.grid]
+        self.original_name = self.level_name
+        self.show_confirm_dialog = False
 
         self.status_message = ""
         self.status_timer = 0
@@ -166,7 +171,7 @@ class LevelEditor:
                 btn_w,
                 40,
                 "退出",
-                lambda: self.on_exit() if self.on_exit else None,
+                self._request_exit,
                 self.font,
                 bg_color=COLORS["error"],
             )
@@ -183,6 +188,18 @@ class LevelEditor:
                 bg_color=COLORS["success"],
             )
         )
+        self.buttons.append(
+            ModernButton(
+                right_x - (btn_w + spacing) * 2,
+                bar_y,
+                btn_w,
+                40,
+                "試玩(T)",
+                self._playtest_level,
+                self.font,
+                bg_color=COLORS["text_highlight"],
+            )
+        )
 
     def set_on_save(self, callback: Callable[[Level], None]) -> None:
         """Set callback function for when the level is saved."""
@@ -191,6 +208,10 @@ class LevelEditor:
     def set_on_exit(self, callback: Callable[[], None]) -> None:
         """Set callback function for when the editor is exited."""
         self.on_exit = callback
+
+    def set_on_playtest(self, callback: Callable[[Level], None]) -> None:
+        """Set callback function for when playtest is requested."""
+        self.on_playtest = callback
 
     def show_status(self, message: str) -> None:
         """Display a status message in the editor status bar."""
@@ -256,6 +277,22 @@ class LevelEditor:
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle Pygame events for inputs, buttons, paint, and shortcuts."""
+        # Confirmation Dialog intercept
+        if self.show_confirm_dialog:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self._check_confirm_click(event.pos):
+                    return True
+            elif event.type == pygame.KEYDOWN:
+                if event.key in [pygame.K_y, pygame.K_RETURN]:
+                    self.show_confirm_dialog = False
+                    if self.on_exit:
+                        self.on_exit()
+                    return True
+                elif event.key in [pygame.K_n, pygame.K_ESCAPE]:
+                    self.show_confirm_dialog = False
+                    return True
+            return True
+
         # 1. Handle Input Box - If active, it consumes input and BLOCKS other shortcuts
         if self.name_input.handle_event(event):
             return True
@@ -316,8 +353,9 @@ class LevelEditor:
             elif event.key == pygame.K_y or event.key == pygame.K_r:
                 self._redo()
             elif event.key == pygame.K_ESCAPE:
-                if self.on_exit:
-                    self.on_exit()
+                self._request_exit()
+            elif event.key == pygame.K_t:
+                self._playtest_level()
             elif event.key == pygame.K_c:
                 self._clear_grid()
                 self._save_state()
@@ -424,6 +462,8 @@ class LevelEditor:
         trimmed_grid = [row[:] for row in self.grid]
         level = Level(level_name, trimmed_grid)
         if self.on_save:
+            self.original_grid = trimmed_grid
+            self.original_name = level_name
             self.on_save(level)
 
     def draw(self) -> None:
@@ -476,8 +516,8 @@ class LevelEditor:
         # Rows/Cols buttons are in the sidebar; bottom bar buttons are updated here.
 
         # Update bottom bar buttons
-        # Indices 4-8 correspond to Undo, Redo, Clear, Exit, Save in _init_buttons order
-        if len(self.buttons) >= 9:
+        # Indices 4-9: Undo, Redo, Clear, PlayTest, Exit, Save
+        if len(self.buttons) >= 10:
             # Undo
             self.buttons[4].rect.y = btn_y
             self.buttons[4].rect.x = start_x
@@ -490,13 +530,17 @@ class LevelEditor:
             self.buttons[6].rect.y = btn_y
             self.buttons[6].rect.x = start_x + 230
 
-            # Exit (Right)
+            # PlayTest
             self.buttons[7].rect.y = btn_y
-            self.buttons[7].rect.x = self.screen.get_width() - 110
+            self.buttons[7].rect.x = self.screen.get_width() - 340
+
+            # Exit (Right)
+            self.buttons[8].rect.y = btn_y
+            self.buttons[8].rect.x = self.screen.get_width() - 110
 
             # Save (Right next to Exit)
-            self.buttons[8].rect.y = btn_y
-            self.buttons[8].rect.x = self.screen.get_width() - 225
+            self.buttons[9].rect.y = btn_y
+            self.buttons[9].rect.x = self.screen.get_width() - 225
 
         for btn in self.buttons:
             btn.draw(self.screen)
@@ -505,6 +549,9 @@ class LevelEditor:
         if self.status_timer > 0:
             self.status_timer -= 1
             self._draw_status()
+
+        if self.show_confirm_dialog:
+            self._draw_confirm_dialog()
 
     def _draw_tool_selector(self) -> None:
         """Draw the sidebar tool selector showing available grid elements."""
@@ -661,6 +708,7 @@ class LevelEditor:
             "Z：撤銷 | Y / R：重做",
             "Ctrl + S：儲存關卡",
             "C：清空地圖",
+            "T：試玩關卡",
             "Esc：離開編輯器",
         ]
 
@@ -668,3 +716,118 @@ class LevelEditor:
             surf = self.small_font.render(hint, True, COLORS["text_dim"])
             self.screen.blit(surf, (20, y))
             y += 20
+
+    def is_dirty(self) -> bool:
+        """Check if there are unsaved modifications in grid or level name."""
+        if self.name_input.text.strip() != self.original_name:
+            return True
+        return self.grid != self.original_grid
+
+    def _request_exit(self) -> None:
+        """Request editor exit, triggering confirmation dialog if dirty."""
+        if self.is_dirty():
+            self.show_confirm_dialog = True
+        else:
+            if self.on_exit:
+                self.on_exit()
+
+    def _playtest_level(self) -> None:
+        """Validate grid layout and request a playtest session."""
+        has_player = any(CellType.PLAYER in row for row in self.grid)
+        if not has_player:
+            self.show_status("錯誤: 必須放置玩家!")
+            return
+
+        box_count = sum(row.count(CellType.BOX) for row in self.grid)
+        target_count = sum(row.count(CellType.TARGET) for row in self.grid)
+
+        if box_count == 0:
+            self.show_status("錯誤: 至少需要一個箱子!")
+            return
+        if box_count != target_count:
+            self.show_status(
+                f"無法試玩: 箱子({box_count})與目標({target_count})數量必須相同!"
+            )
+            return
+
+        level_name = self.name_input.text.strip() or "Play Test"
+        trimmed_grid = [row[:] for row in self.grid]
+        level = Level(level_name, trimmed_grid)
+        if self.on_playtest:
+            self.on_playtest(level)
+
+    def _draw_confirm_dialog(self) -> None:
+        """Draw a beautiful confirmation overlay dialog."""
+        # 1. Full-screen dark semi-transparent overlay
+        overlay = pygame.Surface(
+            (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 160))
+        self.screen.blit(overlay, (0, 0))
+
+        # 2. Dialog box dimensions
+        dialog_w = 400
+        dialog_h = 180
+        dialog_x = (self.screen.get_width() - dialog_w) // 2
+        dialog_y = (self.screen.get_height() - dialog_h) // 2
+
+        # 3. Draw dialog panel
+        dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_w, dialog_h)
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], dialog_rect, border_radius=12)
+        pygame.draw.rect(
+            self.screen, COLORS["grid_lines"], dialog_rect, 2, border_radius=12
+        )
+
+        # 4. Draw warning title / message
+        if self.font and self.small_font:
+            # Title
+            title_text = self.font.render("防呆警告", True, COLORS["error"])
+            self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
+
+            # Body text
+            msg_text = self.small_font.render(
+                "地圖有未儲存的變更，確定要退出嗎？", True, COLORS["text_main"]
+            )
+            self.screen.blit(msg_text, (dialog_x + 30, dialog_y + 65))
+
+        # 5. Draw buttons
+        self.confirm_yes_rect = pygame.Rect(dialog_x + 40, dialog_y + 110, 140, 36)
+        self.confirm_no_rect = pygame.Rect(dialog_x + 220, dialog_y + 110, 140, 36)
+
+        # Draw "Yes" Button
+        pygame.draw.rect(
+            self.screen, COLORS["error"], self.confirm_yes_rect, border_radius=6
+        )
+        # Draw "No" Button
+        pygame.draw.rect(
+            self.screen, COLORS["button_default"], self.confirm_no_rect, border_radius=6
+        )
+
+        # Draw button labels
+        if self.font:
+            yes_lbl = self.font.render("確定退出 (Y)", True, COLORS["background"])
+            no_lbl = self.font.render("留在編輯 (N)", True, COLORS["text_main"])
+            self.screen.blit(
+                yes_lbl, yes_lbl.get_rect(center=self.confirm_yes_rect.center)
+            )
+            self.screen.blit(
+                no_lbl, no_lbl.get_rect(center=self.confirm_no_rect.center)
+            )
+
+    def _check_confirm_click(self, pos: tuple[int, int]) -> bool:
+        """Check clicks inside the confirmation dialog."""
+        if not self.show_confirm_dialog:
+            return False
+
+        yes_rect = getattr(self, "confirm_yes_rect", None)
+        no_rect = getattr(self, "confirm_no_rect", None)
+
+        if yes_rect and yes_rect.collidepoint(pos):
+            self.show_confirm_dialog = False
+            if self.on_exit:
+                self.on_exit()
+            return True
+        elif no_rect and no_rect.collidepoint(pos):
+            self.show_confirm_dialog = False
+            return True
+        return False
