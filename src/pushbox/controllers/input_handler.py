@@ -38,6 +38,7 @@ class InputHandler:
         "editor": [pygame.K_e],
         "help": [pygame.K_h, pygame.K_F1],
         "settings": [pygame.K_F2],
+        "hint": [pygame.K_i],
     }
 
     def __init__(self, config: Config) -> None:
@@ -63,6 +64,7 @@ class InputHandler:
             "editor": [],
             "help": [],
             "settings": [],
+            "hint": [],
         }
 
     def register_callback(self, action: str, callback: Callable[..., None]) -> None:

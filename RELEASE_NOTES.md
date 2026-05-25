@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.8.0 (Unreleased) - Onboarding Level & Path Solver (2026-05-26)
+
+### Phase 1: Onboarding 互動引導關卡 [已完成]
+* **教學專用 Level 0**：新增了一個獨立、符合 `5x7` 尺寸規範的極簡 Onboarding 關卡。
+* **物理隔離設計**：`Level 0` 不會列入正式的 30 關進度與 `LevelSelector` 一般卡片中，亦不在主選單完成數中統計，為教學專屬的 tutorial-only設計。
+* **無縫直退通關流程**：在玩家完成 `Level 0` 時，不彈出勝利 overlay 與煙火，不更新本地 progress.json，而是直接將 `show_tutorial` 設為 `False` 並以淡出轉場回到主選單。
+* **HUD 動態教學提示橫幅**：在 `Level 0` 遊玩時，於畫面頂端渲染圓角半透明、帶有高亮主色調的教學提示橫幅，動態辨識步數與玩家-箱子相鄰位置給予極致的互動指引。
+* **高品質 QA 通過**：新增 `test_onboarding.py` 全面驗證教學導引與隔離性。 pytest、ruff lint/format、mypy 全數通過！
+
+### Phase 2: Solver 最短行動路徑核心 [已完成]
+* **求解器純邏輯模組 (`solver.py`)**：新增獨立、不依賴 Pygame 畫面的 BFS 求解器。藉由將關卡狀態封裝成 `(player_pos, box_positions_frozenset)` 進行極速的廣度優先搜尋。
+* **定義 Shortest Action Path**：明確採用「最少玩家單步移動數」的 BFS 行動路徑解，而不是宣稱最少推箱數的最優 Sokoban 解，完美契合玩家的提示指引需求。
+* **安全保守剪枝 (Corner Deadlock Pruning)**：針對被推動後的箱子，若非處於目標點且落在兩垂直方向均靠牆的死角中，自動進行狀態剪枝，極大提升搜尋速度且絕對不會誤殺正解。
+* **搜尋節點限制常數**：定義 `MAX_SOLVER_NODES = 50,000` 模組級常數，搜尋走訪節點數超限時優雅回傳 `SolverStatus.NODE_LIMIT_EXCEEDED`，避免記憶體溢出或程式無回應。
+* **完整的單元測試與驗證**：新增 `test_solver.py` 自動化測試。包含 Level 0 求解、5x5 單箱地圖求解、無解地圖檢驗、超時限制測試、BOX_ON_TARGET 預置相容性，以及 **Replay 驗證 Helper**（完整還原移動步驟至 GameState 複本上，確保通關狀態 WON 且地圖未受污染）。
+### Phase 3: Hint UI & I 鍵提示 [已完成]
+* **I 鍵智慧求解提示**：遊戲中按 `I` 鍵即可異步呼叫 BFS 求解器，實時解算當前盤面的 Shortest Action Path，為卡關玩家提供最優單步指引。
+* **高亮發光與呼吸脈衝**：使用 `math.sin` 與當前 ticks 設計高質感脈衝呼吸燈。提示時在第一步目標格渲染圓角高亮呼吸外框，並以半透明粗引導線渲染前 3 步行動路徑。與動態縮放格線和 offset 完美對齊。
+* **視覺高度統一的玻璃提示橫幅**：在 stats HUD 下方，採用與 Onboarding 一致的半透明玻璃微光面板，動態印出當前盤面状态提示（Moves>0：高亮方向引導；無解：建議撤銷/重設；超限：局面較複雜提示），1.5 秒自動淡出消失。
+* **物理隔離與安全阻斷**：
+  * **Onboarding 隔離**：教學關 Level 0 遊玩時，💡 提示 HUD 按鈕會自動隱形，且 `I` 鍵觸發被攔截，防止教學與提示系統衝突。
+  * **行動清理**：一旦玩家移動、撤銷 (Undo)、重寫或重置 (Reset)，已顯示的提示路徑和 banner 會瞬間乾淨清除，防過期提示造成誤導。
+  * **狀態優先權阻斷**：在 win overlay, deadlock overlay, pause overlay, help overlay 處於開啟狀態時，`I` 鍵觸發被完美阻斷，杜絕 UI 衝突。
+* **新增專屬整合測試**：新增 `test_hint_ui.py`。全面覆蓋 SOLVED 狀態 timer、移動/撤銷/重置清理 hint、Help/Pause 覆蓋阻斷、Level 0 攔截及各類 solver 狀態的 UI 提示文案映射，100% 測試覆蓋率！
+
+---
+
 ## v0.5.0 - Expanded Levels and Selector Metadata (2026-05-17)
 
 This release significantly expands the default gameplay content, enhances UI typography and feedback, introduces strictly typed default level metadata, and resolves a layout regression on completed level selector cards.

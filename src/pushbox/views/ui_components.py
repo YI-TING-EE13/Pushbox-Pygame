@@ -76,7 +76,7 @@ class ModernButton:
         body_rect.y += offset_y
 
         if self.is_locked:
-            color = (30, 32, 38)
+            color: ColorLike = (30, 32, 38)
         else:
             color = (
                 self.hover_color if (self.hovered or self.selected) else self.bg_color
@@ -104,7 +104,7 @@ class ModernButton:
 
                 if self.is_locked:
                     sub_text = "未解鎖"
-                    sub_color = (100, 100, 105)
+                    sub_color: ColorLike = (100, 100, 105)
                 else:
                     diff = self.metadata.get("difficulty", "")
                     boxes = self.metadata.get("boxes", 0)

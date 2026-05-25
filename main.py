@@ -18,6 +18,7 @@ from typing import Any
 import pygame
 
 from src.pushbox.controllers.game_controller import GameController
+from src.pushbox.models.solver import SolverStatus, solve
 from src.pushbox.utils.constants import COLORS
 from src.pushbox.utils.constants import GameState as GameStateEnum
 from src.pushbox.views.level_editor import LevelEditor
@@ -65,7 +66,8 @@ class GameApp:
 
         # Game state
         if self.controller.config.get_bool("show_tutorial", True):
-            self.current_screen = "tutorial"
+            self.current_screen = "game"
+            self.controller.load_level("Level 0")
         else:
             self.current_screen = "menu"
         self.show_help = False
@@ -104,8 +106,8 @@ class GameApp:
         btn_w = 100
         btn_h = 36
 
-        # Calculate positions to be centered
-        total_w = btn_w * 3 + 40  # 20px spacing
+        # Calculate positions to be centered (4 buttons with 20px spacing)
+        total_w = btn_w * 4 + 60
         start_x = (self.width - total_w) // 2
 
         self.btn_undo = ModernButton(
@@ -142,7 +144,23 @@ class GameApp:
             bg_color=COLORS["button_default"],
         )
 
-        self.game_buttons = [self.btn_undo, self.btn_reset, self.btn_redo]
+        self.btn_hint = ModernButton(
+            start_x + (btn_w + 20) * 3,
+            btn_y,
+            btn_w,
+            btn_h,
+            "💡 提示 (I)",
+            self._trigger_hint,
+            font,
+            bg_color=COLORS["button_default"],
+        )
+
+        self.game_buttons = [
+            self.btn_undo,
+            self.btn_reset,
+            self.btn_redo,
+            self.btn_hint,
+        ]
 
     def _setup_callbacks(self) -> None:
         """Setup game controller callbacks."""
@@ -153,6 +171,62 @@ class GameApp:
         self.controller.register_callback("undo", self._on_undo)
         self.controller.register_callback("redo", self._on_redo)
         self.settings.set_on_back(self._back_to_menu)
+
+        # Register hint input and state clearing callbacks
+        self.controller.input_handler.register_callback("hint", self._trigger_hint)
+        self.controller.register_callback("move", self._clear_hint)
+        self.controller.register_callback("undo", self._clear_hint)
+        self.controller.register_callback("redo", self._clear_hint)
+        self.controller.register_callback("reset", self._clear_hint)
+
+    def _clear_hint(self, *args: Any, **kwargs: Any) -> None:
+        """Clear active solver hint path and message from renderer."""
+        self.renderer.hint_path = []
+        self.renderer.hint_message = None
+        self.renderer.hint_end_time = 0
+
+    def _trigger_hint(self) -> None:
+        """Trigger BFS path solver for the current level state and cache results."""
+        # 1. Overlay state checks (Do not trigger hint if win,
+        # deadlock, pause, or help is open)
+        if self.current_screen != "game" or self.show_help or self.controller.is_paused:
+            return
+
+        if not self.controller.game_state:
+            return
+
+        if self.controller.game_state.status != GameStateEnum.PLAYING:
+            return
+
+        # 2. Block hint in onboarding Level 0 to prevent UX confusion
+        if self.controller.get_current_level_name() == "Level 0":
+            return
+
+        # Run the BFS path solver on the current level representation
+        res = solve(self.controller.current_level)
+
+        # Set 1.5 seconds visibility ticks in Pygame Renderer
+        current_ticks = pygame.time.get_ticks()
+        self.renderer.hint_end_time = current_ticks + 1500
+
+        if res.status == SolverStatus.SOLVED:
+            if res.path:
+                self.renderer.hint_path = res.path[:3]
+                self.renderer.hint_message = "提示：請沿著高亮方向移動"
+            else:
+                self.renderer.hint_path = []
+                self.renderer.hint_message = "目前已在完成狀態"
+        elif res.status == SolverStatus.NODE_LIMIT_EXCEEDED:
+            self.renderer.hint_path = []
+            self.renderer.hint_message = "此局面較複雜，暫時找不到可靠提示。"
+        elif res.status == SolverStatus.UNSOLVED:
+            self.renderer.hint_path = []
+            self.renderer.hint_message = (
+                "目前局面可能無法完成，建議按 Z 撤銷或 F5 重置。"
+            )
+        elif res.status == SolverStatus.INVALID_LEVEL:
+            self.renderer.hint_path = []
+            self.renderer.hint_message = "目前關卡資料無法產生提示。"
 
     def _setup_menu(self) -> None:
         """Setup main menu."""
@@ -178,7 +252,8 @@ class GameApp:
 
     def _start_game(self) -> None:
         """Start the game with current level."""
-        if not self.controller.get_current_level_name():
+        current = self.controller.get_current_level_name()
+        if not current or current == "Level 0":
             levels = self.controller.get_available_levels()
             if levels:
                 self.controller.load_level(levels[0])
@@ -472,6 +547,18 @@ class GameApp:
         self.renderer.update_animations()
         if self.control_feedback_timer > 0:
             self.control_feedback_timer -= 1
+
+        # Check Level 0 completion direct-exit flow
+        if (
+            self.current_screen == "game"
+            and self.controller.get_current_level_name() == "Level 0"
+            and self.controller.game_state
+            and self.controller.game_state.status == GameStateEnum.WON
+            and self.transition_state == "none"
+        ):
+            self.controller.config.set("show_tutorial", False)
+            self._back_to_menu()
+            return
 
         # Attract Mode Background Update
         if self.current_screen == "menu":
@@ -768,6 +855,11 @@ class GameApp:
             else:
                 # Draw ModernButtons
                 for btn in self.game_buttons:
+                    if (
+                        self.controller.get_current_level_name() == "Level 0"
+                        and btn == self.btn_hint
+                    ):
+                        continue
                     btn.draw(self.screen)
 
     def run(self) -> None:

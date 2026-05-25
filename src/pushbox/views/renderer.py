@@ -247,6 +247,11 @@ class Renderer:
         self.shake_offset_x = 0
         self.shake_offset_y = 0
 
+        # Solver Hint state
+        self.hint_path: list[tuple[int, int]] = []
+        self.hint_message: Optional[str] = None
+        self.hint_end_time: int = 0
+
         if Renderer.PLAYER_IMAGE is None:
             self._load_resources()
 
@@ -439,6 +444,93 @@ class Renderer:
         # Draw Animations on top
         for anim in self.animations:
             anim.render(self.screen, offset_x, offset_y, cell_size)
+
+        # Draw Solver Hint Path on top of animations
+        current_ticks = pygame.time.get_ticks()
+        if (
+            hasattr(self, "hint_end_time")
+            and current_ticks < self.hint_end_time
+            and getattr(self, "hint_path", None)
+        ):
+            self._draw_hint_path(level, offset_x, offset_y, cell_size, current_ticks)
+
+    def _draw_hint_path(
+        self,
+        level: Any,
+        offset_x: int,
+        offset_y: int,
+        cell_size: int,
+        current_ticks: int,
+    ) -> None:
+        """Draw a beautiful semi-transparent hint path on the game board."""
+        player_pos = level.get_player_position()
+        if not player_pos:
+            return
+
+        import math
+
+        pr, pc = player_pos
+        points = [(pr, pc)]
+        for dr, dc in self.hint_path:
+            nr, nc = points[-1][0] + dr, points[-1][1] + dc
+            points.append((nr, nc))
+
+        # 1. Draw glowing highlight pulse for the next immediate step (points[1])
+        if len(points) >= 2:
+            tr, tc = points[1]
+            tx = offset_x + tc * cell_size
+            ty = offset_y + tr * cell_size
+
+            pulse = (math.sin(current_ticks * 0.008) + 1) / 2.0  # 0.0 to 1.0
+            alpha = int(80 + pulse * 100)  # 80 to 180
+
+            surf = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+            highlight_color = COLORS["text_highlight"]
+
+            # Light fill
+            pygame.draw.rect(
+                surf,
+                (*highlight_color[:3], alpha // 2),
+                (2, 2, cell_size - 4, cell_size - 4),
+                border_radius=8,
+            )
+            # Outer border pulsing
+            pygame.draw.rect(
+                surf,
+                (*highlight_color[:3], alpha),
+                (0, 0, cell_size, cell_size),
+                3,
+                border_radius=8,
+            )
+            self.screen.blit(surf, (tx, ty))
+
+        # 2. Draw lines connecting the path steps
+        if len(points) >= 2:
+            line_surf = pygame.Surface(
+                (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
+            )
+            highlight_color = COLORS["text_highlight"]
+
+            for i in range(len(points) - 1):
+                r1, c1 = points[i]
+                r2, c2 = points[i + 1]
+
+                x1 = offset_x + int((c1 + 0.5) * cell_size)
+                y1 = offset_y + int((r1 + 0.5) * cell_size)
+                x2 = offset_x + int((c2 + 0.5) * cell_size)
+                y2 = offset_y + int((r2 + 0.5) * cell_size)
+
+                # Draw bold semi-transparent line
+                pygame.draw.line(
+                    line_surf, (*highlight_color[:3], 150), (x1, y1), (x2, y2), 5
+                )
+                # Draw small circles at intermediate nodes
+                if i > 0:
+                    pygame.draw.circle(
+                        line_surf, (*highlight_color[:3], 200), (x1, y1), 6
+                    )
+
+            self.screen.blit(line_surf, (0, 0))
 
     def _draw_floor(
         self, x: int, y: int, is_light: bool, cell_size: int = CELL_SIZE
@@ -701,6 +793,95 @@ class Renderer:
                     midright=(help_rect.left - 30, bar_height // 2)
                 )
                 self.screen.blit(scheme_surf, scheme_rect)
+
+            # Onboarding Level 0 instruction rendering
+            if game_state.level.name == "Level 0":
+                from src.pushbox.utils.constants import CellType
+
+                moves = stats.get("moves", 0)
+                is_complete = game_state.level.is_complete()
+
+                # Find player and box positions
+                player_pos = game_state.level.get_player_position()
+                box_positions = []
+                for r in range(game_state.level.rows):
+                    for c in range(game_state.level.cols):
+                        if game_state.level.get_cell(r, c) == CellType.BOX:
+                            box_positions.append((r, c))
+
+                # Determine instruction text
+                if is_complete:
+                    tip_text = "提示：目標點變為綠色，通關！"
+                elif moves == 0:
+                    tip_text = "提示：按 WASD 或方向鍵進行移動"
+                else:
+                    # Check adjacency
+                    is_adjacent = False
+                    if player_pos:
+                        pr, pc = player_pos
+                        for br, bc in box_positions:
+                            if abs(pr - br) + abs(pc - bc) == 1:
+                                is_adjacent = True
+                                break
+                    if is_adjacent:
+                        tip_text = "提示：走到箱子旁，繼續向前推動它"
+                    else:
+                        tip_text = "提示：走到箱子旁，將它推向紅色的目標點"
+
+                # Render tip banner
+                text_surf = font.render(tip_text, True, COLORS["text_highlight"])
+                bg_w = text_surf.get_width() + 40
+                bg_h = 36
+                bg_rect = pygame.Rect(
+                    (self.screen.get_width() - bg_w) // 2, bar_height + 15, bg_w, bg_h
+                )
+
+                # Semi-transparent panel
+                surf = pygame.Surface((bg_w, bg_h), pygame.SRCALPHA)
+                pygame.draw.rect(
+                    surf,
+                    (*COLORS["panel_bg"][:3], 230),
+                    (0, 0, bg_w, bg_h),
+                    border_radius=8,
+                )
+                pygame.draw.rect(
+                    surf, COLORS["grid_lines"], (0, 0, bg_w, bg_h), 1, border_radius=8
+                )
+                text_rect = text_surf.get_rect(center=(bg_w // 2, bg_h // 2))
+                surf.blit(text_surf, text_rect)
+
+                self.screen.blit(surf, bg_rect)
+
+        # Draw Solver Hint Message Banner (Unified UI Language)
+        current_ticks = pygame.time.get_ticks()
+        if (
+            hasattr(self, "hint_end_time")
+            and current_ticks < self.hint_end_time
+            and self.hint_message is not None
+            and self.font
+        ):
+            tip_text = self.hint_message
+            text_surf = self.font.render(tip_text, True, COLORS["text_highlight"])
+            bg_w = text_surf.get_width() + 40
+            bg_h = 36
+            bg_rect = pygame.Rect(
+                (self.screen.get_width() - bg_w) // 2, bar_height + 15, bg_w, bg_h
+            )
+
+            surf = pygame.Surface((bg_w, bg_h), pygame.SRCALPHA)
+            pygame.draw.rect(
+                surf,
+                (*COLORS["panel_bg"][:3], 230),
+                (0, 0, bg_w, bg_h),
+                border_radius=8,
+            )
+            pygame.draw.rect(
+                surf, COLORS["grid_lines"], (0, 0, bg_w, bg_h), 1, border_radius=8
+            )
+            text_rect = text_surf.get_rect(center=(bg_w // 2, bg_h // 2))
+            surf.blit(text_surf, text_rect)
+
+            self.screen.blit(surf, bg_rect)
 
         if show_help and self.font:
             self._render_help_overlay()

@@ -20,6 +20,22 @@ uv run ruff format --check .
 uv run mypy src/
 ```
 
+### Solver Core Automated Tests (v0.8.0 Phase 2)
+
+The pathfinding solver core (`src/pushbox/models/solver.py`) is covered by comprehensive unit tests inside [test_solver.py](file:///C:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox/tests/test_solver.py). These tests validate the solver logic independently of Pygame rendering:
+
+- **Level 0 Solvability**: Verifies that the onboarding tutorial-only Level 0 returns a successful `SolverStatus.SOLVED` and a valid action path.
+- **Shortest Action Path Replay**: Uses a test helper to copy a level, replay the actions step-by-step on `GameState`, and assert that the level completes successfully (victory/won state).
+- **Corner Deadlock Pruning**: Checks that a box pushed to a non-target dead-corner is immediately pruned to optimize BFS without dropping correct paths.
+- **Search Constraints**: Limits the maximum searched nodes using `max_nodes` to verify `SolverStatus.NODE_LIMIT_EXCEEDED` is returned rather than hanging.
+- **State Integrity**: Ensures that the solver execution does not mutate the original `Level` grid or state.
+- **Layout Safety**: Confirms layouts containing pre-placed boxes on targets (`BOX_ON_TARGET`) parse and solve correctly.
+
+Run these tests specifically using:
+```bash
+uv run python -m pytest tests/test_solver.py -v
+```
+
 ## 2. Manual Smoke Test
 
 > [!NOTE]
@@ -64,6 +80,38 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 1. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
 2. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
 3. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
+
+### Solver Hint UI Flow (v0.8.0 Phase 3)
+1. **Triggering Hint via Button**: Start a default game (e.g. `Level 1`). Locate the `"💡 提示 (I)"` HUD button at the bottom of the screen.
+   - Click the button. Confirm that a high-contrast highlighted text banner `"提示：請沿著高亮方向移動"` fades in at the top (below stats bar) and that **a beautiful pulsing/glowing border appears around the cell for the first step** and **a semi-transparent highlighted guide line is drawn for the first 3 steps of the path**.
+2. **Triggering Hint via Key**: Press the `I` key. Confirm that the exact same glowing path, pulsed border, and instruction text are rendered instantly.
+3. **Pulsing Highlight and Guide Line**: Verify the guide line follows the center of grid cells, respects dynamic cell sizing, and aligns correctly after window resizing.
+4. **Auto Fade Out**: Confirm that the hint path, pulsed target border, and text banner **automatically disappear after 1.5 seconds**.
+5. **Action Clearing**: Press `I` to show the path, then make a move, undo (`Z`), or reset (`F5`). Verify the hint path and text banner **disappear instantly**, preventing outdated instructions.
+6. **Overlay Blocks**: Try pressing `I` when help (`H`), pause (`Esc`), win, or deadlock screen is open. Confirm no hints are triggered.
+7. **Onboarding Level 0 Exclusivity**: Play Level 0. Look at the HUD buttons: the `"💡 提示 (I)"` button must be **completely hidden** and pressing `I` key must do nothing.
+8. **Solver Status Wording Check**:
+   - **SOLVED with empty path**: Confirm it prints `"目前已在完成狀態"`.
+   - **UNSOLVED**: Push a box to an unsolvable non-target dead corner. Press `I`. Confirm it displays `"目前局面可能無法完成，建議按 Z 撤銷或 F5 重置。"` instead of "no solution".
+   - **NODE_LIMIT_EXCEEDED**: Confirm it displays `"此局面較複雜，暫時找不到可靠提示。"`.
+
+### Onboarding (Level 0) Tutorial-Only Flow
+1. **Reset to Tutorial State**: Delete the `data/config.json` file if it exists, or edit it to set `"show_tutorial": true`.
+2. **Startup Redirect**: Launch the game (`uv run python main.py`). Verify that the game **directly boots into gameplay showing "Level 0"**, completely skipping the main menu and static tutorial card.
+3. **Instruction Banner display**: Confirm that a high-contrast highlighted text banner (e.g. `"提示：按 WASD 或方向鍵進行移動"`) is beautifully centered inside a rounded semi-transparent window at the top of the gameplay board.
+4. **Adjacency detection & feedback**:
+   - Move the player at least one step. Verify that the top instruction updates to `"提示：走到箱子旁，將它推向紅色的目標點"`.
+   - Walk next to the box. Verify that the instruction instantly switches to `"提示：走到箱子旁，繼續向前推動它"`.
+5. **No Win Overlay & Direct-Exit**: Push the box onto the target to solve the puzzle.
+   - Verify that **no win fireworks animation** is played.
+   - Verify that **no stats overlay card** (MISSION COMPLETE) appears.
+   - Confirm that the game **immediately and smoothly fades out and exits back to the Main Menu**.
+6. **Persistence & Exclusivity Verification**:
+   - Check the Main Menu: The completion indicator must show `★ 0 / 30 關` (Level 0 is ignored from progress).
+   - Check the level select: Go to "選擇關卡" and confirm that `Level 0` is **completely invisible** on any card page.
+   - Restart the game: Verify it boots straight to the Main Menu now (and `show_tutorial` config was correctly written to `false`).
+   - Click "開始遊戲": Verify it successfully loads `Level 1` instead.
+   - Click "教學說明": Verify it opens the static `TutorialScreen` card overlay for review as normal.
 
 ### Pause Screen Overlay
 1. **Triggering Pause**: Start a game, then press `Esc` or `P` during standard gameplay. Verify the yellow "暫停" card appears and the background game board is dimmed behind the semi-transparent overlay.

@@ -168,7 +168,7 @@ class GameController:
         # Update save data
         stats = self.game_state.get_stats()
         is_record = False
-        if not self.is_playtest:
+        if not self.is_playtest and self.current_level.name != "Level 0":
             is_record = self.save_manager.update_level_progress(
                 self.current_level.name,
                 stats["moves"],

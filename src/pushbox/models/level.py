@@ -143,6 +143,16 @@ class LevelManager:
 
     def _load_default_levels(self) -> None:
         """Load default built-in levels."""
+        # Load Onboarding Level 0 (5x7)
+        level_0_grid = [
+            [1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 4, 0, 0, 3, 2, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1],
+        ]
+        self.levels["Level 0"] = Level("Level 0", level_0_grid)
+
         for name, grid in DEFAULT_LEVELS.items():
             self.levels[name] = Level(name, grid)
 
@@ -177,7 +187,7 @@ class LevelManager:
         Returns:
             List of level names.
         """
-        return list(self.levels.keys())
+        return [name for name in self.levels.keys() if name != "Level 0"]
 
     def save_level(self, level: Level) -> None:
         """Save a custom level.
