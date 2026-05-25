@@ -83,6 +83,13 @@ class GameApp:
         self._setup_callbacks()
         self._setup_menu()
 
+        # Attract Mode Background State
+        self.attract_game_state = None
+        self.attract_path = [(0, -1), (0, 1), (-1, 0), (1, 0), (0, 1), (-1, 0), (-1, 0)]
+        self.attract_index = 0
+        self.attract_timer = 0.0
+        self.attract_reset_timer = 0.0
+
     def _init_game_buttons(self) -> None:
         """Initialize in-game control buttons."""
         font = pygame.font.SysFont("microsoftyahei", 20)
@@ -141,6 +148,7 @@ class GameApp:
         self.controller.register_callback("win", self._on_win)
         self.controller.register_callback("game_over", self._on_game_over)
         self.controller.register_callback("invalid_move", self._on_invalid_move)
+        self.controller.register_callback("box_on_target", self._on_box_on_target)
         self.settings.set_on_back(self._back_to_menu)
 
     def _setup_menu(self) -> None:
@@ -462,6 +470,10 @@ class GameApp:
         if self.control_feedback_timer > 0:
             self.control_feedback_timer -= 1
 
+        # Attract Mode Background Update
+        if self.current_screen == "menu":
+            self._update_attract_mode()
+
         # Update screen transitions
         if self.transition_state == "fade_out":
             self.transition_alpha += self.transition_speed
@@ -511,7 +523,12 @@ class GameApp:
                 button.selected = idx == self.menu_selected_index
             current = self.controller.get_current_level_name() or "未選擇"
             progress = self.controller.save_manager.get_all_progress()
-            self.menu.draw(self.controller.get_available_levels(), current, progress)
+            self.menu.draw(
+                self.controller.get_available_levels(),
+                current,
+                progress,
+                draw_bg_callback=self._draw_attract_bg,
+            )
             self._draw_feedback()
 
         elif self.current_screen == "settings":
@@ -566,6 +583,103 @@ class GameApp:
             surf.blit(text_surface, text_rect)
 
             self.screen.blit(surf, bg_rect)
+
+    def _on_box_on_target(self, pos: tuple[int, int]) -> None:
+        """Handle box pushed onto target event for particle burst."""
+        from src.pushbox.views.renderer import TargetSparkAnimation
+
+        self.renderer.add_animation(
+            TargetSparkAnimation(pos, pygame.time.get_ticks() / 1000.0)
+        )
+
+    def _update_attract_mode(self) -> None:
+        """Update the background attract mode demo solver."""
+        if self.attract_game_state is None:
+            level = self.controller.level_manager.get_level("Level 1")
+            if level:
+                level.reset()
+                from copy import deepcopy
+
+                from src.pushbox.models.game_state import GameState
+
+                self.attract_game_state = GameState(deepcopy(level))
+                self.attract_index = 0
+                self.attract_timer = 0.0
+                self.attract_reset_timer = 0.0
+            else:
+                return
+
+        # Frame delta time (approx 1/60s per frame)
+        dt = 1.0 / self.fps
+
+        if self.attract_reset_timer > 0:
+            self.attract_reset_timer -= dt
+            if self.attract_reset_timer <= 0:
+                self.attract_game_state = None  # Force reload next frame
+        else:
+            self.attract_timer += dt
+            if self.attract_timer >= 1.2:
+                self.attract_timer = 0.0
+                if self.attract_index < len(self.attract_path):
+                    direction = self.attract_path[self.attract_index]
+
+                    # Check if pushing a box to a target for particle spawning
+                    pr, pc = self.attract_game_state.level.get_player_position() or (
+                        0,
+                        0,
+                    )
+                    dr, dc = direction
+                    box_pos = (pr + dr, pc + dc)
+                    box_dest = (pr + 2 * dr, pc + 2 * dc)
+
+                    is_push = self.attract_game_state.level.get_cell(
+                        box_pos[0], box_pos[1]
+                    ) in [3, 5]
+                    is_target = (
+                        self.attract_game_state.level.get_cell(box_dest[0], box_dest[1])
+                        == 2
+                    )
+
+                    success = self.attract_game_state.move(direction)
+
+                    if success and is_push and is_target:
+                        from src.pushbox.views.renderer import TargetSparkAnimation
+
+                        self.renderer.add_animation(
+                            TargetSparkAnimation(
+                                box_dest, pygame.time.get_ticks() / 1000.0
+                            )
+                        )
+
+                    self.attract_index += 1
+
+                    from src.pushbox.utils.constants import GameState as GameStateEnum
+
+                    if (
+                        self.attract_game_state.status == GameStateEnum.WON
+                        or self.attract_index >= len(self.attract_path)
+                    ):
+                        self.attract_reset_timer = 3.0
+                else:
+                    self.attract_reset_timer = 3.0
+
+    def _draw_attract_bg(self) -> None:
+        """Render the attract mode background board translucently."""
+        if self.attract_game_state is None:
+            return
+
+        attract_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        attract_surf.fill((0, 0, 0, 0))
+
+        orig_screen = self.renderer.screen
+        self.renderer.screen = attract_surf
+
+        # Render board center offset
+        self.renderer.render_game(self.attract_game_state, offset_y=60)
+
+        self.renderer.screen = orig_screen
+        attract_surf.set_alpha(38)
+        self.screen.blit(attract_surf, (0, 0))
 
     def _render_game(self) -> None:
         """Render the game screen."""

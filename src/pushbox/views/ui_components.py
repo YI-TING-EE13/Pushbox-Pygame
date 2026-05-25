@@ -285,12 +285,15 @@ class Menu:
         level_names: Optional[list[str]] = None,
         current_level: Optional[str] = None,
         progress: Optional[dict] = None,
+        draw_bg_callback: Optional[Callable[[], None]] = None,
     ) -> None:
         """Render the complete main menu screen, titles, and buttons."""
         self.screen.fill(COLORS["background"])
         self.time += 0.05
 
         self._draw_grid_bg()
+        if draw_bg_callback:
+            draw_bg_callback()
 
         # Recalculate center based on current screen size (for resizable window)
         center_x = self.screen.get_width() // 2

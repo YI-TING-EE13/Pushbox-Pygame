@@ -1,5 +1,6 @@
 """Game renderer using pygame."""
 
+import math
 import os
 from typing import Any, Optional
 
@@ -151,6 +152,78 @@ class WinAnimation(Animation):
                 surf = pygame.Surface((p["size"] * 2, p["size"] * 2), pygame.SRCALPHA)
                 pygame.draw.circle(surf, color, (p["size"], p["size"]), p["size"])
                 screen.blit(surf, (int(p["x"]), int(p["y"])))
+
+
+class TargetSparkAnimation(Animation):
+    """Animation for target spark explosion when a box is pushed onto a target."""
+
+    def __init__(
+        self, pos: tuple[int, int], start_time: float, duration: float = 0.25
+    ) -> None:
+        """Initialize target spark animation at a grid position (row, col)."""
+        super().__init__(duration, start_time)
+        self.pos = pos
+        self.particles: list[dict[str, Any]] = []
+        self._init_particles()
+
+    def _init_particles(self) -> None:
+        """Create explosive spark particle descriptors."""
+        import random
+
+        colors = [
+            (152, 195, 121),  # success green
+            (180, 220, 150),  # light green
+            (210, 255, 180),  # extra light green
+        ]
+        for _ in range(12):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(1.5, 4.0)
+            self.particles.append(
+                {
+                    "dx": math.cos(angle) * speed,
+                    "dy": math.sin(angle) * speed,
+                    "color": random.choice(colors),
+                    "size": random.randint(2, 5),
+                    "life": 1.0,
+                    "decay": random.uniform(0.04, 0.08),
+                }
+            )
+
+    def update(self, current_time: float) -> None:
+        """Update particle physics and decay."""
+        super().update(current_time)
+        for p in self.particles:
+            p["life"] -= p["decay"]
+
+    def render(
+        self,
+        screen: pygame.Surface,
+        offset_x: int,
+        offset_y: int,
+        cell_size: int = CELL_SIZE,
+    ) -> None:
+        row, col = self.pos
+        center_x = offset_x + int((col + 0.5) * cell_size)
+        center_y = offset_y + int((row + 0.5) * cell_size)
+
+        current_time = pygame.time.get_ticks() / 1000.0
+        progress = self.get_progress(current_time)
+
+        for p in self.particles:
+            if p["life"] > 0:
+                px = center_x + p["dx"] * progress * cell_size * 0.6
+                py = center_y + p["dy"] * progress * cell_size * 0.6
+
+                color = list(p["color"])
+                if len(color) == 3:
+                    color.append(255)
+                color[3] = int(255 * p["life"])
+
+                size = max(1, int(p["size"] * p["life"]))
+
+                surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+                pygame.draw.circle(surf, color, (size, size), size)
+                screen.blit(surf, (int(px - size), int(py - size)))
 
 
 class Renderer:

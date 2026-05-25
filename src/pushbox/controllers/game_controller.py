@@ -10,6 +10,7 @@ from ..models.level import Level, LevelManager
 from ..models.save_manager import SaveManager
 from ..utils.audio import AudioManager
 from ..utils.config import Config
+from ..utils.constants import CellType
 from ..utils.constants import GameState as GameStateEnum
 from .input_handler import InputHandler
 
@@ -44,6 +45,7 @@ class GameController:
             "undo": [],
             "reset": [],
             "invalid_move": [],
+            "box_on_target": [],
         }
 
         # Setup input callbacks
@@ -136,6 +138,17 @@ class GameController:
         success = self.game_state.move(direction)
         if success:
             self._trigger_event("move", direction)
+
+            # Check if box was pushed onto a target
+            if self.game_state.move_history:
+                last_cmd = self.game_state.move_history[-1]
+                if last_cmd.box_to:
+                    br, bc = last_cmd.box_to
+                    if (
+                        self.current_level
+                        and self.current_level.initial_grid[br, bc] == CellType.TARGET
+                    ):
+                        self._trigger_event("box_on_target", (br, bc))
 
             # Check for win/game over
             if self.game_state.status == GameStateEnum.WON:
