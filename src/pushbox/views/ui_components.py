@@ -206,8 +206,8 @@ class InputBox:
                     pygame.key.get_mods() & pygame.KMOD_CTRL
                 ):
                     # Paste from clipboard using robust fallback helper
-                    from pushbox.utils.level_share import (
-                        best_effort_get_clipboard_text,  # type: ignore
+                    from pushbox.utils.level_share import (  # type: ignore[import-untyped]
+                        best_effort_get_clipboard_text,
                     )
 
                     clipboard_text = best_effort_get_clipboard_text(self.max_length)

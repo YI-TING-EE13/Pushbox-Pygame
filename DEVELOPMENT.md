@@ -199,22 +199,22 @@ gantt
     dateFormat  YYYY-MM-DD
     section v0.6.0 (已完成)
     Settings, Transition, Adaptation   :done, 2026-05-20, 2026-05-25
-    section v0.7.0 (當前階段)
-    Editor Playtest, Shake Feedback, LockChain :active, 2026-05-26, 2026-05-31
-    section v0.8.0 (挑戰與社群)
-    Hint solver, Share Levels, Minimap Preview  : 2026-06-01, 2026-06-10
+    section v0.7.0 (已完成)
+    Editor Playtest, Shake Feedback, LockChain :done, 2026-05-26, 2026-05-31
+    section v0.8.0 (當前版本)
+    Hint solver, Share Levels, Onboarding  :active, 2026-06-01, 2026-06-10
     section v1.0.0 (正式版發布)
     PyInstaller EXE Packaging, Theme System, SFX Integration : 2026-06-11, 2026-06-20
 ```
 
-### 🎯 v0.7.0 — 交互反饋、多主題與平滑動畫 (當前版本)
+### 🎯 v0.7.0 — 交互反饋、多主題與平滑動畫
 * 實作 Level Editor「一鍵試玩 (Play Test)」與「未儲存防呆警告」。 [已完成]
 * 實作無效操作「畫面微震動（Screen Shake）」與歸位「發光粒子（Cell Particle Spark）」。 [已完成]
 * 實作預設 30 個關卡的「循序解鎖鏈」與「微縮關卡預覽 (Minimap Preview)」。 [已完成]
 * 實作「多套主題配色包 (Visual Theme Packs)」實時換色。 [已完成]
 * 實作「時光倒流插值平滑 (Smooth Undo/Redo)」100ms 短動畫。 [已完成]
 
-### 🎯 v0.8.0 — 智慧提示系統、互動教學與社群分享 (當前階段)
+### 🎯 v0.8.0 — 智慧提示系統、互動教學與社群分享 (當前版本)
 * 實作 **互動式 Onboarding 新手教學關卡**，以引導式操作取代靜態圖卡說明。 [已完成]
 * 實作 **後台 A* / BFS 最短行動路徑智慧求解引擎**，在卡關時提供 `I` 鍵提示與發光路徑。 [已完成]
 * 支援自訂關卡 `zlib-base64` 壓縮字串一鍵匯出，並加載 8 點嚴苛防禦性驗證機制支援匯入社群分享。 [已完成]
@@ -281,7 +281,7 @@ graph TD
 
 ## 六、下一步工作規劃 (Future Roadmap & Next Steps)
 
-為了從 `v0.7.0` 跨越至 `v0.8.0` 並順利進軍 `v1.0.0` 發布版本，以下是接下來的具體執行路徑與規劃：
+為了從 `v0.8.0` 順利進軍 `v1.0.0` 發布版本，以下是各階段的具體執行路徑與規劃：
 
 ### 6.1 任務 1：互動式新手引導關卡 (Onboarding Level) [已完成]
 * **目標**：用 100% 互動的操作引導，取代舊有首次啟動時強制的靜態說明圖。

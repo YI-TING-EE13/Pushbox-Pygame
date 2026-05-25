@@ -932,8 +932,8 @@ class LevelEditor:
 
             # Import a best effort copy helper
             # We defined best_effort_copy_to_clipboard inside LevelEditor as helper
-            from pushbox.utils.level_share import (
-                best_effort_copy_to_clipboard,  # type: ignore
+            from pushbox.utils.level_share import (  # type: ignore[import-untyped]
+                best_effort_copy_to_clipboard,
             )
 
             copied = best_effort_copy_to_clipboard(self.export_code)
@@ -946,8 +946,8 @@ class LevelEditor:
 
     def _copy_to_clipboard(self, text: str) -> bool:
         """Best-effort copy text to clipboard."""
-        from pushbox.utils.level_share import (
-            best_effort_copy_to_clipboard,  # type: ignore
+        from pushbox.utils.level_share import (  # type: ignore[import-untyped]
+            best_effort_copy_to_clipboard,
         )
 
         return bool(best_effort_copy_to_clipboard(text))
