@@ -36,6 +36,8 @@ config.json
 data/progress.json
 data/scores.json
 data/config.json
+data/
+levels/
 
 # Logs
 *.log

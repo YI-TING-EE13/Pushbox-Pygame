@@ -154,6 +154,7 @@ class InputBox:
         height: int,
         text: str = "",
         font: Optional[pygame.font.Font] = None,
+        max_length: int = 20,
     ) -> None:
         """Initialize text input box with positions, active colors, and initial text."""
         self.rect = pygame.Rect(x, y, width, height)
@@ -163,6 +164,7 @@ class InputBox:
         self.text = text
         self.font = font
         self.active = False
+        self.max_length = max_length
         self.txt_surface: Optional[pygame.Surface] = None
         self._render_text()
 
@@ -170,7 +172,7 @@ class InputBox:
         """Render text value or default placeholders to screen surfaces."""
         if self.font:
             # Handle empty text prompt
-            display_text = self.text if self.text else "請輸入名稱..."
+            display_text = self.text if self.text else "請輸入或貼上..."
             color = COLORS["text_main"] if self.text else COLORS["text_dim"]
             self.txt_surface = self.font.render(display_text, True, color)
 
@@ -200,6 +202,18 @@ class InputBox:
                     pygame.key.stop_text_input()
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
+                elif event.key == pygame.K_v and (
+                    pygame.key.get_mods() & pygame.KMOD_CTRL
+                ):
+                    # Paste from clipboard using robust fallback helper
+                    from pushbox.utils.level_share import (
+                        best_effort_get_clipboard_text,  # type: ignore
+                    )
+
+                    clipboard_text = best_effort_get_clipboard_text(self.max_length)
+                    if clipboard_text:
+                        if len(self.text) + len(clipboard_text) <= self.max_length:
+                            self.text += clipboard_text
                 else:
                     # Fallback for simple ASCII if TEXTINPUT not triggered
                     pass
@@ -208,7 +222,7 @@ class InputBox:
 
             elif event.type == pygame.TEXTINPUT:
                 # Handle Unicode input (Traditional Chinese, etc.)
-                if len(self.text) < 20:  # Limit length
+                if len(self.text) < self.max_length:  # Limit length
                     self.text += event.text
                 self._render_text()
                 return True  # Consume event
@@ -506,6 +520,12 @@ class LevelSelector:
         self.on_delete: Optional[Callable[[str], None]] = None
         self.selected_index = 0
 
+        # Import Level Sharing dialog state
+        self.show_import_dialog = False
+        self.import_input: Optional[InputBox] = None
+        self.import_error_message: Optional[str] = None
+        self.import_button: Optional[ModernButton] = None
+
         # Pagination fields
         self.level_names_all: list[str] = []
         self.progress_all: dict = {}
@@ -680,16 +700,35 @@ class LevelSelector:
             if self.on_back_cb:
                 self.on_back_cb()
 
+        center_x = self.screen.get_width() // 2
+        btn_y = self.screen.get_height() - 80
+        btn_w = 135
+        btn_h = 46
+
         self.back_button = ModernButton(
-            (self.screen.get_width() - 140) // 2,
-            self.screen.get_height() - 80,
-            140,
-            50,
+            center_x - 145,
+            btn_y,
+            btn_w,
+            btn_h,
             "返回",
             handle_back,
             self.font,
             bg_color=(60, 40, 40),
             hover_color=(80, 50, 50),
+        )
+
+        def handle_click_import() -> None:
+            self._on_import_button_click()
+
+        self.import_button = ModernButton(
+            center_x + 10,
+            btn_y,
+            btn_w,
+            btn_h,
+            "匯入關卡",
+            handle_click_import,
+            self.font,
+            bg_color=COLORS["text_highlight"],
         )
 
         # Page navigation buttons layout anchored relative to screen height
@@ -743,6 +782,23 @@ class LevelSelector:
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Process keyboard arrow navigation, boundary page flips, and mouse clicks."""
+        # Import Dialog intercept
+        if self.show_import_dialog:
+            if self.import_input and self.import_input.handle_event(event):
+                return True
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self._check_import_dialog_click(event.pos):
+                    return True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.show_import_dialog = False
+                    return True
+                elif event.key == pygame.K_RETURN:
+                    if self.import_input:
+                        self._import_level(self.import_input.text)
+                    return True
+            return True
+
         if event.type == pygame.MOUSEMOTION:
             for idx, (button, _, _) in enumerate(self.level_buttons):
                 if button.rect.collidepoint(event.pos):
@@ -841,6 +897,8 @@ class LevelSelector:
             if button.handle_event(event):
                 return True
         if self.back_button and self.back_button.handle_event(event):
+            return True
+        if self.import_button and self.import_button.handle_event(event):
             return True
         return False
 
@@ -1027,9 +1085,14 @@ class LevelSelector:
         """Render level selector grids, titles, pagination, and record stars."""
         self.screen.fill(COLORS["background"])
 
+        btn_y = self.screen.get_height() - 80
+        center_x = self.screen.get_width() // 2
         if self.back_button:
-            self.back_button.rect.centerx = self.screen.get_width() // 2
-            self.back_button.rect.bottom = self.screen.get_height() - 30
+            self.back_button.rect.x = center_x - 145
+            self.back_button.rect.y = btn_y
+        if self.import_button:
+            self.import_button.rect.x = center_x + 10
+            self.import_button.rect.y = btn_y
 
         if self.title_font:
             title = self.title_font.render("選擇關卡", True, COLORS["text_main"])
@@ -1088,9 +1151,191 @@ class LevelSelector:
                 )
                 self.screen.blit(hint_surface, hint_rect)
 
-        # Draw Back Button
+        # Draw Back and Import Buttons
         if self.back_button:
             self.back_button.draw(self.screen)
+        if self.import_button:
+            self.import_button.draw(self.screen)
+
+        # Draw Import Code Dialog overlay if active
+        if self.show_import_dialog:
+            self._draw_import_dialog()
+
+    def _on_import_button_click(self) -> None:
+        """Triggered when the user clicks the Import Level button."""
+        self.show_import_dialog = True
+        self.import_error_message = None
+
+        # Instantiate InputBox for entering share code
+        dialog_w = 600
+        dialog_h = 260
+        dialog_x = (self.screen.get_width() - dialog_w) // 2
+        dialog_y = (self.screen.get_height() - dialog_h) // 2
+
+        box = InputBox(
+            dialog_x + 30,
+            dialog_y + 110,
+            dialog_w - 60,
+            36,
+            "",
+            self.font,
+            max_length=2000,
+        )
+        box.active = True
+        self.import_input = box
+        pygame.key.start_text_input()
+
+    def _import_level(self, code: str) -> None:
+        """Decode, validate, and import a custom level from PBX_ share code."""
+        from ..models.level import Level
+        from ..utils.level_share import (
+            LevelShareError,
+            deduplicate_level_name,
+            import_level_from_code,
+            sanitize_level_name,
+        )
+
+        try:
+            payload = import_level_from_code(code)
+            import_name = payload["name"]
+            grid = payload["grid"]
+
+            # Sanitization & Deduplication
+            sanitized = sanitize_level_name(import_name)
+            existing_names = self.level_manager.get_level_names()
+            final_name = deduplicate_level_name(sanitized, existing_names)
+
+            # Save level to manager
+            imported_level = Level(final_name, grid)
+            self.level_manager.save_level(imported_level)
+
+            # Success UI State
+            self.show_import_dialog = False
+            self.import_error_message = None
+
+            # Refresh level selector names list and keep selected index
+            levels = self.level_manager.get_level_names()
+
+            # Move to the page containing the newly imported level
+            try:
+                new_idx = levels.index(final_name)
+                self.current_page = new_idx // self.levels_per_page
+                self.selected_index = new_idx % self.levels_per_page
+            except ValueError:
+                self.current_page = max(0, (len(levels) - 1) // self.levels_per_page)
+                self.selected_index = 0
+
+            self.level_names_all = levels
+            self.progress_all[final_name] = {"completed": False}
+            self._layout_buttons(self.level_names_all, self.progress_all)
+
+        except LevelShareError as e:
+            self.import_error_message = str(e)
+        except Exception as e:
+            self.import_error_message = f"匯入失敗，請確認分享碼完整。({e})"
+
+    def _draw_import_dialog(self) -> None:
+        """Draw the import code entry dialog overlay."""
+        # 1. Full-screen dark semi-transparent overlay
+        overlay = pygame.Surface(
+            (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 160))
+        self.screen.blit(overlay, (0, 0))
+
+        # 2. Dialog box dimensions
+        dialog_w = 600
+        dialog_h = 260
+        dialog_x = (self.screen.get_width() - dialog_w) // 2
+        dialog_y = (self.screen.get_height() - dialog_h) // 2
+
+        # 3. Draw dialog panel
+        dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_w, dialog_h)
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], dialog_rect, border_radius=12)
+        pygame.draw.rect(
+            self.screen, COLORS["grid_lines"], dialog_rect, 2, border_radius=12
+        )
+
+        # 4. Text
+        if self.font and self.small_font:
+            title_text = self.font.render("匯入關卡", True, COLORS["text_highlight"])
+            self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
+
+            msg_text1 = self.small_font.render(
+                "請在下方框內貼上（Ctrl+V）或輸入 PBX_ 關卡分享碼：",
+                True,
+                COLORS["text_main"],
+            )
+            self.screen.blit(msg_text1, (dialog_x + 30, dialog_y + 60))
+
+            if self.import_error_message:
+                err_text = self.small_font.render(
+                    self.import_error_message, True, COLORS["error"]
+                )
+                self.screen.blit(err_text, (dialog_x + 30, dialog_y + 82))
+            else:
+                hint_text = self.small_font.render(
+                    "按下 Enter 鍵或點擊下方「確認匯入」即可載入。",
+                    True,
+                    COLORS["text_dim"],
+                )
+                self.screen.blit(hint_text, (dialog_x + 30, dialog_y + 82))
+
+        # 5. Draw input box
+        if self.import_input:
+            self.import_input.draw(self.screen)
+
+        # 6. Action buttons: "確認匯入" and "取消"
+        self.import_confirm_rect = pygame.Rect(dialog_x + 130, dialog_y + 190, 150, 36)
+        self.import_cancel_rect = pygame.Rect(dialog_x + 320, dialog_y + 190, 150, 36)
+
+        pygame.draw.rect(
+            self.screen,
+            COLORS["text_highlight"],
+            self.import_confirm_rect,
+            border_radius=6,
+        )
+        pygame.draw.rect(
+            self.screen,
+            COLORS["button_default"],
+            self.import_cancel_rect,
+            border_radius=6,
+        )
+
+        if self.font:
+            confirm_lbl = self.font.render("確認匯入", True, COLORS["background"])
+            cancel_lbl = self.font.render("取消返回", True, COLORS["text_main"])
+            self.screen.blit(
+                confirm_lbl,
+                confirm_lbl.get_rect(center=self.import_confirm_rect.center),
+            )
+            self.screen.blit(
+                cancel_lbl, cancel_lbl.get_rect(center=self.import_cancel_rect.center)
+            )
+
+    def _check_import_dialog_click(self, pos: tuple[int, int]) -> bool:
+        """Check clicks inside the import dialog."""
+        if not self.show_import_dialog:
+            return False
+
+        confirm_rect = getattr(self, "import_confirm_rect", None)
+        cancel_rect = getattr(self, "import_cancel_rect", None)
+
+        if confirm_rect and confirm_rect.collidepoint(pos):
+            if self.import_input:
+                self._import_level(self.import_input.text)
+            return True
+        elif cancel_rect and cancel_rect.collidepoint(pos):
+            self.show_import_dialog = False
+            return True
+
+        if self.import_input and self.import_input.rect.collidepoint(pos):
+            self.import_input.active = True
+            self.import_input.color = self.import_input.color_active
+            pygame.key.start_text_input()
+            return True
+
+        return False
 
 
 class SettingsScreen:

@@ -69,6 +69,9 @@ class LevelEditor:
         self.original_grid = [row[:] for row in self.grid]
         self.original_name = self.level_name
         self.show_confirm_dialog = False
+        self.show_export_dialog = False
+        self.export_code = ""
+        self.export_input: Optional[InputBox] = None
 
         self.status_message = ""
         self.status_timer = 0
@@ -122,6 +125,20 @@ class LevelEditor:
         self.buttons.append(
             ModernButton(
                 120, y_pos, 30, 30, "+", lambda: self._change_size("cols", 1), self.font
+            )
+        )
+
+        # Export Button (In Sidebar)
+        self.buttons.append(
+            ModernButton(
+                20,
+                515,
+                220,
+                36,
+                "匯出關卡 (E)",
+                self._export_level,
+                self.font,
+                bg_color=COLORS["text_highlight"],
             )
         )
 
@@ -293,6 +310,17 @@ class LevelEditor:
                     return True
             return True
 
+        # Export Dialog intercept
+        if self.show_export_dialog:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self._check_export_click(event.pos):
+                    return True
+            elif event.type == pygame.KEYDOWN:
+                if event.key in [pygame.K_ESCAPE, pygame.K_RETURN]:
+                    self.show_export_dialog = False
+                    return True
+            return True
+
         # 1. Handle Input Box - If active, it consumes input and BLOCKS other shortcuts
         if self.name_input.handle_event(event):
             return True
@@ -356,6 +384,8 @@ class LevelEditor:
                 self._request_exit()
             elif event.key == pygame.K_t:
                 self._playtest_level()
+            elif event.key == pygame.K_e:
+                self._export_level()
             elif event.key == pygame.K_c:
                 self._clear_grid()
                 self._save_state()
@@ -516,31 +546,31 @@ class LevelEditor:
         # Rows/Cols buttons are in the sidebar; bottom bar buttons are updated here.
 
         # Update bottom bar buttons
-        # Indices 4-9: Undo, Redo, Clear, PlayTest, Exit, Save
-        if len(self.buttons) >= 10:
+        # Indices 5-10: Undo, Redo, Clear, PlayTest, Exit, Save
+        if len(self.buttons) >= 11:
             # Undo
-            self.buttons[4].rect.y = btn_y
-            self.buttons[4].rect.x = start_x
+            self.buttons[5].rect.y = btn_y
+            self.buttons[5].rect.x = start_x
 
             # Redo
-            self.buttons[5].rect.y = btn_y
-            self.buttons[5].rect.x = start_x + 105
+            self.buttons[6].rect.y = btn_y
+            self.buttons[6].rect.x = start_x + 105
 
             # Clear
-            self.buttons[6].rect.y = btn_y
-            self.buttons[6].rect.x = start_x + 230
+            self.buttons[7].rect.y = btn_y
+            self.buttons[7].rect.x = start_x + 230
 
             # PlayTest
-            self.buttons[7].rect.y = btn_y
-            self.buttons[7].rect.x = self.screen.get_width() - 340
+            self.buttons[8].rect.y = btn_y
+            self.buttons[8].rect.x = self.screen.get_width() - 340
 
             # Exit (Right)
-            self.buttons[8].rect.y = btn_y
-            self.buttons[8].rect.x = self.screen.get_width() - 110
+            self.buttons[9].rect.y = btn_y
+            self.buttons[9].rect.x = self.screen.get_width() - 110
 
             # Save (Right next to Exit)
-            self.buttons[9].rect.y = btn_y
-            self.buttons[9].rect.x = self.screen.get_width() - 225
+            self.buttons[10].rect.y = btn_y
+            self.buttons[10].rect.x = self.screen.get_width() - 225
 
         for btn in self.buttons:
             btn.draw(self.screen)
@@ -552,6 +582,9 @@ class LevelEditor:
 
         if self.show_confirm_dialog:
             self._draw_confirm_dialog()
+
+        if self.show_export_dialog:
+            self._draw_export_dialog()
 
     def _draw_tool_selector(self) -> None:
         """Draw the sidebar tool selector showing available grid elements."""
@@ -687,7 +720,7 @@ class LevelEditor:
         if not self.small_font:
             return
 
-        y = 505
+        y = 565
         # Line separator
         pygame.draw.line(
             self.screen,
@@ -709,6 +742,7 @@ class LevelEditor:
             "Ctrl + S：儲存關卡",
             "C：清空地圖",
             "T：試玩關卡",
+            "E：匯出關卡",
             "Esc：離開編輯器",
         ]
 
@@ -830,4 +864,186 @@ class LevelEditor:
         elif no_rect and no_rect.collidepoint(pos):
             self.show_confirm_dialog = False
             return True
+        return False
+
+    def _export_level(self) -> None:
+        """Validate layout and export grid to PBX_ share code."""
+        has_player = any(CellType.PLAYER in row for row in self.grid)
+        if not has_player:
+            self.show_status("錯誤: 必須放置玩家!")
+            return
+
+        box_count = sum(row.count(CellType.BOX) for row in self.grid)
+        target_count = sum(row.count(CellType.TARGET) for row in self.grid)
+
+        if box_count == 0:
+            self.show_status("錯誤: 至少需要一個箱子!")
+            return
+        if box_count != target_count:
+            self.show_status(
+                f"無法匯出: 箱子({box_count})與目標({target_count})數量必須相同!"
+            )
+            return
+
+        # Perimeter wall check
+        for c in range(self.cols):
+            if (
+                self.grid[0][c] != CellType.WALL
+                or self.grid[self.rows - 1][c] != CellType.WALL
+            ):
+                self.show_status("無法匯出: 外圍邊界必須完全封閉為牆壁!")
+                return
+        for r in range(self.rows):
+            if (
+                self.grid[r][0] != CellType.WALL
+                or self.grid[r][self.cols - 1] != CellType.WALL
+            ):
+                self.show_status("無法匯出: 外圍邊界必須完全封閉為牆壁!")
+                return
+
+        level_name = self.name_input.text.strip() or "Custom Level"
+
+        from ..utils.level_share import (
+            export_level_to_code,
+        )
+
+        # Try best effort copy to clipboard
+        try:
+            self.export_code = export_level_to_code(level_name, self.grid)
+            self.show_export_dialog = True
+
+            # Instantiate input box for dialog
+            dialog_w = 600
+            dialog_h = 260
+            dialog_x = (self.screen.get_width() - dialog_w) // 2
+            dialog_y = (self.screen.get_height() - dialog_h) // 2
+            box = InputBox(
+                dialog_x + 30,
+                dialog_y + 110,
+                dialog_w - 60,
+                36,
+                self.export_code,
+                self.font,
+                max_length=2000,
+            )
+            # Disable typing active state
+            box.active = False
+            self.export_input = box
+
+            # Import a best effort copy helper
+            # We defined best_effort_copy_to_clipboard inside LevelEditor as helper
+            from pushbox.utils.level_share import (
+                best_effort_copy_to_clipboard,  # type: ignore
+            )
+
+            copied = best_effort_copy_to_clipboard(self.export_code)
+            if copied:
+                self.show_status("已複製至剪貼簿！")
+            else:
+                self.show_status("分享碼已生成，請手動複製！")
+        except Exception as e:
+            self.show_status(f"匯出失敗: {e}")
+
+    def _copy_to_clipboard(self, text: str) -> bool:
+        """Best-effort copy text to clipboard."""
+        from pushbox.utils.level_share import (
+            best_effort_copy_to_clipboard,  # type: ignore
+        )
+
+        return bool(best_effort_copy_to_clipboard(text))
+
+    def _draw_export_dialog(self) -> None:
+        """Draw the export code sharing dialog overlay."""
+        # 1. Full-screen dark semi-transparent overlay
+        overlay = pygame.Surface(
+            (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 160))
+        self.screen.blit(overlay, (0, 0))
+
+        # 2. Dialog box dimensions
+        dialog_w = 600
+        dialog_h = 260
+        dialog_x = (self.screen.get_width() - dialog_w) // 2
+        dialog_y = (self.screen.get_height() - dialog_h) // 2
+
+        # 3. Draw dialog panel
+        dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_w, dialog_h)
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], dialog_rect, border_radius=12)
+        pygame.draw.rect(
+            self.screen, COLORS["grid_lines"], dialog_rect, 2, border_radius=12
+        )
+
+        # 4. Text
+        if self.font and self.small_font:
+            title_text = self.font.render(
+                "匯出關卡分享碼", True, COLORS["text_highlight"]
+            )
+            self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
+
+            msg_text1 = self.small_font.render(
+                "分享碼已自動複製到您的剪貼簿！", True, COLORS["success"]
+            )
+            self.screen.blit(msg_text1, (dialog_x + 30, dialog_y + 60))
+
+            msg_text2 = self.small_font.render(
+                "若未成功，請點擊下方輸入框選取，或使用 Ctrl+C 手動複製：",
+                True,
+                COLORS["text_dim"],
+            )
+            self.screen.blit(msg_text2, (dialog_x + 30, dialog_y + 82))
+
+        # 5. Draw input box
+        if self.export_input:
+            self.export_input.draw(self.screen)
+
+        # 6. Action buttons: "複製分享碼" and "關閉"
+        self.export_copy_rect = pygame.Rect(dialog_x + 130, dialog_y + 190, 150, 36)
+        self.export_close_rect = pygame.Rect(dialog_x + 320, dialog_y + 190, 150, 36)
+
+        pygame.draw.rect(
+            self.screen,
+            COLORS["text_highlight"],
+            self.export_copy_rect,
+            border_radius=6,
+        )
+        pygame.draw.rect(
+            self.screen,
+            COLORS["button_default"],
+            self.export_close_rect,
+            border_radius=6,
+        )
+
+        if self.font:
+            copy_lbl = self.font.render("複製分享碼", True, COLORS["background"])
+            close_lbl = self.font.render("關閉視窗", True, COLORS["text_main"])
+            self.screen.blit(
+                copy_lbl, copy_lbl.get_rect(center=self.export_copy_rect.center)
+            )
+            self.screen.blit(
+                close_lbl, close_lbl.get_rect(center=self.export_close_rect.center)
+            )
+
+    def _check_export_click(self, pos: tuple[int, int]) -> bool:
+        """Check clicks inside the export sharing dialog."""
+        if not self.show_export_dialog:
+            return False
+
+        copy_rect = getattr(self, "export_copy_rect", None)
+        close_rect = getattr(self, "export_close_rect", None)
+
+        if copy_rect and copy_rect.collidepoint(pos):
+            self._copy_to_clipboard(self.export_code)
+            self.show_status("已複製至剪貼簿！")
+            return True
+        elif close_rect and close_rect.collidepoint(pos):
+            self.show_export_dialog = False
+            return True
+
+        if self.export_input and self.export_input.rect.collidepoint(pos):
+            self.export_input.active = True
+            self.export_input.color = self.export_input.color_active
+            pygame.key.start_text_input()
+            return True
+
         return False

@@ -208,6 +208,32 @@ The level editor allows creating and managing custom puzzles.
 6. **Saving**: Provide a name and save a valid level.
 7. **Custom Levels**: Verify the new level appears in the "選擇關卡" screen and can be played, edited, or deleted. Confirm the layout reduces the risk of custom level cards overlapping the back button.
 
+### Custom Level Share Code Export & Import (v0.8.0 Phase 4)
+1. **Valid Level Export**: Go to "自訂關卡" (Level Editor). Create a valid level (e.g. wall perimeter, exactly 1 player, at least 1 box, boxes == targets).
+   - Press `E` or click `"匯出關卡 (E)"` in the sidebar.
+   - Confirm that a beautiful dialog `"匯出關卡分享碼"` fades in showing `"分享碼已自動複製到您的剪貼簿！"` and displays a text box with the code starting with `PBX_`.
+   - Click `"複製分享碼"` in the dialog. Verify that status feedback `"已複製至剪貼簿！"` appears.
+   - Click `"關閉視窗"` or press `Esc`. Verify the dialog closes.
+2. **Invalid Level Export Validation**:
+   - Clear the editor grid, or remove the wall perimeter, or remove the player. Press `E`.
+   - Verify that an error message like `"無法匯出: 外圍邊界必須完全封閉為牆壁!"` or `"錯誤: 必須放置玩家!"` is displayed in the status bar, and no dialog is triggered.
+3. **Valid Level Import**: Go to "選擇關卡" (Level Selector). Scroll to Page 4 where custom levels are shown.
+   - Click `"匯入關卡"` button at the bottom.
+   - Confirm that a dialog `"匯入關卡"` fades in.
+   - Paste (Ctrl+V) the copied valid `PBX_` code into the input box.
+   - Click `"確認匯入"` or press `Enter`.
+   - Verify that the dialog closes successfully, and the newly imported level appears selected on the custom levels page.
+   - Select the imported card and click `"開始遊戲"` to verify it loads and plays perfectly.
+4. **Name Deduplication & Sanitization**:
+   - Paste the same code again and click `"確認匯入"`.
+   - Verify it successfully imports the level, appending ` (2)` to the name (e.g. `My Level (2)`) instead of overwriting the existing level.
+   - Create a sharing code with a malicious name like `"../../Hack"`. Import it and verify it sanitizes the name to `"Hack"`, preventing path traversal.
+5. **Import Defenses & Validation Errors**:
+   - Click `"匯入關卡"`. Paste a bad sharing code, e.g. `"PBX_!!!notbase64!!!"`. Click `"確認匯入"`.
+   - Verify that it shows a clear red error message `"分享碼格式不正確（無法進行 Base64 解碼）。"` inside the dialog and stays open.
+   - Try importing a layout with 2 players, 0 boxes, or open boundaries. Verify the corresponding defensive error messages (e.g., `"必須恰好只有 1 位玩家"`, `"外圍邊界必須完全封閉為牆壁"`) are displayed correctly and no crash occurs.
+   - Click `"取消返回"` to close the import dialog.
+
 ## 4. Runtime Data Notes
 
 The following files are used for local persistence and should **not** be committed to version control:

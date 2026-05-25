@@ -29,6 +29,18 @@ All notable changes to this project are documented in this file.
   * **狀態優先權阻斷**：在 win overlay, deadlock overlay, pause overlay, help overlay 處於開啟狀態時，`I` 鍵觸發被完美阻斷，杜絕 UI 衝突。
 * **新增專屬整合測試**：新增 `test_hint_ui.py`。全面覆蓋 SOLVED 狀態 timer、移動/撤銷/重置清理 hint、Help/Pause 覆蓋阻斷、Level 0 攔截及各類 solver 狀態的 UI 提示文案映射，100% 測試覆蓋率！
 
+### Phase 4: 自訂關卡 Export / Import 與分享碼系統 [已完成]
+* **分享編解碼系統 (`level_share.py`)**：新增獨立純邏輯模組，實作自訂關卡匯出為 `zlib + base64` 壓縮編碼，固定以 `PBX_` 前綴開頭，支援 0 成本在社群拓寬可玩性。
+* **8 點防禦性驗證機制**：匯入時實施最嚴格的防禦性邊界檢查。包含：字串格式檢查、20,000 長度上限、網格非空與 Rectangular 檢查、`5x5` 至 `20x20` 尺寸極限限制、合法 Cell 值約束（僅允許 0-4）、唯一玩家 (exactly one)、箱子與目標配對一致性、外圍邊界牆壁完全封閉檢查。
+* **名稱安全淨化與去重**：匯入名稱實施去點/去斜線防路徑穿越淨化（Sanitization）；若與現有自訂關卡重名，自動採用數字遞增後綴（如 `(2)`, `(3)`）進行去重（Deduplication），避免任何檔案覆蓋風險。
+* **極致體驗的雙 Dialog 介面**：
+  * **編輯器匯出**：在編輯器 sidebar 整合漂亮的 `ModernButton` 和 `E` 鍵快捷鍵。點擊後觸發關卡 Layout 驗證，成功則生成並快照分享碼，呼叫 Tkinter 與 PowerShell 進程進行 **雙通道 Best-effort 自動寫入剪貼簿**，並彈出圓角玻璃分享視窗供玩家 Ctrl+C 選取複製。
+  * **選擇器匯入**：在選擇器底部與返回鍵對稱整合 `ModernButton` 匯入按鈕。點擊後彈出高級的毛玻璃 Dialog，**支援 Ctrl+V 從系統剪貼簿貼上分享碼**，解析成功時自動重新 Setup 關卡列表，並動態將分頁跳轉並聚焦在該自訂關卡 Minimap 上；解析失敗則彈出紅色保守警告且不崩潰。
+* **完整的雙重自動化測試**：
+  * 新增 `test_level_share.py` 測試套件：全面覆蓋 round-trip 還原、各類規格邊界越界攔截、非法 cell 判定、多玩家與無玩家報錯、未封閉牆壁判定、名稱淨化與遞增去重等 16 項單元測試。
+  * 新增 `test_level_share_ui.py` 測試套件：全面模擬 headless 下 Editor 匯出事件、Selector 點擊匯入、文字框貼上及錯誤捕捉等 5 項 UI 整合測試。
+  * 全套 177 個測試 100% 綠燈通過！ ruff/mypy 100% 綠燈通過！
+
 ---
 
 ## v0.5.0 - Expanded Levels and Selector Metadata (2026-05-17)
