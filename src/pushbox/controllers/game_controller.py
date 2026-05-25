@@ -43,6 +43,7 @@ class GameController:
             "game_over": [],
             "move": [],
             "undo": [],
+            "redo": [],
             "reset": [],
             "invalid_move": [],
             "box_on_target": [],
@@ -182,15 +183,19 @@ class GameController:
         """Handle undo input."""
         if self.is_paused:
             return
-        if self.game_state and self.game_state.undo():
-            self._trigger_event("undo")
+        if self.game_state and self.game_state.move_history:
+            command = self.game_state.move_history[-1]
+            if self.game_state.undo():
+                self._trigger_event("undo", command)
 
     def _on_redo(self) -> None:
         """Handle redo input."""
         if self.is_paused:
             return
-        if self.game_state and self.game_state.redo():
-            pass
+        if self.game_state and self.game_state.redo_stack:
+            command = self.game_state.redo_stack[-1]
+            if self.game_state.redo():
+                self._trigger_event("redo", command)
 
     def _on_reset(self) -> None:
         """Handle reset input."""

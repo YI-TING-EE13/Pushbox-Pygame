@@ -7,7 +7,7 @@ Color = tuple[int, int, int]
 ColorWithAlpha = tuple[int, int, int, int]
 ColorLike = Union[Color, ColorWithAlpha]
 
-APP_VERSION = "v0.6.0"
+APP_VERSION = "v0.7.0"
 
 
 class CellType(IntEnum):
@@ -53,39 +53,121 @@ CELL_SIZE = 50
 ANIMATION_SPEED = 0.15  # seconds per cell movement
 MAX_UNDO_HISTORY = 100
 
-# Modern Color Palette (Dracula / Nord inspired)
-COLORS: dict[str, ColorLike] = {
-    # Backgrounds
-    "background": (40, 44, 52),  # Dark Blue-Grey
-    "grid_lines": (50, 54, 62),  # Slightly lighter
-    "panel_bg": (33, 37, 43),  # Darker panel
-    # Game Elements
-    "wall": (97, 175, 239),  # Soft Blue
-    "wall_shadow": (57, 115, 179),  # Darker Blue
-    "floor": (40, 44, 52),  # Same as BG
-    "floor_light": (45, 49, 57),  # Checkerboard pattern
-    "target": (224, 108, 117),  # Soft Red
-    "target_glow": (255, 150, 160),
-    "box": (229, 192, 123),  # Soft Yellow/Gold
-    "box_shadow": (189, 152, 83),
-    "box_outline": (100, 80, 40),
-    "box_on_target": (152, 195, 121),  # Soft Green
-    "box_on_target_shadow": (112, 155, 81),
-    "player": (198, 120, 221),  # Soft Purple
-    "player_shadow": (158, 80, 181),
-    # UI Elements
-    "text_main": (220, 223, 228),  # Off-white
-    "text_dim": (150, 150, 160),  # Grey text
-    "text_highlight": (97, 175, 239),  # Blue text
-    "button_default": (50, 54, 62),
-    "button_hover": (70, 74, 82),
-    "button_active": (97, 175, 239),
-    "button_shadow": (30, 34, 42),
-    "overlay": (0, 0, 0, 180),  # Semi-transparent black
-    "success": (152, 195, 121),  # Green
-    "warning": (229, 192, 123),  # Yellow
-    "error": (224, 108, 117),  # Red
+# Themes configuration
+THEMES: dict[str, dict[str, ColorLike]] = {
+    "nord_blue": {
+        # Backgrounds
+        "background": (40, 44, 52),  # Dark Blue-Grey
+        "grid_lines": (50, 54, 62),  # Slightly lighter
+        "panel_bg": (33, 37, 43),  # Darker panel
+        # Game Elements
+        "wall": (97, 175, 239),  # Soft Blue
+        "wall_shadow": (57, 115, 179),  # Darker Blue
+        "floor": (40, 44, 52),  # Same as BG
+        "floor_light": (45, 49, 57),  # Checkerboard pattern
+        "target": (224, 108, 117),  # Soft Red
+        "target_glow": (255, 150, 160),
+        "box": (229, 192, 123),  # Soft Yellow/Gold
+        "box_shadow": (189, 152, 83),
+        "box_outline": (100, 80, 40),
+        "box_on_target": (152, 195, 121),  # Soft Green
+        "box_on_target_shadow": (112, 155, 81),
+        "player": (198, 120, 221),  # Soft Purple
+        "player_shadow": (158, 80, 181),
+        # UI Elements
+        "text_main": (220, 223, 228),  # Off-white
+        "text_dim": (150, 150, 160),  # Grey text
+        "text_highlight": (97, 175, 239),  # Blue text
+        "button_default": (50, 54, 62),
+        "button_hover": (70, 74, 82),
+        "button_active": (97, 175, 239),
+        "button_shadow": (30, 34, 42),
+        "overlay": (0, 0, 0, 180),  # Semi-transparent black
+        "success": (152, 195, 121),  # Green
+        "warning": (229, 192, 123),  # Yellow
+        "error": (224, 108, 117),  # Red
+    },
+    "classic_green": {
+        # Backgrounds
+        "background": (24, 34, 28),  # Deep Forest Green
+        "grid_lines": (34, 46, 38),
+        "panel_bg": (18, 26, 21),
+        # Game Elements
+        "wall": (46, 139, 87),  # Sea Green
+        "wall_shadow": (34, 102, 64),
+        "floor": (24, 34, 28),
+        "floor_light": (30, 42, 35),
+        "target": (224, 108, 117),
+        "target_glow": (255, 150, 160),
+        "box": (229, 192, 123),  # Soft Yellow/Gold
+        "box_shadow": (189, 152, 83),
+        "box_outline": (100, 80, 40),
+        "box_on_target": (78, 189, 114),  # Bright Emerald Green
+        "box_on_target_shadow": (58, 149, 84),
+        "player": (250, 128, 114),  # Salmon Pink
+        "player_shadow": (210, 98, 84),
+        # UI Elements
+        "text_main": (220, 228, 222),  # Off-white green tint
+        "text_dim": (140, 155, 145),
+        "text_highlight": (78, 189, 114),
+        "button_default": (34, 46, 38),
+        "button_hover": (44, 58, 48),
+        "button_active": (78, 189, 114),
+        "button_shadow": (15, 22, 18),
+        "overlay": (0, 0, 0, 180),
+        "success": (78, 189, 114),
+        "warning": (229, 192, 123),
+        "error": (224, 108, 117),
+    },
+    "dracula_purple": {
+        # Backgrounds
+        "background": (40, 30, 50),  # Deep Dracula Purple
+        "grid_lines": (50, 38, 62),
+        "panel_bg": (30, 22, 38),
+        # Game Elements
+        "wall": (189, 147, 249),  # Dracula Purple
+        "wall_shadow": (139, 97, 199),
+        "floor": (40, 30, 50),
+        "floor_light": (46, 35, 57),
+        "target": (255, 121, 198),  # Dracula Pink
+        "target_glow": (255, 171, 248),
+        "box": (241, 250, 140),  # Dracula Yellow
+        "box_shadow": (191, 200, 90),
+        "box_outline": (100, 100, 40),
+        "box_on_target": (80, 250, 123),  # Dracula Green
+        "box_on_target_shadow": (60, 200, 93),
+        "player": (139, 233, 253),  # Dracula Cyan
+        "player_shadow": (99, 193, 213),
+        # UI Elements
+        "text_main": (248, 248, 242),
+        "text_dim": (140, 130, 160),
+        "text_highlight": (189, 147, 249),
+        "button_default": (50, 38, 62),
+        "button_hover": (70, 55, 85),
+        "button_active": (189, 147, 249),
+        "button_shadow": (20, 15, 26),
+        "overlay": (0, 0, 0, 180),
+        "success": (80, 250, 123),
+        "warning": (241, 250, 140),
+        "error": (255, 95, 95),
+    },
 }
+
+# The active global colors dictionary, populated with default theme initially
+COLORS: dict[str, ColorLike] = dict(THEMES["nord_blue"])
+
+
+def set_theme(theme_name: str) -> None:
+    """Set the active visual theme colors dynamically.
+
+    Args:
+        theme_name: Name of the theme to apply.
+    """
+    actual_theme = "nord_blue" if theme_name == "default" else theme_name
+    if actual_theme in THEMES:
+        COLORS.clear()
+        COLORS.update(THEMES[actual_theme])
+
 
 # Default level data (Unchanged)
 DEFAULT_LEVELS = {

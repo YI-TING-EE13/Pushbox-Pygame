@@ -1119,12 +1119,13 @@ class SettingsScreen:
         # Settings options
         # We have:
         # 0: Control Scheme (arrows / wasd)
-        # 1: Animation Enabled (True / False)
-        # 2: Show Tutorial (True / False)
-        # 3: Reset Progress (Button)
-        # 4: Back to Menu (Button)
+        # 1: Theme (nord_blue / classic_green / dracula_purple)
+        # 2: Animation Enabled (True / False)
+        # 3: Show Tutorial (True / False)
+        # 4: Reset Progress (Button)
+        # 5: Back to Menu (Button)
         self.selected_index = 0
-        self.options_count = 5
+        self.options_count = 6
 
         # Callback when exiting settings
         self.on_back: Optional[Callable[[], None]] = None
@@ -1187,43 +1188,68 @@ class SettingsScreen:
             next_scheme = "wasd" if current == "arrows" else "arrows"
             self.config.set_control_scheme(next_scheme)
         elif index == 1:
+            # Theme Cycling
+            themes = ["nord_blue", "classic_green", "dracula_purple"]
+            current = self.config.get_string("theme", "nord_blue")
+            if current == "default":
+                current = "nord_blue"
+            try:
+                curr_idx = themes.index(current)
+            except ValueError:
+                curr_idx = 0
+            next_theme = themes[(curr_idx + 1) % len(themes)]
+            self.config.set("theme", next_theme)
+        elif index == 2:
             # Animation Enabled
             current = self.config.get_bool("animation_enabled", True)
             self.config.set("animation_enabled", not current)
-        elif index == 2:
+        elif index == 3:
             # Show Tutorial
             current = self.config.get_bool("show_tutorial", True)
             self.config.set("show_tutorial", not current)
-        elif index == 3:
+        elif index == 4:
             # Reset Progress
             self.save_manager.reset_progress()
             self.feedback_text = "進度已重置！"
             self.feedback_timer = 120
-        elif index == 4:
+        elif index == 5:
             # Back
             if self.on_back:
                 self.on_back()
 
     def _adjust_option(self, index: int, right: bool) -> None:
         """Adjust option with left/right arrow keys."""
-        if index in [0, 1, 2]:
+        if index in [0, 2, 3]:
             self._trigger_option(index)
+        elif index == 1:
+            # Theme Left/Right adjustment
+            themes = ["nord_blue", "classic_green", "dracula_purple"]
+            current = self.config.get_string("theme", "nord_blue")
+            if current == "default":
+                current = "nord_blue"
+            try:
+                curr_idx = themes.index(current)
+            except ValueError:
+                curr_idx = 0
+            delta = 1 if right else -1
+            next_theme = themes[(curr_idx + delta) % len(themes)]
+            self.config.set("theme", next_theme)
 
     def _get_mouse_option_index(self, mouse_pos: tuple[int, int]) -> Optional[int]:
         """Determine which option index is clicked by mouse position."""
         screen_w = self.screen.get_width()
         screen_h = self.screen.get_height()
 
-        card_w, card_h = 560, 460
+        card_w, card_h = 560, 520
         card_x = (screen_w - card_w) // 2
         card_y = (screen_h - card_h) // 2
 
-        # Option rows start at card_y + 110, spacing is 60
-        y_start = card_y + 110
+        # Option rows start at card_y + 105, spacing is 58
+        y_start = card_y + 105
         row_h = 44
 
         for i in range(self.options_count):
-            row_y = y_start + i * 62
+            row_y = y_start + i * 58
             rect = pygame.Rect(card_x + 40, row_y, card_w - 80, row_h)
             if rect.collidepoint(mouse_pos):
                 return i
@@ -1244,7 +1270,7 @@ class SettingsScreen:
         screen_h = self.screen.get_height()
 
         # Settings Card (Glassmorphism card layout)
-        card_w, card_h = 560, 460
+        card_w, card_h = 560, 520
         card_x = (screen_w - card_w) // 2
         card_y = (screen_h - card_h) // 2
 
@@ -1260,9 +1286,18 @@ class SettingsScreen:
         self.screen.blit(title_surf, title_rect)
 
         # Option rows
-        y_start = card_y + 110
+        y_start = card_y + 105
         row_w = card_w - 80
         row_h = 44
+
+        theme_names = {
+            "nord_blue": "極光冰川",
+            "classic_green": "經典綠",
+            "dracula_purple": "德古拉暗紫",
+            "default": "極光冰川",
+        }
+        active_theme = self.config.get_string("theme", "nord_blue")
+        theme_val = theme_names.get(active_theme, "極光冰川")
 
         labels = [
             (
@@ -1270,6 +1305,10 @@ class SettingsScreen:
                 "鍵盤 ↑↓←→"
                 if self.config.get_control_scheme() == "arrows"
                 else "鍵盤 WASD",
+            ),
+            (
+                "主題配色",
+                theme_val,
             ),
             (
                 "動畫效果",
@@ -1284,7 +1323,7 @@ class SettingsScreen:
         ]
 
         for i, (label, _value) in enumerate(labels):
-            row_y = y_start + i * 62
+            row_y = y_start + i * 58
             rect = pygame.Rect(card_x + 40, row_y, row_w, row_h)
             selected = i == self.selected_index
 
@@ -1302,7 +1341,7 @@ class SettingsScreen:
             # Draw Label Text
             label_color = COLORS["text_highlight"] if selected else COLORS["text_main"]
             # Red color for reset button
-            if i == 3:
+            if i == 4:
                 label_color = COLORS["error"] if selected else (200, 80, 90)
 
             label_surf = self.font.render(label, True, label_color)
@@ -1310,7 +1349,7 @@ class SettingsScreen:
             self.screen.blit(label_surf, label_rect)
 
             # Draw Value / Toggle Controls
-            if i in [0, 1, 2]:
+            if i in [0, 2, 3]:
                 # Draw rounded rectangle switch / toggle
                 toggle_w, toggle_h = 100, 26
                 toggle_rect = pygame.Rect(
@@ -1323,9 +1362,9 @@ class SettingsScreen:
                 is_on = True
                 if i == 0:
                     is_on = self.config.get_control_scheme() == "arrows"
-                elif i == 1:
-                    is_on = self.config.get_bool("animation_enabled", True)
                 elif i == 2:
+                    is_on = self.config.get_bool("animation_enabled", True)
+                elif i == 3:
                     is_on = self.config.get_bool("show_tutorial", True)
 
                 # Toggle background
@@ -1366,7 +1405,41 @@ class SettingsScreen:
                     )
                 self.screen.blit(txt_surf, txt_rect)
 
-            elif i == 3:
+            elif i == 1:
+                # Theme selector pill box
+                pill_w, pill_h = 130, 26
+                pill_rect = pygame.Rect(
+                    rect.right - pill_w - 20,
+                    rect.centery - pill_h // 2,
+                    pill_w,
+                    pill_h,
+                )
+
+                # Draw pill container background
+                pygame.draw.rect(
+                    self.screen,
+                    COLORS["button_hover"] if selected else COLORS["button_default"],
+                    pill_rect,
+                    border_radius=13,
+                )
+                pygame.draw.rect(
+                    self.screen,
+                    COLORS["wall"] if selected else COLORS["grid_lines"],
+                    pill_rect,
+                    1,
+                    border_radius=13,
+                )
+
+                # Draw theme name inside pill
+                txt_surf = self.small_font.render(
+                    theme_val,
+                    True,
+                    COLORS["text_highlight"] if selected else COLORS["text_main"],
+                )
+                txt_rect = txt_surf.get_rect(center=pill_rect.center)
+                self.screen.blit(txt_surf, txt_rect)
+
+            elif i == 4:
                 # Danger button text / status
                 danger_surf = self.small_font.render(
                     "重置進度", True, COLORS["text_highlight"]
@@ -1376,7 +1449,7 @@ class SettingsScreen:
                 )
                 self.screen.blit(danger_surf, danger_rect)
 
-            elif i == 4:
+            elif i == 5:
                 # Back button arrow
                 back_surf = self.small_font.render("Back", True, COLORS["text_dim"])
                 back_rect = back_surf.get_rect(

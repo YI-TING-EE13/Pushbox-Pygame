@@ -13,6 +13,7 @@ Pushbox-Pygame - A modern Sokoban puzzle game
 """
 
 import sys
+from typing import Any
 
 import pygame
 
@@ -149,6 +150,8 @@ class GameApp:
         self.controller.register_callback("game_over", self._on_game_over)
         self.controller.register_callback("invalid_move", self._on_invalid_move)
         self.controller.register_callback("box_on_target", self._on_box_on_target)
+        self.controller.register_callback("undo", self._on_undo)
+        self.controller.register_callback("redo", self._on_redo)
         self.settings.set_on_back(self._back_to_menu)
 
     def _setup_menu(self) -> None:
@@ -591,6 +594,62 @@ class GameApp:
         self.renderer.add_animation(
             TargetSparkAnimation(pos, pygame.time.get_ticks() / 1000.0)
         )
+
+    def _on_undo(self, command: Any) -> None:
+        """Handle undo event to trigger smooth slide backward animations."""
+        if self.controller.config.is_animation_enabled():
+            from src.pushbox.utils.constants import CellType
+
+            # Player slides backward: player_to -> player_from
+            self.renderer.add_move_animation(
+                command.player_to,
+                command.player_from,
+                CellType.PLAYER,
+                duration=0.10,  # 100ms
+            )
+            # Box slides backward if it was pushed: box_to -> box_from
+            if command.is_push() and command.box_to and command.box_from:
+                lvl = self.controller.current_level
+                is_on_target = (
+                    lvl
+                    and lvl.initial_grid[command.box_from[0], command.box_from[1]]
+                    == CellType.TARGET
+                )
+                cell_type = CellType.BOX_ON_TARGET if is_on_target else CellType.BOX
+                self.renderer.add_move_animation(
+                    command.box_to,
+                    command.box_from,
+                    cell_type,
+                    duration=0.10,
+                )
+
+    def _on_redo(self, command: Any) -> None:
+        """Handle redo event to trigger smooth slide forward animations."""
+        if self.controller.config.is_animation_enabled():
+            from src.pushbox.utils.constants import CellType
+
+            # Player slides forward: player_from -> player_to
+            self.renderer.add_move_animation(
+                command.player_from,
+                command.player_to,
+                CellType.PLAYER,
+                duration=0.10,  # 100ms
+            )
+            # Box slides forward if it was pushed: box_from -> box_to
+            if command.is_push() and command.box_from and command.box_to:
+                lvl = self.controller.current_level
+                is_on_target = (
+                    lvl
+                    and lvl.initial_grid[command.box_to[0], command.box_to[1]]
+                    == CellType.TARGET
+                )
+                cell_type = CellType.BOX_ON_TARGET if is_on_target else CellType.BOX
+                self.renderer.add_move_animation(
+                    command.box_from,
+                    command.box_to,
+                    cell_type,
+                    duration=0.10,
+                )
 
     def _update_attract_mode(self) -> None:
         """Update the background attract mode demo solver."""

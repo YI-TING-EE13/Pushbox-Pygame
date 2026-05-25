@@ -47,6 +47,11 @@ class Config:
             self._config = self.DEFAULT_CONFIG.copy()
             self.save()
 
+        # Synchronize active theme with loaded config
+        from .constants import set_theme
+
+        set_theme(self.get_string("theme", "nord_blue"))
+
     def save(self) -> None:
         """Save configuration to file."""
         # Ensure directory exists
@@ -89,6 +94,10 @@ class Config:
         """
         self._config[key] = value
         self.save()
+        if key == "theme":
+            from .constants import set_theme
+
+            set_theme(value)
 
     def get_control_scheme(self) -> str:
         """Get current control scheme."""
@@ -107,3 +116,6 @@ class Config:
         """Reset configuration to defaults."""
         self._config = self.DEFAULT_CONFIG.copy()
         self.save()
+        from .constants import set_theme
+
+        set_theme(self.get_string("theme", "nord_blue"))
