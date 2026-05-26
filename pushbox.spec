@@ -48,6 +48,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
+    icon='src/pushbox/assets/icon/pushbox.ico',
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

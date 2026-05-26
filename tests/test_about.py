@@ -21,7 +21,7 @@ def test_about_screen_attributes_and_content():
 
     about = AboutScreen(screen)
     assert about.app_version == APP_VERSION
-    assert "0.9.0" in about.app_version
+    assert APP_VERSION in about.app_version
     assert about.github_url == "https://github.com/YI-TING-EE13/Pushbox-Pygame"
     assert about.license_info == "MIT License"
 

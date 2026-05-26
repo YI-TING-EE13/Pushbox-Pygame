@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Package settings
 APP_NAME = "Pushbox-Pygame"
-VERSION = "0.9.0"
+VERSION = "0.9.1.dev0"
 ZIP_NAME = f"{APP_NAME}-v{VERSION}-windows-x64.zip"
 
 
@@ -55,10 +55,11 @@ def main() -> None:
             shutil.rmtree(path)
     release_dir.mkdir(exist_ok=True)
 
-    # 2. Run PyInstaller
-    print(f"\n[2/5] Running PyInstaller using spec file: {spec_file.name}...")
-    if not spec_file.exists():
-        print(f"Error: Specification file not found at {spec_file}")
+    # Check that the icon file exists as defined in the spec to prevent build errors
+    icon_file = project_root / "src" / "pushbox" / "assets" / "icon" / "pushbox.ico"
+    if not icon_file.exists():
+        print(f"Error: Application icon not found at {icon_file}")
+        print("Please run 'uv run python scripts/generate_icon.py' first.")
         sys.exit(1)
 
     try:
