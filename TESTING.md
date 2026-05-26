@@ -140,7 +140,7 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
     - Verify that pressing `Q` alone does not exit.
 4. **Level Selector Keyboard Navigation & Pagination**:
     - Go to the "選擇關卡" screen. Verify that `Level 1` is highlighted by default.
-    - Confirm the layout has spacious margins and zero overlaps at the default `800x720` resolution.
+    - Confirm the layout has spacious margins and zero overlaps at the default `1024x768` resolution.
     - Confirm the helper prompt `"換頁：Tab / Shift+Tab 或 PageUp / PageDown"` is displayed in small grey text below the Page Indicator (`"頁面: 1 / 4"`).
     - Page 1 must list exactly `Level 1` to `Level 9`. Page 2 lists exactly `Level 10` to `Level 18`. Page 3 lists exactly `Level 19` to `Level 27`. Page 4 lists exactly `Level 28` to `Level 30` (plus custom levels if any).
     - **Cross-page keyboard navigation (Down/S)**:
@@ -178,7 +178,7 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
       - Navigate to the "選擇關卡" screen. Verify that default levels (Levels 1–30) display a clear metadata badge (e.g. `Intro · 3 boxes` or `Advanced · 2 boxes`) beneath the level title.
       - Verify that custom levels do not display any metadata badges on cards and do not cause the selector to crash.
       - Verify that default level cards do not show "編輯" (Edit) or "刪除" (Delete) buttons, whereas custom level cards display them correctly.
-      - Confirm that there is no vertical or horizontal text overlap at the default resolution of `800x720`.
+      - Confirm that there is no vertical or horizontal text overlap at the default resolution of `1024x768`.
       - Play and complete any default level. Return to the "選擇關卡" screen and verify that the completed card displays a compact success-colored completion star (`★`) in its top-right corner, completely eliminating card-level overlaps.
       - **Keyboard Interoperability:** Use arrow keys or WASD to navigate the selector. Verify that the bottom selected level detail panel updates dynamically and instantly to reflect the newly highlighted level.
       - **Mouse Hover Interoperability:** Hover the mouse over different cards. Verify that the selection index updates and the bottom detail panel changes in real-time.
@@ -204,7 +204,7 @@ The level editor allows creating and managing custom puzzles.
    - Try to save a level without boxes.
    - Try to save a level where the number of boxes does not match the number of targets.
    - **Verify**: Clear error messages appear in the status bar.
-5. **Sidebar Layout & Hints**: Confirm that all 6 lines of shortcut hints (左鍵/右鍵, 1-5, Z/Y/R, Ctrl+S, C, Esc) are visible on the default window size (800x720) without overlapping other controls.
+5. **Sidebar Layout & Hints**: Confirm that all 6 lines of shortcut hints (左鍵/右鍵, 1-5, Z/Y/R, Ctrl+S, C, Esc) are visible on the default window size (1024x768) without overlapping other controls.
 6. **Saving**: Provide a name and save a valid level.
 7. **Custom Levels**: Verify the new level appears in the "選擇關卡" screen and can be played, edited, or deleted. Confirm the layout reduces the risk of custom level cards overlapping the back button.
 

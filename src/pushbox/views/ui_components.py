@@ -905,7 +905,13 @@ class LevelSelector:
     def _draw_selected_level_details(
         self, screen: pygame.Surface, progress: dict
     ) -> None:
-        """Draw level details and Minimap Preview."""
+        """Draw level details and Minimap Preview with adaptive layout.
+
+        The detail panel is positioned between the card grid bottom and
+        the pagination/nav area, ensuring it never overlaps either region.
+        The minimap is sized to fit within the available panel height and
+        is hidden entirely when vertical space is insufficient.
+        """
         if (
             not (0 <= self.selected_index < len(self.level_buttons))
             or not self.font
@@ -917,21 +923,65 @@ class LevelSelector:
         is_locked = btn.is_locked
         level_progress = progress.get(level_name, {})
 
-        # Panel coordinates and sizes
+        # --- Adaptive vertical positioning ---
+        # Card grid constants (must match _layout_buttons)
+        button_height = 65
+        spacing_y = 35
+        start_y = 110
+        rows_on_page = min(3, (len(self.level_buttons) + 2) // 3)
+        grid_bottom = start_y + rows_on_page * (button_height + spacing_y) - spacing_y
+
         screen_w = screen.get_width()
         screen_h = screen.get_height()
-        card_w = 640
-        card_h = 110
-        card_x = (screen_w - card_w) // 2
-        card_y = screen_h - 305
-        card_rect = pygame.Rect(card_x, card_y, card_w, card_h)
+
+        # Bottom UI zones (must match draw/layout)
+        # Nav buttons at screen_h - 130, page text at screen_h - 180
+        # Back/Import buttons at screen_h - 80
+        bottom_zone_top = screen_h - 195  # Leave room above page text
+
+        # Panel goes between grid_bottom and bottom_zone_top
+        panel_gap_top = 15
+        panel_gap_bottom = 10
+        panel_top = grid_bottom + panel_gap_top
+        panel_max_bottom = bottom_zone_top - panel_gap_bottom
+
+        panel_w = min(640, screen_w - 40)
+        panel_h = max(0, panel_max_bottom - panel_top)
+        panel_x = (screen_w - panel_w) // 2
+
+        # Don't draw if there's no room at all
+        if panel_h < 50:
+            return
+
+        card_rect = pygame.Rect(panel_x, panel_top, panel_w, panel_h)
 
         # Draw translucent glassmorphism background panel
         pygame.draw.rect(screen, COLORS["panel_bg"], card_rect, border_radius=12)
         pygame.draw.rect(screen, COLORS["grid_lines"], card_rect, 1, border_radius=12)
 
-        # Draw details text (Left Panel, aligned center-left at card_x + 240)
-        text_center_x = card_x + 240
+        # --- Minimap sizing ---
+        # Minimap occupies right side of panel, square, with 8px padding
+        minimap_padding = 8
+        minimap_max_size = min(
+            panel_h - 2 * minimap_padding,
+            int(panel_w * 0.15),  # Max 15% of panel width
+            80,  # Hard cap
+        )
+        show_minimap = minimap_max_size >= 30  # Hide if too tiny
+
+        # Text area: left portion of the panel
+        if show_minimap:
+            text_area_right = panel_x + panel_w - minimap_max_size - 2 * minimap_padding
+        else:
+            text_area_right = panel_x + panel_w - minimap_padding
+        text_center_x = panel_x + (text_area_right - panel_x) // 2
+
+        # --- Draw details text ---
+        # Distribute 3 lines evenly within panel height
+        line_spacing = panel_h / 4  # 4 gaps for 3 centered lines
+        line1_y = panel_top + line_spacing
+        line2_y = panel_top + 2 * line_spacing
+        line3_y = panel_top + 3 * line_spacing
 
         if not is_custom and level_name in DEFAULT_LEVEL_METADATA:
             meta = DEFAULT_LEVEL_METADATA[level_name]
@@ -949,7 +999,7 @@ class LevelSelector:
             info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
             info_rect = info_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 24,
+                centery=int(line1_y),
             )
             screen.blit(info_surf, info_rect)
 
@@ -958,7 +1008,7 @@ class LevelSelector:
             note_surf = self.small_font.render(note_text, True, COLORS["text_dim"])
             note_rect = note_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 52,
+                centery=int(line2_y),
             )
             screen.blit(note_surf, note_rect)
 
@@ -977,7 +1027,7 @@ class LevelSelector:
             status_surf = self.small_font.render(status_text, True, status_color)
             status_rect = status_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 80,
+                centery=int(line3_y),
             )
             screen.blit(status_surf, status_rect)
 
@@ -992,7 +1042,7 @@ class LevelSelector:
             info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
             info_rect = info_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 24,
+                centery=int(line1_y),
             )
             screen.blit(info_surf, info_rect)
 
@@ -1001,7 +1051,7 @@ class LevelSelector:
             type_surf = self.small_font.render(type_text, True, COLORS["text_dim"])
             type_rect = type_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 52,
+                centery=int(line2_y),
             )
             screen.blit(type_surf, type_rect)
 
@@ -1020,12 +1070,18 @@ class LevelSelector:
             status_surf = self.small_font.render(status_text, True, status_color)
             status_rect = status_surf.get_rect(
                 centerx=text_center_x,
-                centery=card_y + 80,
+                centery=int(line3_y),
             )
             screen.blit(status_surf, status_rect)
 
-        # Draw Minimap Preview (Right Panel, centered 80x80 container)
-        minimap_rect = pygame.Rect(card_x + 520, card_y + 15, 80, 80)
+        # --- Draw Minimap Preview (right side of panel) ---
+        if not show_minimap:
+            return
+
+        minimap_size = minimap_max_size
+        minimap_x = panel_x + panel_w - minimap_size - minimap_padding
+        minimap_y = panel_top + (panel_h - minimap_size) // 2
+        minimap_rect = pygame.Rect(minimap_x, minimap_y, minimap_size, minimap_size)
         pygame.draw.rect(screen, COLORS["background"], minimap_rect, border_radius=6)
 
         if is_locked:
@@ -1040,14 +1096,14 @@ class LevelSelector:
                 grid = level.initial_grid
                 rows, cols = grid.shape
 
-                # Calculate dynamic cell size to fully fit the 80x80 box
-                cell_size = min(80.0 / cols, 80.0 / rows)
+                # Calculate dynamic cell size to fully fit the minimap box
+                cell_size = min(float(minimap_size) / cols, float(minimap_size) / rows)
 
                 # Centering offsets
                 map_w = cols * cell_size
                 map_h = rows * cell_size
-                offset_x = (80.0 - map_w) / 2.0
-                offset_y = (80.0 - map_h) / 2.0
+                offset_x = (minimap_size - map_w) / 2.0
+                offset_y = (minimap_size - map_h) / 2.0
 
                 for r in range(rows):
                     for c in range(cols):
@@ -1066,8 +1122,8 @@ class LevelSelector:
                             color = COLORS["floor_light"]
 
                         cell_draw_rect = pygame.Rect(
-                            card_x + 520 + offset_x + c * cell_size,
-                            card_y + 15 + offset_y + r * cell_size,
+                            minimap_x + offset_x + c * cell_size,
+                            minimap_y + offset_y + r * cell_size,
                             math.ceil(cell_size),
                             math.ceil(cell_size),
                         )

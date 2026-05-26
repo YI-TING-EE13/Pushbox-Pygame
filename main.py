@@ -41,8 +41,8 @@ class GameApp:
         self.controller = GameController()
 
         # Load window dimensions from config
-        self.width = self.controller.config.get("window_width", 800)
-        self.height = self.controller.config.get("window_height", 720)
+        self.width = self.controller.config.get("window_width", 1024)
+        self.height = self.controller.config.get("window_height", 768)
         self.screen = pygame.display.set_mode(
             (self.width, self.height), pygame.RESIZABLE
         )

@@ -73,7 +73,7 @@ This release significantly expands the default gameplay content, enhances UI typ
 Use this checklist to verify that all v0.5.0 features run correctly after a local pull or build.
 
 ### 1. Game Boot and Main Menu
-* [ ] **Launch Game:** Run `uv run python main.py` or `python main.py`. Confirm the game boots in `800x720` resolution with zero console exceptions.
+* [ ] **Launch Game:** Run `uv run python main.py` or `python main.py`. Confirm the game boots in `1024x768` resolution with zero console exceptions.
 * [ ] **Menu Navigation:** Confirm you can select menu items ("開始遊戲", "選擇關卡", "地圖編輯器", "結束遊戲") using mouse clicks and keyboard (Arrow keys/WASD) followed by `Enter`/`Space`.
 
 ### 2. Gameplay and Control Mechanics

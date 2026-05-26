@@ -10,7 +10,7 @@ Default levels serve as the core progression experience for the player. These gu
 * **Overly Similar Levels:** Puzzles that look slightly different but share identical mechanical paths and solutions.
 * **Unclear Difficulty Progression:** Severe difficulty spikes or sudden, unearned drops in complexity.
 * **Invalid Board Layouts:** Levels with mismatched box-target counts, unreachable spaces, or missing players.
-* **Cramped Map Layouts:** Board boundaries that collide with UI indicators at standard `800x720` resolution.
+* **Cramped Map Layouts:** Board boundaries that collide with UI indicators at standard `1024x768` resolution.
 * **Undocumented Design Intent:** Grid modifications without clear pedagogical goals (e.g. teaching a specific push, turn, or ordering route).
 
 ---
@@ -202,7 +202,7 @@ Future developers and agents must check all new levels against this checklist be
 * [ ] **Linter Clean:** `uv run ruff check .` returns zero warnings or errors.
 * [ ] **Formatter Compliant:** `uv run ruff format --check .` passes.
 * [ ] **Mypy Clean:** `uv run mypy src/` returns zero type issues.
-* [ ] **Visual Launch:** The level launches safely and centers on the screen at `800x720`.
+* [ ] **Visual Launch:** The level launches safely and centers on the screen at `1024x768`.
 * [ ] **Manual Playtest:** The level has been manually completed to provide practical confidence that it is solvable.
 
 ---

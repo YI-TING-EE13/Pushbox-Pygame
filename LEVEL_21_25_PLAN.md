@@ -21,7 +21,7 @@ All planned levels strictly follow the standards defined in [LEVEL_DESIGN.md](fi
 * **Graduated Complexity:** Create a smooth curve from Level 20's Advanced+ difficulty into high-tier spatial challenges.
 * **Aesthetic & Structural Uniqueness:** Avoid reskinned clones of prior levels by utilizing diverse wall topologies and room layouts.
 * **Clear Pedagogical Skills:** Each level is engineered to teach or test a specific spatial reasoning skill (e.g. routing, ordering locks, zone transferring).
-* **Grid Safety Limits:** All draft grids are expected to fit within `800x720` resolution after verification and satisfy all structural checks.
+* **Grid Safety Limits:** All draft grids are expected to fit within `1024x768` resolution after verification and satisfy all structural checks.
 
 ---
 
@@ -182,7 +182,7 @@ Before committing these levels to code in the next phase, they must pass this st
 * [ ] **Clean Startup:** Verify that the starting grid utilizes only `0-4` (no resolved `5`s).
 * [ ] **Type-Safe Metadata:** The new `DEFAULT_LEVEL_METADATA` structures must exactly compile with `LevelMetadata`.
 * [ ] **Uniqueness Check:** Compare the new grids against Levels 1–20 to ensure no accidental duplication.
-* [ ] **Dynamic Centering:** Launch each level in the game screen. Verify that the grid scales and centers safely at `800x720` without clipping the status bar or timer.
+* [ ] **Dynamic Centering:** Launch each level in the game screen. Verify that the grid scales and centers safely at `1024x768` without clipping the status bar or timer.
 * [ ] **Manual Playtest Check:** Complete every new level manually; manual completion provides practical confidence of solvability and actual quality.
 * [ ] **Selector Pagination Stability:** Ensure that the newly added cards display their metadata badges, corner stars, and detail panels legibly across all selector pages.
 
