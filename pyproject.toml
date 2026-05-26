@@ -1,6 +1,6 @@
 [project]
 name = "pushbox-pygame"
-version = "1.0.0"
+version = "0.9.0.dev0"
 description = "A Python/Pygame Sokoban game with built-in levels, custom level editor, undo/redo, progress saving, and documented testing workflows."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -16,6 +16,9 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
+]
+build = [
+    "pyinstaller>=6.0",
 ]
 
 [build-system]
@@ -51,3 +54,5 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+

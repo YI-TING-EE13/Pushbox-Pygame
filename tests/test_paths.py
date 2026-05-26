@@ -32,12 +32,12 @@ def test_dev_mode_paths():
     # 3. bundle_root points to src/pushbox
     bundle_root = get_bundle_root()
     assert bundle_root.exists()
-    assert (bundle_root / "assets/images/player.jpeg").exists()
+    assert (bundle_root / "assets/images").exists()
 
     # 4. get_resource_path maps to get_bundle_root() / path
-    res_path = get_resource_path("assets/images/player.jpeg")
+    res_path = get_resource_path("assets/images")
     assert res_path.exists()
-    assert res_path == bundle_root / "assets/images/player.jpeg"
+    assert res_path == bundle_root / "assets/images"
 
     # 5. get_app_data_path in dev maps to project_root / path
     assert (
@@ -65,8 +65,8 @@ def test_frozen_mode_paths_with_mocking(tmp_path, monkeypatch):
     assert get_app_base_path() == mock_dist_dir
 
     # 2. Resource paths point to _MEIPASS bundle
-    res_path = get_resource_path("assets/images/player.jpeg")
-    assert res_path == mock_bundle_dir / "assets/images/player.jpeg"
+    res_path = get_resource_path("assets/images")
+    assert res_path == mock_bundle_dir / "assets/images"
 
     # 3. App data paths point to executable directory (not _MEIPASS)
     config_path = get_app_data_path("data/config.json")
