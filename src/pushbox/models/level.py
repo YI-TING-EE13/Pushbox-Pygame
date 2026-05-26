@@ -158,6 +158,8 @@ class LevelManager:
 
     def _load_custom_levels(self) -> None:
         """Load custom levels from files."""
+        import sys
+
         if not self.levels_dir.exists():
             return
 
@@ -165,10 +167,61 @@ class LevelManager:
             try:
                 with open(level_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    level = Level.from_dict(data)
-                    self.levels[level.name] = level
-            except (json.JSONDecodeError, KeyError) as e:
-                print(f"Warning: Could not load level {level_file}: {e}")
+
+                # Pre-validation checks to protect against early crashes
+                if not isinstance(data, dict):
+                    raise ValueError("Loaded JSON is not a dictionary.")
+                if "name" not in data or "grid" not in data:
+                    raise KeyError("Missing required keys 'name' or 'grid'.")
+
+                name = data["name"]
+                grid = data["grid"]
+
+                if not isinstance(name, str):
+                    raise TypeError("Level name must be a string.")
+                if not isinstance(grid, list) or not grid:
+                    raise TypeError("Level grid must be a non-empty list of lists.")
+
+                rows = len(grid)
+                if rows == 0:
+                    raise ValueError("Level grid has 0 rows.")
+
+                # Check list of lists and rectangularity
+                if not isinstance(grid[0], list):
+                    raise TypeError("Level grid must be a list of lists.")
+                cols = len(grid[0])
+                if cols == 0:
+                    raise ValueError("Level grid rows cannot be empty.")
+
+                for r_idx, row in enumerate(grid):
+                    if not isinstance(row, list):
+                        raise TypeError(f"Row {r_idx} in level grid is not a list.")
+                    if len(row) != cols:
+                        raise ValueError("Level grid must be rectangular.")
+                    for c_idx, cell in enumerate(row):
+                        if not isinstance(cell, int) or cell < 0 or cell > 4:
+                            raise ValueError(
+                                f"Invalid cell value {cell} at "
+                                f"row {r_idx}, col {c_idx}. "
+                                "Must be between 0 and 4."
+                            )
+
+                # Unpacking safety
+                level = Level.from_dict(data)
+                # Verify unpacking shape
+                if level.rows != rows or level.cols != cols:
+                    raise ValueError("Level grid shape unpacking mismatch.")
+
+                self.levels[level.name] = level
+
+            except Exception as e:
+                # Output details to stderr as requested
+                err_type = type(e).__name__
+                print(
+                    f"Warning: Could not load custom level from {level_file.name} "
+                    f"[{err_type}]: {e}",
+                    file=sys.stderr,
+                )
 
     def get_level(self, name: str) -> Optional[Level]:
         """Get a level by name.

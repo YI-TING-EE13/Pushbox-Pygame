@@ -34,15 +34,91 @@ class Config:
         self._config: dict[str, Any] = {}
         self.load()
 
+    def _backup_file(self) -> None:
+        """Safely backup the corrupted config file with incrementing suffix."""
+        if not self.config_path.exists():
+            return
+        import sys
+
+        # Try .bak
+        bak_path = self.config_path.with_suffix(self.config_path.suffix + ".bak")
+        if not bak_path.exists():
+            try:
+                self.config_path.replace(bak_path)
+                return
+            except Exception as e:
+                print(
+                    f"Warning: Could not backup config to {bak_path}: {e}",
+                    file=sys.stderr,
+                )
+                try:
+                    import shutil
+
+                    shutil.copy2(self.config_path, bak_path)
+                    self.config_path.unlink()
+                    return
+                except Exception as e2:
+                    print(
+                        f"Warning: Fallback config backup failed: {e2}", file=sys.stderr
+                    )
+
+        # Try .bak.1, .bak.2, etc.
+        idx = 1
+        while True:
+            candidate = self.config_path.with_suffix(
+                self.config_path.suffix + f".bak.{idx}"
+            )
+            if not candidate.exists():
+                try:
+                    self.config_path.replace(candidate)
+                    return
+                except Exception as e:
+                    print(
+                        f"Warning: Could not backup config to {candidate}: {e}",
+                        file=sys.stderr,
+                    )
+                    try:
+                        import shutil
+
+                        shutil.copy2(self.config_path, candidate)
+                        self.config_path.unlink()
+                        return
+                    except Exception as e2:
+                        print(
+                            f"Warning: Fallback config backup failed: {e2}",
+                            file=sys.stderr,
+                        )
+                break
+            idx += 1
+
     def load(self) -> None:
         """Load configuration from file."""
+        import sys
+
         if self.config_path.exists():
             try:
                 with open(self.config_path, encoding="utf-8") as f:
-                    self._config = json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        # Merge default values for missing keys to preserve other keys
+                        self._config = self.DEFAULT_CONFIG.copy()
+                        for k, v in data.items():
+                            self._config[k] = v
+                    else:
+                        print(
+                            "Warning: Config is not a dictionary. Fallback to default.",
+                            file=sys.stderr,
+                        )
+                        self._backup_file()
+                        self._config = self.DEFAULT_CONFIG.copy()
+                        self.save()
             except (json.JSONDecodeError, OSError) as e:
-                print(f"Warning: Could not load config: {e}")
+                print(
+                    f"Warning: Could not load config: {e}. Rebuilding.", file=sys.stderr
+                )
+                self._backup_file()
                 self._config = self.DEFAULT_CONFIG.copy()
+                self.save()
         else:
             self._config = self.DEFAULT_CONFIG.copy()
             self.save()

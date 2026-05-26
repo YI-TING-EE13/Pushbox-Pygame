@@ -47,36 +47,121 @@ class TestSaveManagerDefaults:
 
 
 class TestSaveManagerMalformedData:
-    """Test that malformed JSON files don't crash the manager."""
+    """Test malformed JSON files don't crash and are safely backed up."""
 
-    def test_malformed_progress_json(self, tmp_path):
+    def test_malformed_progress_json(self, tmp_path, capsys):
         progress_file = tmp_path / "progress.json"
         progress_file.write_text("{broken json", encoding="utf-8")
 
         mgr = SaveManager(save_dir=str(tmp_path))
         assert mgr.get_all_progress() == {}
 
-    def test_malformed_scores_json(self, tmp_path):
+        # Original corrupted file backed up
+        bak_file = tmp_path / "progress.json.bak"
+        assert bak_file.exists()
+        assert bak_file.read_text(encoding="utf-8") == "{broken json"
+
+        # Rebuilt file exists on disk as empty dict
+        assert progress_file.exists()
+        assert json.loads(progress_file.read_text(encoding="utf-8")) == {}
+
+        # Stderr captures the warning
+        captured = capsys.readouterr()
+        assert "Could not load progress" in captured.err
+
+    def test_malformed_scores_json(self, tmp_path, capsys):
         scores_file = tmp_path / "scores.json"
         scores_file.write_text("not valid json!", encoding="utf-8")
 
         mgr = SaveManager(save_dir=str(tmp_path))
         assert mgr.get_high_scores("Level 1") == []
 
-    def test_non_dict_progress_json(self, tmp_path):
-        """A JSON array instead of object should be treated as empty."""
+        # Original corrupted file backed up
+        bak_file = tmp_path / "scores.json.bak"
+        assert bak_file.exists()
+        assert bak_file.read_text(encoding="utf-8") == "not valid json!"
+
+        # Rebuilt file exists on disk as empty dict
+        assert scores_file.exists()
+        assert json.loads(scores_file.read_text(encoding="utf-8")) == {}
+
+        # Stderr captures the warning
+        captured = capsys.readouterr()
+        assert "Could not load scores" in captured.err
+
+    def test_non_dict_progress_json(self, tmp_path, capsys):
+        """A JSON array instead of object should be treated as empty and backed up."""
         progress_file = tmp_path / "progress.json"
         progress_file.write_text("[1, 2, 3]", encoding="utf-8")
 
         mgr = SaveManager(save_dir=str(tmp_path))
         assert mgr.get_all_progress() == {}
 
-    def test_non_dict_scores_json(self, tmp_path):
+        bak_file = tmp_path / "progress.json.bak"
+        assert bak_file.exists()
+        assert json.loads(bak_file.read_text(encoding="utf-8")) == [1, 2, 3]
+
+        captured = capsys.readouterr()
+        assert "Progress file is not a dictionary" in captured.err
+
+    def test_non_dict_scores_json(self, tmp_path, capsys):
         scores_file = tmp_path / "scores.json"
         scores_file.write_text('"just a string"', encoding="utf-8")
 
         mgr = SaveManager(save_dir=str(tmp_path))
         assert mgr.get_high_scores("Level 1") == []
+
+        bak_file = tmp_path / "scores.json.bak"
+        assert bak_file.exists()
+        assert json.loads(bak_file.read_text(encoding="utf-8")) == "just a string"
+
+        captured = capsys.readouterr()
+        assert "Scores file is not a dictionary" in captured.err
+
+    def test_existing_backup_increment(self, tmp_path):
+        """Test that save manager does not overwrite existing .bak files."""
+        progress_file = tmp_path / "progress.json"
+
+        # 1. Existing backup
+        bak_file = tmp_path / "progress.json.bak"
+        bak_file.write_text("old progress backup", encoding="utf-8")
+
+        # 2. Write new corrupted progress
+        progress_file.write_text("{broken 2", encoding="utf-8")
+
+        mgr = SaveManager(save_dir=str(tmp_path))
+        assert mgr.get_all_progress() == {}
+
+        # 3. Old backup intact
+        assert bak_file.read_text(encoding="utf-8") == "old progress backup"
+
+        # 4. New backup is progress.json.bak.1
+        bak_file_1 = tmp_path / "progress.json.bak.1"
+        assert bak_file_1.exists()
+        assert bak_file_1.read_text(encoding="utf-8") == "{broken 2"
+
+    def test_normal_operations_after_rebuild(self, tmp_path):
+        """Test that we can safely save records normally after a corrupted rebuild."""
+        progress_file = tmp_path / "progress.json"
+        progress_file.write_text("{broken json", encoding="utf-8")
+
+        mgr = SaveManager(save_dir=str(tmp_path))
+
+        # Perform save normally
+        is_record = mgr.update_level_progress(
+            "Level 1", moves=12, time_seconds=15.0, pushes=4
+        )
+        assert is_record is True
+
+        progress = mgr.get_level_progress("Level 1")
+        assert progress["completed"] is True
+        assert progress["best_moves"] == 12
+
+        # Verify it was correctly written to the rebuilt progress.json file
+        with open(progress_file, encoding="utf-8") as f:
+            data = json.load(f)
+        assert "Level 1" in data
+        assert data["Level 1"]["best_moves"] == 12
 
 
 # ---------------------------------------------------------------------------

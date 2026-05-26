@@ -343,8 +343,8 @@ class TestLevelManager:
         assert loaded is not None
         assert loaded.name == "Disk Level"
 
-    def test_malformed_json_skipped(self, tmp_path):
-        """Malformed JSON files should be skipped without crashing."""
+    def test_malformed_json_skipped(self, tmp_path, capsys):
+        """Malformed JSON files should be skipped and reported to stderr."""
         levels_dir = tmp_path / "levels"
         levels_dir.mkdir()
 
@@ -353,7 +353,112 @@ class TestLevelManager:
 
         # Should not raise
         mgr = LevelManager(levels_dir=str(levels_dir))
-        # Default levels should still be there
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "bad.json" in captured.err
+        assert "JSONDecodeError" in captured.err
+
+    def test_empty_custom_json_file_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        (levels_dir / "empty.json").write_text("", encoding="utf-8")
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "empty.json" in captured.err
+        assert "JSONDecodeError" in captured.err
+
+    def test_non_dict_json_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        with open(levels_dir / "array.json", "w", encoding="utf-8") as f:
+            json.dump([1, 2, 3], f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "array.json" in captured.err
+        assert "ValueError" in captured.err
+
+    def test_missing_name_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        with open(levels_dir / "no_name.json", "w", encoding="utf-8") as f:
+            json.dump({"grid": [[1, 1, 1], [1, 4, 1], [1, 1, 1]]}, f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "no_name.json" in captured.err
+        assert "KeyError" in captured.err
+
+    def test_missing_grid_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        with open(levels_dir / "no_grid.json", "w", encoding="utf-8") as f:
+            json.dump({"name": "No Grid"}, f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "no_grid.json" in captured.err
+        assert "KeyError" in captured.err
+
+    def test_jagged_grid_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        # Row 1 has 3 elements, Row 2 has 2 elements (jagged)
+        bad_data = {"name": "Jagged", "grid": [[1, 1, 1], [1, 4], [1, 1, 1]]}
+        with open(levels_dir / "jagged.json", "w", encoding="utf-8") as f:
+            json.dump(bad_data, f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "jagged.json" in captured.err
+        assert "ValueError" in captured.err
+        assert "rectangular" in captured.err
+
+    def test_invalid_cell_value_skipped(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        # Cell value 5 (BOX_ON_TARGET) is not allowed in custom level starting grids
+        bad_data = {"name": "Bad Cell", "grid": [[1, 1, 1], [1, 5, 1], [1, 1, 1]]}
+        with open(levels_dir / "bad_cell.json", "w", encoding="utf-8") as f:
+            json.dump(bad_data, f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+        assert "Level 1" in mgr.get_level_names()
+
+        captured = capsys.readouterr()
+        assert "bad_cell.json" in captured.err
+        assert "ValueError" in captured.err
+        assert "value" in captured.err
+
+    def test_one_bad_does_not_block_one_good_level(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+
+        # 1. Write one bad level
+        (levels_dir / "bad.json").write_text("{broken", encoding="utf-8")
+
+        # 2. Write one good level
+        good_data = {"name": "Good Level", "grid": [[1, 1, 1], [1, 4, 1], [1, 1, 1]]}
+        with open(levels_dir / "good.json", "w", encoding="utf-8") as f:
+            json.dump(good_data, f)
+
+        mgr = LevelManager(levels_dir=str(levels_dir))
+
+        # Good level must be loaded successfully
+        assert mgr.get_level("Good Level") is not None
+        # Default levels also loaded
         assert "Level 1" in mgr.get_level_names()
 
 

@@ -32,8 +32,68 @@ class SaveManager:
         self._load_progress()
         self._load_scores()
 
+    def _backup_file(self, filepath: Path) -> None:
+        """Safely backup a corrupted file with incrementing suffix."""
+        if not filepath.exists():
+            return
+        import sys
+
+        # Try .bak
+        bak_path = filepath.with_suffix(filepath.suffix + ".bak")
+        if not bak_path.exists():
+            try:
+                filepath.replace(bak_path)
+                return
+            except Exception as e:
+                print(
+                    f"Warning: Could not backup {filepath.name} to {bak_path}: {e}",
+                    file=sys.stderr,
+                )
+                try:
+                    import shutil
+
+                    shutil.copy2(filepath, bak_path)
+                    filepath.unlink()
+                    return
+                except Exception as e2:
+                    print(
+                        f"Warning: Fallback backup for {filepath.name} failed: {e2}",
+                        file=sys.stderr,
+                    )
+
+        # Try .bak.1, .bak.2, etc.
+        idx = 1
+        while True:
+            candidate = filepath.with_suffix(filepath.suffix + f".bak.{idx}")
+            if not candidate.exists():
+                try:
+                    filepath.replace(candidate)
+                    return
+                except Exception as e:
+                    print(
+                        f"Warning: Could not backup {filepath.name} "
+                        f"to {candidate}: {e}",
+                        file=sys.stderr,
+                    )
+                    try:
+                        import shutil
+
+                        shutil.copy2(filepath, candidate)
+                        filepath.unlink()
+                        return
+                    except Exception as e2:
+                        print(
+                            f"Warning: Fallback backup for "
+                            f"{filepath.name} failed: {e2}",
+                            file=sys.stderr,
+                        )
+                break
+            idx += 1
+
     def _load_progress(self) -> None:
         """Load progress data."""
+        import sys
+
         if self.progress_file.exists():
             try:
                 with open(self.progress_file, encoding="utf-8") as f:
@@ -41,12 +101,26 @@ class SaveManager:
                     if isinstance(raw, dict):
                         self.progress = cast(dict[str, ProgressEntry], raw)
                     else:
+                        print(
+                            "Warning: Progress file is not a dictionary. Rebuilding.",
+                            file=sys.stderr,
+                        )
+                        self._backup_file(self.progress_file)
                         self.progress = {}
-            except (json.JSONDecodeError, OSError):
+                        self._save_progress()
+            except (json.JSONDecodeError, OSError) as e:
+                print(
+                    f"Warning: Could not load progress: {e}. Rebuilding.",
+                    file=sys.stderr,
+                )
+                self._backup_file(self.progress_file)
                 self.progress = {}
+                self._save_progress()
 
     def _load_scores(self) -> None:
         """Load high scores."""
+        import sys
+
         if self.scores_file.exists():
             try:
                 with open(self.scores_file, encoding="utf-8") as f:
@@ -54,9 +128,20 @@ class SaveManager:
                     if isinstance(raw, dict):
                         self.scores = cast(dict[str, list[ScoreEntry]], raw)
                     else:
+                        print(
+                            "Warning: Scores file is not a dictionary. Rebuilding.",
+                            file=sys.stderr,
+                        )
+                        self._backup_file(self.scores_file)
                         self.scores = {}
-            except (json.JSONDecodeError, OSError):
+                        self._save_scores()
+            except (json.JSONDecodeError, OSError) as e:
+                print(
+                    f"Warning: Could not load scores: {e}. Rebuilding.", file=sys.stderr
+                )
+                self._backup_file(self.scores_file)
                 self.scores = {}
+                self._save_scores()
 
     def _save_progress(self) -> None:
         """Save progress data."""
