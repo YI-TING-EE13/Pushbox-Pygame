@@ -130,9 +130,9 @@ uv run mypy src/ --explicit-package-bases
 - [x] **README Redesign**: Decoupled player-facing startup details from advanced developer commands to improve usability.
 - [x] **Attribution Credits (About Screen)**：Added credits details into the in-game About screen.
 
-### v0.9.0.dev0 — Standalone Packaging & Portability (Packaging Preview / Current)
+### v0.9.0 — Standalone Packaging & Portability (Release Candidate Ready / Current)
 * **核心目標與當前狀態**：
-  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已完成 Phase 1（封裝基礎建設）與 Phase 2（本地冒煙測試），目前處於 Phase 3（文件更新）階段。此版本依然是 **Packaging Preview (Unreleased)**，絕非正式的 v0.9.0 釋出。
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。此版本已成為 **v0.9.0 Release Candidate**，GitHub 線上正式發布與標籤（Tag）仍為 pending 等待最終審查核可。
   
 * **已完成任務及技術決策 (Milestones & Technical Decisions)**：
   - [x] **Phase 1: Packaging Infrastructure Completed**: 
@@ -144,17 +144,13 @@ uv run mypy src/ --explicit-package-bases
     - 通過在路徑中包含空格（Space）與中文語系字元（Chinese Characters）的資料夾啟動測試。
     - **運行時存檔與數據隔離**：確立主動數據路由策略，確保運行時寫入的 `data/` 與自訂關卡 `levels/` 全數建立在 EXE 同級資料夾下（即 siblings），而非臨時資源目錄 `_MEIPASS` 或內部 `_internal/` 下，保證 100% 的存檔便攜性與唯讀資產的隔離性。
     - **預防性版權資產下架**：手動完全移除了授權不透明之 `player.jpeg` 圖像資產。代之以優雅、程序化向量繪製的 Player Fallback（procedural bear fallback），渲染穩定且絕不拋出 Crash 例外。
-  - [x] **偵錯控制台維持開啟 (Console Debugging)**：`pushbox.spec` 中的 `console=True` 設定為刻意保留（remains intentional），以便於在預覽驗證階段將標準 Traceback 日誌輸出至命令列以進行快速除錯；`console=False`（GUI 模式）將保留至最終正式 Release 核可前夕 (Phase 5) 再予切換。
+  - [x] **偵錯控制台已關閉並切換為純 GUI**：`pushbox.spec` 中的設定在 Phase 5 正式調整為 `console=False`，經乾淨目錄首航驗證，CMD 黑色終端命令列視窗已被成功隱藏，提供一般玩家極佳的純視窗遊戲體驗。
 
-* **待處理/規劃中任務 (Pending / In Progress Phases)**：
-  - [/] **Phase 3: Documentation Update (In Progress / Current)**:
-    - 同步更新 README.md, RELEASE_NOTES.md, 及 DEVELOPMENT.md 以完整反映打包進度、測試細節與技術決策。
-  - [ ] **Phase 4: Clean Machine Verification (Pending)**:
-    - 將生成的 `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` 置於全新、不包含 Python 環境的 Windows 主機中進行跨環境解壓縮冒煙驗證。
-  - [ ] **Phase 5: Release Prep & Final Package (Pending)**:
-    - 設計並匯入與 Dracula/Nord 配色高度一致的客製化 `.ico` 圖示至 `pushbox.spec`。
-    - 切換 `console=False` 為純 GUI 視窗模式。
-    - 打上 Git Annotated Tag `v1.0.0` 並發布為 GitHub Release Assets（目前無任何 pre-packaged exe 上傳至 GitHub 釋出頁面）。
+* **已完成之專案封裝階段回顧 (Completed Packaging Phases)**：
+  - [x] **Phase 3: Documentation Update**: 同步更新說明文件，使其完美反映 v0.9.0 正式 Release Candidate 狀態。
+  - [x] **Phase 4: Clean Machine / Release Candidate Verification**: 在全新乾淨資料夾與中文空格路徑中成功解壓並驗證首航。
+  - [x] **Phase 5: Final Release Prep**: 版本號正式定案為 `0.9.0`，並藉由 `console=False` 純 GUI 模式編譯產出。
+  - * [ ] **Git Tag & GitHub Release Assets Publish (Pending / Waiting Review)**: 待最終核可後，打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 上傳至 GitHub Releases 中。
 
 * **注意事項**：
   - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。
@@ -192,9 +188,9 @@ gantt
 
 ---
 
-### v0.9.0.dev0 — Standalone Packaging & Portability (Packaging Preview / Current)
+### v0.9.0 — Standalone Packaging & Portability (Release Candidate Ready / Current)
 * **核心目標與當前狀態**：
-  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已完成 Phase 1（封裝基礎建設）與 Phase 2（本地冒煙測試），目前處於 Phase 3（文件更新）階段。此版本依然是 **Packaging Preview (Unreleased)**，絕非正式的 v0.9.0 釋出。
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。此版本已成為 **v0.9.0 Release Candidate**，GitHub 線上正式發布與標籤（Tag）仍為 pending 等待最終審查核可。
   
 * **已完成任務及技術決策 (Milestones & Technical Decisions)**：
   - [x] **Phase 1: Packaging Infrastructure Completed**: 
@@ -206,17 +202,13 @@ gantt
     - 通過在路徑中包含空格（Space）與中文語系字元（Chinese Characters）的資料夾啟動測試。
     - **運行時存檔與數據隔離**：確立主動數據路由策略，確保運行時寫入的 `data/` 與自訂關卡 `levels/` 全數建立在 EXE 同級資料夾下（即 siblings），而非臨時資源目錄 `_MEIPASS` 或內部 `_internal/` 下，保證 100% 的存檔便攜性與唯讀資產的隔離性。
     - **預防性版權資產下架**：手動完全移除了授權不透明之 `player.jpeg` 圖像資產。代之以優雅、程序化向量繪製的 Player Fallback（procedural bear fallback），渲染穩定且絕不拋出 Crash 例外。
-  - [x] **偵錯控制台維持開啟 (Console Debugging)**：`pushbox.spec` 中的 `console=True` 設定為刻意保留（remains intentional），以便於在預覽驗證階段將標準 Traceback 日誌輸出至命令列以進行快速除錯；`console=False`（GUI 模式）將保留至最終正式 Release 核可前夕 (Phase 5) 再予切換。
+  - [x] **偵錯控制台已關閉並切換為純 GUI**：`pushbox.spec` 中的設定在 Phase 5 正式調整為 `console=False`，經乾淨目錄首航驗證，CMD 黑色終端命令列視窗已被成功隱藏，提供一般玩家極佳的純視窗遊戲體驗。
 
-* **待處理/規劃中任務 (Pending / In Progress Phases)**：
-  - [/] **Phase 3: Documentation Update (In Progress / Current)**:
-    - 同步更新 README.md, RELEASE_NOTES.md, 及 DEVELOPMENT.md 以完整反映打包進度、測試細節與技術決策。
-  - [ ] **Phase 4: Clean Machine Verification (Pending)**:
-    - 將生成的 `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` 置於全新、不包含 Python 環境 of Windows 主機中進行跨環境解壓縮冒煙驗證。
-  - [ ] **Phase 5: Release Prep & Final Package (Pending)**:
-    - 設計並匯入與 Dracula/Nord 配色高度一致的客製化 `.ico` 圖示至 `pushbox.spec`。
-    - 切換 `console=False` 為純 GUI 視窗模式。
-    - 打上 Git Annotated Tag `v1.0.0` 並發布為 GitHub Release Assets（目前無任何 pre-packaged exe 上傳至 GitHub 釋出頁面）。
+* **已完成之專案封裝階段回顧 (Completed Packaging Phases)**：
+  - [x] **Phase 3: Documentation Update**: 同步更新說明文件，使其完美反映 v0.9.0 正式 Release Candidate 狀態。
+  - [x] **Phase 4: Clean Machine / Release Candidate Verification**: 在全新乾淨資料夾與中文空格路徑中成功解壓並驗證首航。
+  - [x] **Phase 5: Final Release Prep**: 版本號正式定案為 `0.9.0`，並藉由 `console=False` 純 GUI 模式編譯產出。
+  - * [ ] **Git Tag & GitHub Release Assets Publish (Pending / Waiting Review)**: 待最終核可後，打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 上傳至 GitHub Releases 中。
 
 * **注意事項**：
   - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。

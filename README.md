@@ -42,26 +42,26 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 
 ### Current Status
 
-> [!NOTE]
-> **Windows Standalone Package (v0.9.0.dev0 - Packaging Preview) is now available!**
-> The Windows `onedir` standalone packaging pipeline has been successfully completed. Local packaged smoke tests have fully passed.
+> [!IMPORTANT]
+> **Windows Standalone Package (v0.9.0 - Release Candidate Ready) is now available!**
+> The Windows `onedir` standalone packaging pipeline has been successfully completed and compiled in pure GUI windowed mode (`console=False`). Local packaged smoke tests have fully passed with 100% stability.
 > 
 > **Verified Smoke Test Scenarios:**
-> - Clean extraction to an empty directory.
-> - Execution from directory paths containing spaces.
-> - Execution from directory paths containing Chinese characters.
-> - Automated runtime creation of `data/` (saves, config) and `levels/` (custom maps) in the exact folder adjacent to the executable.
-> - Procedural vector player character (procedural bear fallback) rendering works beautifully and reliably after removing the external `player.jpeg` asset for licensing compliance.
+> - Clean extraction and execution from empty folders.
+> - Execution from directory paths containing spaces and Chinese characters.
+> - Pure GUI windowed mode execution with **no terminal command console (CMD) windows appearing**.
+> - Automated runtime sibling creation of `data/` (saves, configurations) and `levels/` (custom editor levels) next to the executable for absolute save file portability.
+> - Procedural vector player character (procedural bear fallback) rendering works reliably and beautifully without requiring external `player.jpeg` image files.
 > 
-> *Please note that this is a **Packaging Preview / Dev Build** for validation. It is NOT the final stable v0.9.0 release. GitHub Release assets are NOT yet officially published. The executable currently launches with a debugging console enabled (`console=True`) to assist in smoke test diagnostic logs.*
+> *Please note that this is a **Release Candidate** that is fully package-ready. Official GitHub Release asset publication and online repository tagging are currently pending final review.*
 
-### How to Run the Packaged Version (Preview)
+### How to Run the Packaged Version
 
-1. **Obtain the ZIP archive**: Get the local preview package `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` (compiled via local build pipelines).
+1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.0-windows-x64.zip` (generated via the official local build pipelines).
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
-   - *Portability*: On first launch, the game automatically creates `data/` (for configurations, save progress, and scores) and `levels/` (for custom level files) directories in the **same directory** as the executable, ensuring 100% portability.
+   - *Portability*: On first launch, the game automatically creates `data/` and `levels/` directories in the **same directory** as the executable, ensuring 100% portability.
 
 ### How to Run from Source for Now
 
@@ -261,7 +261,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 ## Roadmap
 
 - **v0.8.1**: Completed. Release hardening (paths refactoring, config/save robustness, About screen, decoupled README).
-- **v0.9.0 (Packaging Preview / Current)**: Windows standalone packaging infrastructure, build pipelines, quick-start guide, and SHA256 checksum automation. All local packaged smoke tests passed.
+- **v0.9.0 (Release Candidate Ready / Current)**: Standalone Windows packaging infrastructure fully completed under pure GUI mode (`console=False`). Automated build scripts and local multi-directory path smoke tests completed and verified.
 - **v0.9.5**: Optional SFX activation (sound effects and ambient background music).
 - **v1.0.0**: Stable official player-facing release.
 
@@ -269,7 +269,8 @@ All user settings, progressions, high scores, and custom maps are stored locally
 
 ## Requirements & Limitations
 
-- **Packaging Preview Exe Available**: A Windows `onedir` standalone executable package (`Pushbox-Pygame.exe`) has been compiled and verified for preview; Python source execution continues to be fully supported.
+- **Release Candidate Exe Ready**: A Windows `onedir` standalone executable package (`Pushbox-Pygame.exe`) has been successfully compiled and verified; Python source execution continues to be fully supported.
+- **App Desktop Icon Deferred**: The custom desktop application icon is currently deferred and will be introduced as an optional polish in the upcoming releases (defaults to standard executable system icons for now).
 - **Audio and BGM are not implemented yet**: Optional SFX is planned for v0.9.5. AudioManager currently contains stubs and does not emit audio.
 - **PBX_ sharing is local only**: Custom levels are shared by transferring text codes manually; no central server hosting is present.
 - **BFS Solver Shortest Action Path**: The solver provides a BFS shortest action path hint, not necessarily the minimum push-count solution. The search budget is capped at `50,000` nodes to keep the game UI responsive.

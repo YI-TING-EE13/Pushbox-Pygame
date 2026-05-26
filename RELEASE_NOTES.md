@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## v0.9.0.dev0 — Packaging Preview (Unreleased)
+## v0.9.0 — Release Candidate (Unreleased)
 
 ### Added
 
@@ -15,22 +15,23 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-* Updated development version metadata to `0.9.0.dev0` and UI version to `0.9.0-dev`.
+* Updated version metadata (pyproject.toml, src/pushbox/__init__.py) and UI version string (constants.py) to the formal release version `0.9.0`.
+* Configured PyInstaller to build in pure GUI windowed mode (`console=False`) to hide the diagnostic CMD console for general players.
 * Removed `player.jpeg` from packaged assets because its redistribution license was unclear; the game now relies on procedural player fallback rendering.
 
 ### Verified
 
-* Packaged build passed local smoke tests from a clean extracted folder.
-* Verified launch from paths containing spaces and Chinese characters.
-* Verified runtime `data/` and `levels/` creation next to the executable.
+* Packaged build passed clean local smoke tests from a clean extracted folder under pure GUI mode.
+* Verified launch from extreme directory paths containing spaces and Chinese characters.
+* Verified runtime `data/` and `levels/` creation in the exact folder adjacent to the executable.
 * Verified no `player.jpeg` is included in dist/release artifacts.
 
 ### Notes
 
-* This is not the final v0.9.0 release.
-* GitHub Release asset upload is still pending.
-* The current `.exe` uses `console=True` for debugging during packaging validation.
-* Audio/BGM/SFX remain deferred.
+* This is the official Release Candidate for v0.9.0, which is fully package-ready.
+* GitHub Release asset upload and official tagging are still pending final review.
+* Custom application desktop icon is deferred and defaults to standard system executable icons.
+* Audio/BGM/SFX, macOS/Linux packaging, and MSI installers remain deferred.
 
 ---
 
