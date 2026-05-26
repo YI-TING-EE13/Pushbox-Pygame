@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .constants import ControlScheme
 
@@ -24,13 +24,18 @@ class Config:
         "theme": "default",
     }
 
-    def __init__(self, config_path: str = "data/config.json") -> None:
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """Initialize configuration.
 
         Args:
             config_path: Path to the configuration file.
         """
-        self.config_path = Path(config_path)
+        from .paths import get_app_data_path
+
+        if config_path is None:
+            self.config_path = get_app_data_path("data/config.json")
+        else:
+            self.config_path = Path(config_path)
         self._config: dict[str, Any] = {}
         self.load()
 

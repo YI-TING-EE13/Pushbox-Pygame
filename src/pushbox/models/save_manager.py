@@ -14,13 +14,18 @@ ScoreEntry = dict[str, ScoreValue]
 class SaveManager:
     """Manages game save data and high scores."""
 
-    def __init__(self, save_dir: str = "data") -> None:
+    def __init__(self, save_dir: Optional[str] = None) -> None:
         """Initialize save manager.
 
         Args:
             save_dir: Directory for save files.
         """
-        self.save_dir = Path(save_dir)
+        from ..utils.paths import get_app_data_path
+
+        if save_dir is None:
+            self.save_dir = get_app_data_path("data")
+        else:
+            self.save_dir = Path(save_dir)
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
         self.progress_file = self.save_dir / "progress.json"
@@ -145,6 +150,7 @@ class SaveManager:
 
     def _save_progress(self) -> None:
         """Save progress data."""
+        self.save_dir.mkdir(parents=True, exist_ok=True)
         try:
             with open(self.progress_file, "w", encoding="utf-8") as f:
                 json.dump(self.progress, f, indent=2, ensure_ascii=False)
@@ -153,6 +159,7 @@ class SaveManager:
 
     def _save_scores(self) -> None:
         """Save high scores."""
+        self.save_dir.mkdir(parents=True, exist_ok=True)
         try:
             with open(self.scores_file, "w", encoding="utf-8") as f:
                 json.dump(self.scores, f, indent=2, ensure_ascii=False)

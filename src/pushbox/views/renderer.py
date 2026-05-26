@@ -8,6 +8,7 @@ import pygame
 
 from ..models.game_state import GameState
 from ..utils.constants import CELL_SIZE, COLORS, CellType, ColorLike
+from ..utils.paths import get_resource_path
 
 
 class Animation:
@@ -258,10 +259,7 @@ class Renderer:
     def _load_resources(self) -> None:
         """Load game assets."""
         try:
-            # Use absolute path relative to this file location or project root
-            # Assuming src/pushbox/assets/images/player.jpeg structure
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            img_path = os.path.join(base_path, "assets", "images", "player.jpeg")
+            img_path = get_resource_path("assets/images/player.jpeg")
 
             if os.path.exists(img_path):
                 img = pygame.image.load(img_path)

@@ -20,6 +20,10 @@ class GameController:
 
     def __init__(self) -> None:
         """Initialize game controller."""
+        from ..utils.paths import ensure_runtime_dirs
+
+        ensure_runtime_dirs()
+
         # Initialize systems
         self.config = Config()
         self.audio = AudioManager()

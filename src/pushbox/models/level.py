@@ -130,13 +130,18 @@ class Level:
 class LevelManager:
     """Manages all game levels."""
 
-    def __init__(self, levels_dir: str = "levels") -> None:
+    def __init__(self, levels_dir: Optional[str] = None) -> None:
         """Initialize level manager.
 
         Args:
             levels_dir: Directory containing level files.
         """
-        self.levels_dir = Path(levels_dir)
+        from ..utils.paths import get_app_data_path
+
+        if levels_dir is None:
+            self.levels_dir = get_app_data_path("levels")
+        else:
+            self.levels_dir = Path(levels_dir)
         self.levels: dict[str, Level] = {}
         self._load_default_levels()
         self._load_custom_levels()
