@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.8.1 — Release Hardening (2026-05-26)
+
+### Added
+- Added About / Credits screen with version, license, repository, and attribution placeholder.
+- Added runtime path helpers for packaging readiness, separating bundled read-only resources from writable runtime data.
+- Added README split for players and developers.
+
+### Changed
+- Updated README to clearly separate player-facing and developer-facing instructions.
+- Improved runtime path handling so future packaged builds can write data/ and levels/ next to the executable instead of bundled resource directories.
+
+### Fixed
+- Hardened config, progress, score, and custom level loading against corrupted JSON files.
+- Corrupted config/save files now rebuild safely, with backup files preserved where applicable.
+- Malformed custom level files are skipped with warnings instead of crashing the game.
+
+### Notes
+- This release does not add packaged Windows binaries yet; packaging is planned for v0.9.0.
+- Audio and BGM are still not implemented; optional SFX is planned for v0.9.5.
+- PBX_ level sharing remains local text-code / clipboard exchange, not an online server.
+- Solver hints use BFS shortest action path, not necessarily minimum push-count optimization.
+
+---
+
 ## v0.8.0 (Unreleased) - Onboarding Level & Path Solver (2026-05-26)
 
 ### Phase 1: Onboarding 互動引導關卡 [已完成]
