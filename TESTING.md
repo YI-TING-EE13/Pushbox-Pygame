@@ -250,3 +250,49 @@ The following items currently require manual visual inspection as they are not c
 - **Window Resizing**: UI element centering and grid scaling when the window is resized.
 - **Animations**: Smoothness of the win screen transition and feedback timers.
 - **Input Responsiveness**: Lack of delay or dropped inputs during rapid movement.
+
+## 6. Packaged Standalone Release Smoke-Test Checklist
+
+這是一個專為打包後的 Windows 獨立發佈版本（Standalone Exe Release）設計的冒煙測試清單。每次重新打包發佈前，應在乾淨的 Windows 測試機或獨立虛擬機中完成以下所有項目的手動驗證：
+
+### 1. Clean Directory Launch (全新乾淨目錄啟動)
+- [ ] 將打包產出的 ZIP 壓縮檔（例如 `Pushbox-Pygame-v0.9.0-windows-x64.zip`）複製到一個乾淨的、不包含任何舊版遊戲殘留或 Python 環境的暫存目錄。
+- [ ] 完整解壓縮 ZIP 檔。
+- [ ] 驗證解壓縮後的資料夾結構乾淨，不包含 `data/`（存檔與設定）或 `levels/`（自訂關卡）目錄。
+- [ ] 雙擊執行 `Pushbox-Pygame.exe`，確認遊戲能正常開啟並成功顯示開頭的 Tutorial 畫面。
+
+### 2. Standalone Save & Portability (存檔與資料可攜性)
+- [ ] 在初次啟動遊戲後，關閉遊戲。
+- [ ] 檢查 EXE 同級目錄，驗證 `data/` 和 `levels/` 資料夾已**自動且成功建立在與 EXE 相同的目錄下**。
+- [ ] 驗證 `data/` 內包含 `config.json`，且**沒有**寫入 PyInstaller 的內部暫存目錄（如 `_internal/`）中。
+- [ ] 重新開啟遊戲，完成 Level 1，然後關閉遊戲。
+- [ ] 驗證 `data/` 下是否成功產生了 `progress.json`、`scores.json` 以及對應的 `.bak` 備份檔案。
+
+### 3. SmartScreen & Security Verification (安全警告防禦)
+- [ ] 在全新下載或首次雙擊時，確認 Windows SmartScreen 是否出現「未知的發行商」警告。
+- [ ] 點擊「其他資訊（More info）」，確認顯示的檔案名稱正確，然後點擊「仍要執行（Run anyway）」，確認可順利啟動遊戲。
+- [ ] 確保殺毒軟體（如 Windows Defender）在啟動和遊玩過程中不會報毒或阻攔 EXE 的行為。
+
+### 4. Non-English & Space Paths (特殊路徑相容性)
+- [ ] 將遊戲整個資料夾移動到包含**中文/非英文字元**的路徑下（例如 `C:\Users\測試使用者\桌面\推箱子遊戲\`）。雙擊 EXE 啟動，確認遊戲完全正常執行且無崩潰。
+- [ ] 將遊戲整個資料夾移動到包含**半形空格**的路徑下（例如 `C:\Program Files\Pushbox Pygame Standalone\`）。雙擊 EXE 啟動，確認遊戲能正常讀寫設定與存檔。
+
+### 5. Packaging Quality & GUI Window Mode (打包品質與純 GUI 驗證)
+- [ ] 雙擊執行 `Pushbox-Pygame.exe` 時，確認**沒有任何命令提示字元（CMD/Console）黑視窗伴隨出現**。
+- [ ] 遊戲視窗在開啟、遊玩和關閉時，均應為純粹的 Pygame GUI 視窗。
+- [ ] 驗證 `scripts/build_windows.py` 中的 `console=False` 參數運作正確。
+
+### 6. Executable Icon Verification (獨立圖標驗證)
+- [ ] 在 Windows 檔案總管中，將檢視模式切換為「大圖示」或「中等圖示」。
+- [ ] 驗證 `Pushbox-Pygame.exe` 檔案圖標已正確顯示為自訂設計的幾何小熊推木箱（Nord geometric bear pushing a crate）圖標。
+- [ ] 將 `Pushbox-Pygame.exe` 傳送捷徑到桌面，驗證桌面捷徑的圖標依然顯示正確且高解析度不失真（256x256 縮小至 32x32 等多解析度適配）。
+
+### 7. Clean Assets Verification (乾淨資產驗證)
+- [ ] 在解壓縮後的 `_internal/` 或 EXE 目錄中，搜索驗證 **沒有** `player.jpeg` 或其他未授權的外部測試圖片。
+- [ ] 進入遊戲的 "關於 (About)" 畫面，確認版本號顯示與當前 build 設定相符。
+
+### 8. Release SHA256 Verification (哈希校驗)
+- [ ] 每次打包後，手動或使用自動化腳本計算 ZIP 檔案的 SHA256 哈希值。
+- [ ] 驗證產出的 `.sha256` 檔案內容格式正確：
+  `SHA256哈希值  Pushbox-Pygame-v[版本]-windows-x64.zip`
+

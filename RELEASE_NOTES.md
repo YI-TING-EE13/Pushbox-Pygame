@@ -4,7 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## v0.9.0 — Release Candidate (Unreleased)
+## v0.9.1.dev0 — Unreleased
+
+### Added
+
+* Added custom packaged application icon: a procedurally generated **Nord geometric bear pushing a crate** multi-resolution `.ico` file (`src/pushbox/assets/icon/pushbox.ico`).
+* Added `scripts/generate_icon.py` for fully reproducible icon generation using only Pygame and the Python standard library (no Pillow dependency).
+* Added `docs/icon-source.md` documenting the icon's generation tool, prompt, creation date, post-processing steps, and redistribution terms.
+* Added `docs/images/` directory with 3 game screenshots for the Visual Showcase gallery: `main-menu.png`, `gameplay-hint.png`, `level-editor.png`.
+* Added Visual Showcase (畫面展示) section to `README.md` with a 3-column screenshot table.
+* Added Section 6 — Packaged Standalone Release Smoke-Test Checklist to `TESTING.md`.
+
+### Changed
+
+* Updated version metadata to `0.9.1.dev0` (`pyproject.toml`, `src/pushbox/__init__.py`, `scripts/build_windows.py`) and UI version string to `v0.9.1-dev` (`constants.py`).
+* Updated `pushbox.spec` to embed the custom `.ico` icon into the PyInstaller packaging pipeline.
+* Updated `scripts/build_windows.py` with a pre-build existence check for the icon file.
+* Updated `tests/test_about.py` to dynamically compare against `APP_VERSION` from `constants.py`.
+* Updated `README.md` roadmap, status, and features to reflect the official v0.9.0 release and upcoming v0.9.1 polish.
+
+### Notes
+
+* This is an in-development polish version. It has **not** been released.
+* Audio/BGM/SFX remain deferred and planned for v0.9.5.
+
+---
+
+## v0.9.0 — Windows Standalone Packaging (2026-05-26)
 
 ### Added
 
@@ -28,9 +54,9 @@ All notable changes to this project are documented in this file.
 
 ### Notes
 
-* This is the official Release Candidate for v0.9.0, which is fully package-ready.
-* GitHub Release asset upload and official tagging are still pending final review.
-* Custom application desktop icon is deferred and defaults to standard system executable icons.
+* Official GitHub Release published with tag `v0.9.0` pointing to commit `817cca1`.
+* Release assets: `Pushbox-Pygame-v0.9.0-windows-x64.zip` and `.sha256` checksum file.
+* Custom application desktop icon was deferred and defaults to standard system executable icons in this release.
 * Audio/BGM/SFX, macOS/Linux packaging, and MSI installers remain deferred.
 
 ---

@@ -5,18 +5,20 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v0.9.0--dev-orange.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v0.9.1--dev-orange.svg)](#-roadmap)
 
 ## Overview
 
 Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It offers a clean, fluid interface, robust keyboard/mouse controls, local progression saving, options and configuration settings, an interactive solver hint system, PBX share code level imports/exports, and a built-in custom level editor.
 
-## Screenshots / Demo
+## Visual Showcase (畫面展示)
 
-> [!NOTE]
-> *Screenshots and gameplay recordings will be officially updated in the upcoming **v0.9.0** release alongside the pre-packaged Windows binary download.*
+| Main Menu (主選單) | Solver Hint (求解提示) | Level Editor (關卡編輯器) |
+| :---: | :---: | :---: |
+| ![Main Menu](docs/images/main-menu.png) | ![Solver Hint](docs/images/gameplay-hint.png) | ![Level Editor](docs/images/level-editor.png) |
 
 ---
+
 
 ## Key Features
 
@@ -35,6 +37,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 - **About / Credits Screen**: In-game credits screen displaying project version, license details, and open-source contributions.
 - **Config / Save Hardening**: Bulletproof local save resilience with automatic `.bak` backups and active data integrity guards.
 - **Runtime Path Helpers**: Pre-wired path resolution routing for Windows standalone packaging readiness.
+- **Custom App Icon (Upcoming v0.9.1)**: Incorporated a beautifully custom-coded **Nord geometric bear pushing a crate** icon (`pushbox.ico`) into the PyInstaller packaging pipeline.
 
 ---
 
@@ -43,8 +46,8 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Windows Standalone Package (v0.9.0 - Release Candidate Ready) is now available!**
-> The Windows `onedir` standalone packaging pipeline has been successfully completed and compiled in pure GUI windowed mode (`console=False`). Local packaged smoke tests have fully passed with 100% stability.
+> **Windows Standalone Package (v0.9.0 Official Release) is now available!**
+> The Windows `onedir` standalone packaging pipeline has been officially released, and compiled in pure GUI windowed mode (`console=False`). Standalone ZIP packages are officially published on GitHub Releases.
 > 
 > **Verified Smoke Test Scenarios:**
 > - Clean extraction and execution from empty folders.
@@ -53,7 +56,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 > - Automated runtime sibling creation of `data/` (saves, configurations) and `levels/` (custom editor levels) next to the executable for absolute save file portability.
 > - Procedural vector player character (procedural bear fallback) rendering works reliably and beautifully without requiring external `player.jpeg` image files.
 > 
-> *Please note that this is a **Release Candidate** that is fully package-ready. Official GitHub Release asset publication and online repository tagging are currently pending final review.*
+> *Active development on the `main` branch is targeted towards the upcoming **v0.9.1-dev** polish version (unreleased), which features a custom-designed desktop application icon. The stable release remains **v0.9.0**.*
 
 ### How to Run the Packaged Version
 
@@ -261,16 +264,17 @@ All user settings, progressions, high scores, and custom maps are stored locally
 ## Roadmap
 
 - **v0.8.1**: Completed. Release hardening (paths refactoring, config/save robustness, About screen, decoupled README).
-- **v0.9.0 (Release Candidate Ready / Current)**: Standalone Windows packaging infrastructure fully completed under pure GUI mode (`console=False`). Automated build scripts and local multi-directory path smoke tests completed and verified.
-- **v0.9.5**: Optional SFX activation (sound effects and ambient background music).
-- **v1.0.0**: Stable official player-facing release.
+- **v0.9.0 (Official Release)**: Standalone Windows packaging infrastructure completed under pure GUI mode (`console=False`). Standalone ZIP packages officially published on GitHub Releases.
+- **v0.9.1 (Upcoming Polish - In Development)**: Complete Visual Showcase gallery, detailed release smoke-test checklists, PyInstaller pipeline upgrades, and an elegant custom **Nord geometric bear** desktop application icon (`pushbox.ico`).
+- **v0.9.5 (Planned)**: Optional SFX activation (sound effects and ambient background music).
+- **v1.0.0 (Planned)**: Stable official player-facing release.
 
 ---
 
 ## Requirements & Limitations
 
-- **Release Candidate Exe Ready**: A Windows `onedir` standalone executable package (`Pushbox-Pygame.exe`) has been successfully compiled and verified; Python source execution continues to be fully supported.
-- **App Desktop Icon Deferred**: The custom desktop application icon is currently deferred and will be introduced as an optional polish in the upcoming releases (defaults to standard executable system icons for now).
+- **Official Windows Package Ready**: A standalone Windows executable package (`Pushbox-Pygame.exe`) is officially published and supported; running directly from Python source code continues to be fully supported as well.
+- **Custom Desktop App Icon Included**: The main branch now incorporates a beautifully custom-coded **Nord geometric bear pushing a crate** desktop application icon (`pushbox.ico`).
 - **Audio and BGM are not implemented yet**: Optional SFX is planned for v0.9.5. AudioManager currently contains stubs and does not emit audio.
 - **PBX_ sharing is local only**: Custom levels are shared by transferring text codes manually; no central server hosting is present.
 - **BFS Solver Shortest Action Path**: The solver provides a BFS shortest action path hint, not necessarily the minimum push-count solution. The search budget is capped at `50,000` nodes to keep the game UI responsive.

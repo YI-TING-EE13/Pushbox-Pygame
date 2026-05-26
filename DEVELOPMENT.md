@@ -172,12 +172,14 @@ gantt
     Onboarding, Solver, Level Sharing :done, 2026-05-20, 2026-05-26
     section v0.8.1 (產品穩定性補強)
     Robustness, Credits Screen, README :done, 2026-05-27, 2026-06-02
-    section v0.9.0 (Windows 打包分發)
-    PyInstaller spec, Icon design, Release zip :active, 2026-06-03, 2026-06-09
-    section v0.9.5 (選配最小音效 SFX)
-    AudioManager fallback, Kenney SFX : 2026-06-10, 2026-06-16
+    section v0.9.0 (Windows 打包分發 — 已發布)
+    PyInstaller spec, Release zip, GitHub Release :done, 2026-06-03, 2026-06-09
+    section v0.9.1 (視覺拋光 — 開發中)
+    App Icon, Screenshots, README/TESTING docs :active, 2026-06-10, 2026-06-13
+    section v0.9.5 (選配最小音效 SFX — 已規劃)
+    AudioManager fallback, Kenney SFX : 2026-06-14, 2026-06-20
     section v1.0.0 (正式版發布)
-    Final QA, GitHub Release, Docs finalization : 2026-06-17, 2026-06-23
+    Final QA, GitHub Release, Docs finalization : 2026-06-21, 2026-06-27
 ```
 
 ### v0.8.1 Completed — Release Hardening & Decoupled README
@@ -188,9 +190,9 @@ gantt
 
 ---
 
-### v0.9.0 — Standalone Packaging & Portability (Release Candidate Ready / Current)
-* **核心目標與當前狀態**：
-  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。此版本已成為 **v0.9.0 Release Candidate**，GitHub 線上正式發布與標籤（Tag）仍為 pending 等待最終審查核可。
+### v0.9.0 — Standalone Packaging & Portability (Official Release ✅)
+* **核心目標與最終狀態**：
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。**v0.9.0 已正式發佈至 GitHub Releases**，tag `v0.9.0` 指向 commit `817cca1`。
   
 * **已完成任務及技術決策 (Milestones & Technical Decisions)**：
   - [x] **Phase 1: Packaging Infrastructure Completed**: 
@@ -208,12 +210,38 @@ gantt
   - [x] **Phase 3: Documentation Update**: 同步更新說明文件，使其完美反映 v0.9.0 正式 Release Candidate 狀態。
   - [x] **Phase 4: Clean Machine / Release Candidate Verification**: 在全新乾淨資料夾與中文空格路徑中成功解壓並驗證首航。
   - [x] **Phase 5: Final Release Prep**: 版本號正式定案為 `0.9.0`，並藉由 `console=False` 純 GUI 模式編譯產出。
-  - * [ ] **Git Tag & GitHub Release Assets Publish (Pending / Waiting Review)**: 待最終核可後，打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 上傳至 GitHub Releases 中。
+  - [x] **Git Tag & GitHub Release Assets Published**: 已打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 及 `.sha256` 上傳至 GitHub Releases。
+
+---
+
+### v0.9.1 — Visual Polish & Documentation (In Development 🔧)
+* **核心目標**：
+  為專案補齊高品質的視覺展示素材與詳盡的 release QA 文件，讓 GitHub / README 頁面對外呈現更完整的產品形象，同時為 Windows standalone 打包流程加入自訂桌面應用程式圖標。此階段嚴格不修改 gameplay code 或 packaging pipeline。
+
+* **已完成任務 (Completed Milestones)**：
+  - [x] **Phase A: Icon / Screenshot Decision Brief**:
+    - 確定圖標視覺方案為「Nord geometric bear pushing a crate（幾何小熊推木箱）」。
+    - 確定使用 Python/Pygame 程序化生成多解析度 `.ico`，不依賴 Pillow。
+    - 確定截圖策略為 3 張最小截圖集合（Main Menu / Gameplay Hint / Level Editor）。
+  - [x] **Phase B: Icon Integration (commit `b5c9755`)**:
+    - 完成 `scripts/generate_icon.py`：使用 Pygame + Python 標準庫 `struct` 程序化繪製多解析度幾何小熊推木箱圖標。
+    - 產出 `src/pushbox/assets/icon/pushbox.ico`（256x256、48x48、32x32、16x16 四種解析度）。
+    - 撰寫 `docs/icon-source.md` 完整記錄生成工具、提示詞、日期、後處理步驟與再分發條款。
+    - 更新 `pushbox.spec` 嵌入自訂 `.ico`。
+    - 更新 `scripts/build_windows.py` 加入圖標存在性前置檢查。
+    - 更新版本號至 `0.9.1.dev0` / `v0.9.1-dev`。
+    - 更新 `tests/test_about.py` 動態比對 `APP_VERSION`。
+  - [x] **Phase C: Screenshot / README / TESTING docs**:
+    - 產出 3 張遊戲截圖 PNG：`docs/images/main-menu.png`、`docs/images/gameplay-hint.png`、`docs/images/level-editor.png`。
+    - 更新 `README.md`：新增 Visual Showcase 3 欄截圖表格、更新版本徽章至 `v0.9.1-dev`、更新 Features/Roadmap/Requirements 段落以反映 v0.9.0 正式發佈與 v0.9.1 開發中狀態。
+    - 更新 `TESTING.md`：新增 Section 6 — Packaged Standalone Release Smoke-Test Checklist。
+    - 更新 `RELEASE_NOTES.md`：新增 `v0.9.1.dev0 — Unreleased` 條目、更新 v0.9.0 為正式發佈狀態。
+    - 更新 `DEVELOPMENT.md`：記錄 Phase B 已完成、Phase C 已完成。
 
 * **注意事項**：
-  - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。
-  - ❌ **不要**在此階段同時做 SFX 音效實作，保持 Packaging 邊界清晰。
-  - ❌ 運行時的本地存檔（`data/`）、測試自訂關卡（`levels/`）與編譯快取（`build/`, `dist/`）**嚴禁** commit 進 GitHub 倉庫。
+  - ❌ 此階段**嚴禁**修改 gameplay code、UI logic、packaging pipeline 或版本號。
+  - ❌ **不要**宣稱 v0.9.1 已正式 release。
+  - ❌ **不要**修改 v0.9.0 的 download link 或 GitHub Release assets。
 
 ---
 
