@@ -1765,3 +1765,199 @@ class SettingsScreen:
             )
             fb_rect = fb_surf.get_rect(centerx=screen_w // 2, y=card_y + card_h - 40)
             self.screen.blit(fb_surf, fb_rect)
+
+
+class AboutScreen:
+    """About & Credits screen UI displaying version info and open-source licenses."""
+
+    def __init__(self, screen: pygame.Surface) -> None:
+        """Initialize the About screen."""
+        self.screen = screen
+        self.font: Optional[pygame.font.Font] = None
+        self.title_font: Optional[pygame.font.Font] = None
+        self.small_font: Optional[pygame.font.Font] = None
+        self._init_fonts()
+
+        # Import APP_VERSION dynamically to ensure single source of truth
+        from ..utils.constants import APP_VERSION
+
+        # Public attributes for testability
+        self.app_version = APP_VERSION
+        self.github_url = "https://github.com/YI-TING-EE13/Pushbox-Pygame"
+        self.license_info = "MIT License"
+
+        self.content_lines = [
+            "Pushbox-Pygame",
+            f"Version: v{self.app_version}",
+            "Built with Python & Pygame",
+            f"License: {self.license_info}",
+            f"GitHub: {self.github_url}",
+            "Description: A modern Sokoban puzzle game with onboarding, "
+            "solver hints, and custom level sharing.",
+        ]
+
+        self.credit_lines = [
+            "Code & Design: Project contributors",
+            "Thanks: Python, Pygame, and the open-source community",
+            "External assets: External asset credits "
+            "will be documented before release.",
+        ]
+
+        # Callback function for exit/back
+        self.on_back: Optional[Callable[[], None]] = None
+
+        # Back button position calculation (set on draw)
+        self.back_button_rect = pygame.Rect(0, 0, 0, 0)
+        self.back_button_hovered = False
+
+    def _init_fonts(self) -> None:
+        """Initialize SysFonts or fallbacks."""
+        try:
+            self.font = pygame.font.SysFont("microsoftyahei", 20)
+            self.small_font = pygame.font.SysFont("microsoftyahei", 16)
+            self.title_font = pygame.font.SysFont("microsoftyahei", 32, bold=True)
+        except (OSError, pygame.error):
+            self.font = pygame.font.Font(None, 24)
+            self.small_font = pygame.font.Font(None, 20)
+            self.title_font = pygame.font.Font(None, 40)
+
+    def set_on_back(self, callback: Callable[[], None]) -> None:
+        """Set callback function for returning to the main menu."""
+        self.on_back = callback
+
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle inputs on the About screen.
+
+        Returns:
+            True if handled, False otherwise.
+        """
+        if event.type == pygame.KEYDOWN:
+            if event.key in [pygame.K_ESCAPE]:
+                if self.on_back:
+                    self.on_back()
+                return True
+        elif event.type == pygame.MOUSEMOTION:
+            if self.back_button_rect.collidepoint(event.pos):
+                self.back_button_hovered = True
+            else:
+                self.back_button_hovered = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1 and self.back_button_rect.collidepoint(event.pos):
+                if self.on_back:
+                    self.on_back()
+                return True
+        return False
+
+    def draw(self) -> None:
+        """Draw the glassmorphic About card and credits info onto the screen."""
+        # 1. Fill screen background (auto-adapt to theme bg)
+        self.screen.fill(COLORS["background"])
+
+        card_width = 720
+        card_height = 580
+        card_x = (self.screen.get_width() - card_width) // 2
+        card_y = (self.screen.get_height() - card_height) // 2
+
+        card_rect = pygame.Rect(card_x, card_y, card_width, card_height)
+
+        # 2. Shadow effect
+        shadow_rect = card_rect.copy()
+        shadow_rect.y += 10
+        pygame.draw.rect(self.screen, (0, 0, 0, 40), shadow_rect, border_radius=12)
+
+        # 3. Draw Main Panel
+        pygame.draw.rect(self.screen, COLORS["panel_bg"], card_rect, border_radius=12)
+        pygame.draw.rect(
+            self.screen, COLORS["grid_lines"], card_rect, 1, border_radius=12
+        )
+
+        # 4. Title
+        y_pos = card_y + 25
+        if self.title_font:
+            title_surf = self.title_font.render(
+                "關於遊戲 / Credits", True, COLORS["text_highlight"]
+            )
+            title_rect = title_surf.get_rect(centerx=card_rect.centerx, y=y_pos)
+            self.screen.blit(title_surf, title_rect)
+            y_pos = title_rect.bottom + 15
+
+        # 5. Separation line
+        pygame.draw.line(
+            self.screen,
+            COLORS["grid_lines"],
+            (card_rect.left + 40, y_pos),
+            (card_rect.right - 40, y_pos),
+            2,
+        )
+        y_pos += 20
+
+        # 6. Content lines (Slightly larger font)
+        if self.font:
+            for line in self.content_lines:
+                is_title = line.startswith("Pushbox")
+                color = COLORS["text_highlight"] if is_title else COLORS["text_main"]
+                if line.startswith("Description:"):
+                    desc_label = self.font.render(
+                        "遊戲簡介: ", True, COLORS["text_dim"]
+                    )
+                    self.screen.blit(desc_label, (card_rect.left + 50, y_pos))
+
+                    desc_body = self.font.render(
+                        line[12:].strip(), True, COLORS["text_main"]
+                    )
+                    self.screen.blit(desc_body, (card_rect.left + 140, y_pos))
+                else:
+                    surf = self.font.render(line, True, color)
+                    self.screen.blit(surf, (card_rect.left + 50, y_pos))
+                y_pos += 32
+
+            y_pos += 10
+
+        # 7. Credits separation line
+        pygame.draw.line(
+            self.screen,
+            COLORS["grid_lines"],
+            (card_rect.left + 40, y_pos),
+            (card_rect.right - 40, y_pos),
+            1,
+        )
+        y_pos += 20
+
+        # 8. Credits lines (Slightly smaller, dimmer font)
+        if self.small_font:
+            credits_title = (
+                self.font.render(
+                    "開發與授權致謝 (Credits):", True, COLORS["text_highlight"]
+                )
+                if self.font
+                else None
+            )
+            if credits_title:
+                self.screen.blit(credits_title, (card_rect.left + 50, y_pos))
+                y_pos += 30
+
+            for line in self.credit_lines:
+                surf = self.small_font.render(line, True, COLORS["text_dim"])
+                self.screen.blit(surf, (card_rect.left + 50, y_pos))
+                y_pos += 26
+
+        # 9. Draw back button at the bottom center
+        btn_w, btn_h = 240, 42
+        btn_x = card_rect.centerx - btn_w // 2
+        btn_y = card_rect.bottom - btn_h - 25
+        self.back_button_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+
+        is_hover = self.back_button_hovered
+        btn_bg = COLORS["button_hover"] if is_hover else COLORS["button_default"]
+        btn_fg = COLORS["background"] if is_hover else COLORS["text_main"]
+        btn_border = COLORS["wall"] if is_hover else COLORS["grid_lines"]
+
+        pygame.draw.rect(self.screen, btn_bg, self.back_button_rect, border_radius=8)
+        pygame.draw.rect(
+            self.screen, btn_border, self.back_button_rect, 1, border_radius=8
+        )
+
+        if self.font:
+            btn_lbl = self.font.render("返回主選單 (Esc)", True, btn_fg)
+            lbl_rect = btn_lbl.get_rect(center=self.back_button_rect.center)
+            self.screen.blit(btn_lbl, lbl_rect)

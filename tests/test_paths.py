@@ -41,8 +41,7 @@ def test_dev_mode_paths():
 
     # 5. get_app_data_path in dev maps to project_root / path
     assert (
-        get_app_data_path("data/config.json")
-        == project_root / "data" / "config.json"
+        get_app_data_path("data/config.json") == project_root / "data" / "config.json"
     )
     assert get_app_data_path("levels") == project_root / "levels"
 
@@ -117,6 +116,7 @@ def test_manual_path_injection_override(tmp_path):
     assert lvl_mgr.levels_dir == custom_levels
     # Perform a custom level save to verify it writes to the custom directory
     from src.pushbox.models.level import Level
+
     custom_lvl = Level("Injected Level", [[1, 1, 1], [1, 4, 1], [1, 1, 1]])
     lvl_mgr.save_level(custom_lvl)
     assert custom_levels.exists()

@@ -24,6 +24,7 @@ from src.pushbox.utils.constants import GameState as GameStateEnum
 from src.pushbox.views.level_editor import LevelEditor
 from src.pushbox.views.renderer import Renderer
 from src.pushbox.views.ui_components import (
+    AboutScreen,
     LevelSelector,
     Menu,
     ModernButton,
@@ -58,6 +59,7 @@ class GameApp:
         self.settings = SettingsScreen(
             self.screen, self.controller.config, self.controller.save_manager
         )
+        self.about = AboutScreen(self.screen)
         self.editor: LevelEditor | None = None
 
         # In-Game UI Buttons
@@ -171,6 +173,7 @@ class GameApp:
         self.controller.register_callback("undo", self._on_undo)
         self.controller.register_callback("redo", self._on_redo)
         self.settings.set_on_back(self._back_to_menu)
+        self.about.set_on_back(self._back_to_menu)
 
         # Register hint input and state clearing callbacks
         self.controller.input_handler.register_callback("hint", self._trigger_hint)
@@ -231,12 +234,17 @@ class GameApp:
     def _setup_menu(self) -> None:
         """Setup main menu."""
         self.menu.buttons.clear()
-        self.menu.add_button("開始遊戲", self._start_game, -120)
-        self.menu.add_button("選擇關卡", self._show_level_select, -60)
-        self.menu.add_button("編輯器", lambda: self._show_editor(), 0)
-        self.menu.add_button("教學說明", self._show_tutorial, 60)
-        self.menu.add_button("設定", self._show_settings, 120)
-        self.menu.add_button("退出", self._quit, 180)
+        self.menu.add_button("開始遊戲", self._start_game, -150)
+        self.menu.add_button("選擇關卡", self._show_level_select, -90)
+        self.menu.add_button("編輯器", lambda: self._show_editor(), -30)
+        self.menu.add_button("教學說明", self._show_tutorial, 30)
+        self.menu.add_button("設定", self._show_settings, 90)
+        self.menu.add_button("關於遊戲", self._show_about, 150)
+        self.menu.add_button("退出", self._quit, 210)
+
+    def _show_about(self) -> None:
+        """Show about game screen."""
+        self._start_transition("about")
 
     def _start_transition(self, target_screen: str) -> None:
         """Start a screen fade transition."""
@@ -418,6 +426,9 @@ class GameApp:
 
             elif self.current_screen == "settings":
                 self.settings.handle_event(event)
+
+            elif self.current_screen == "about":
+                self.about.handle_event(event)
 
             elif self.current_screen == "menu":
                 if event.type == pygame.KEYDOWN:
@@ -623,6 +634,10 @@ class GameApp:
 
         elif self.current_screen == "settings":
             self.settings.draw()
+            self._draw_feedback()
+
+        elif self.current_screen == "about":
+            self.about.draw()
             self._draw_feedback()
 
         elif self.current_screen == "game":
