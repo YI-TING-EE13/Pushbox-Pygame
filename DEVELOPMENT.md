@@ -122,7 +122,44 @@ uv run mypy src/ --explicit-package-bases
 - [x] **互動式新手引導教學**：由 `LevelManager` 動態載入 5x7 教學關 `"Level 0"`，實施物理隔離，首次啟動強制進入教學，並由 HUD 透明引導，通關後直退選單。
 - [x] **後台 BFS 求解提示**：實作 Sokoban 後台求解器（最大防護節點 50,000），按 `I` 鍵即可高亮渲染下一步推動路徑 1.5 秒。
 - [x] **自訂關卡 JSON 匯出/匯入**：採用版本控制 Schema，匯出用 `zlib-base64` 封裝。匯入加入 8 點驗證，名稱自動去重與防穿越過濾。
-- [x] **Level Selector 預覽優化**：重寫 adaptive details panel 佈局，大幅提升縮小視窗時的防重疊相容性；同時將遊戲預設尺寸調整為 **`1024x768`**，使預覽 Minimap 在初始啟動時即可完美呈現且絕不遮擋卡片與按鈕。
+- [x] **Level Selector Previews**: Rewrote the adaptive details panel layout, greatly increasing window-resizing compatibility; adjusted the default resolution to **`1024x768`** so that the Minimap fits perfectly at launch without overlaps.
+
+### v0.8.1 Completed — Release Hardening & Decoupled README
+- [x] **Config / Save / Custom Level Corrupted Data Hardening**: Automated save file `.bak` duplicate recovery and safely skipped invalid custom map loads without program crashes.
+- [x] **Runtime Path Infrastructure**: Implemented standalone resource vs writable data isolation to ensure full compatibility.
+- [x] **README Redesign**: Decoupled player-facing startup details from advanced developer commands to improve usability.
+- [x] **Attribution Credits (About Screen)**：Added credits details into the in-game About screen.
+
+### v0.9.0.dev0 — Standalone Packaging & Portability (Packaging Preview / Current)
+* **核心目標與當前狀態**：
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已完成 Phase 1（封裝基礎建設）與 Phase 2（本地冒煙測試），目前處於 Phase 3（文件更新）階段。此版本依然是 **Packaging Preview (Unreleased)**，絕非正式的 v0.9.0 釋出。
+  
+* **已完成任務及技術決策 (Milestones & Technical Decisions)**：
+  - [x] **Phase 1: Packaging Infrastructure Completed**: 
+    - 確立 `onedir` 資料夾打包策略，確保依賴項可攜式隨行。
+    - 完成了穩健且可重現的 PyInstaller `pushbox.spec` 設定。
+    - 撰寫了全自動 Windows 打包建置指令指令碼 `scripts/build_windows.py`，支援自動清理工作區、編譯二進位檔、複製靜態元數據（README.md, LICENSE, RELEASE_NOTES.md）並動態生成中文 `quick-start.txt`。
+  - [x] **Phase 2: Local Packaged Smoke Test Completed**:
+    - 通過從乾淨的解壓縮資料夾中啟動測試。
+    - 通過在路徑中包含空格（Space）與中文語系字元（Chinese Characters）的資料夾啟動測試。
+    - **運行時存檔與數據隔離**：確立主動數據路由策略，確保運行時寫入的 `data/` 與自訂關卡 `levels/` 全數建立在 EXE 同級資料夾下（即 siblings），而非臨時資源目錄 `_MEIPASS` 或內部 `_internal/` 下，保證 100% 的存檔便攜性與唯讀資產的隔離性。
+    - **預防性版權資產下架**：手動完全移除了授權不透明之 `player.jpeg` 圖像資產。代之以優雅、程序化向量繪製的 Player Fallback（procedural bear fallback），渲染穩定且絕不拋出 Crash 例外。
+  - [x] **偵錯控制台維持開啟 (Console Debugging)**：`pushbox.spec` 中的 `console=True` 設定為刻意保留（remains intentional），以便於在預覽驗證階段將標準 Traceback 日誌輸出至命令列以進行快速除錯；`console=False`（GUI 模式）將保留至最終正式 Release 核可前夕 (Phase 5) 再予切換。
+
+* **待處理/規劃中任務 (Pending / In Progress Phases)**：
+  - [/] **Phase 3: Documentation Update (In Progress / Current)**:
+    - 同步更新 README.md, RELEASE_NOTES.md, 及 DEVELOPMENT.md 以完整反映打包進度、測試細節與技術決策。
+  - [ ] **Phase 4: Clean Machine Verification (Pending)**:
+    - 將生成的 `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` 置於全新、不包含 Python 環境的 Windows 主機中進行跨環境解壓縮冒煙驗證。
+  - [ ] **Phase 5: Release Prep & Final Package (Pending)**:
+    - 設計並匯入與 Dracula/Nord 配色高度一致的客製化 `.ico` 圖示至 `pushbox.spec`。
+    - 切換 `console=False` 為純 GUI 視窗模式。
+    - 打上 Git Annotated Tag `v1.0.0` 並發布為 GitHub Release Assets（目前無任何 pre-packaged exe 上傳至 GitHub 釋出頁面）。
+
+* **注意事項**：
+  - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。
+  - ❌ **不要**在此階段同時做 SFX 音效實作，保持 Packaging 邊界清晰。
+  - ❌ 運行時的本地存檔（`data/`）、測試自訂關卡（`levels/`）與編譯快取（`build/`, `dist/`）**嚴禁** commit 進 GitHub 倉庫。
 
 ---
 
@@ -138,72 +175,53 @@ gantt
     section v0.8.0 (已發布)
     Onboarding, Solver, Level Sharing :done, 2026-05-20, 2026-05-26
     section v0.8.1 (產品穩定性補強)
-    Robustness, Credits Screen, README :active, 2026-05-27, 2026-06-02
+    Robustness, Credits Screen, README :done, 2026-05-27, 2026-06-02
     section v0.9.0 (Windows 打包分發)
-    PyInstaller spec, Icon design, Release zip : 2026-06-03, 2026-06-09
+    PyInstaller spec, Icon design, Release zip :active, 2026-06-03, 2026-06-09
     section v0.9.5 (選配最小音效 SFX)
     AudioManager fallback, Kenney SFX : 2026-06-10, 2026-06-16
     section v1.0.0 (正式版發布)
     Final QA, GitHub Release, Docs finalization : 2026-06-17, 2026-06-23
 ```
 
-### v0.8.1 — Release Hardening / 穩定性補強
-* **核心目標**：
-  優化資料儲存穩定性與系統防護，確保在設定檔、進度檔、自訂關卡資料損毀或資源路徑異常時，遊戲能優雅容錯而不 Crash。
-* **建議任務**：
-  1. **Config / Save / Custom Level 防呆與容錯**：
-     - 若 `config.json` 遺失、毀損或格式異常，系統應自動覆寫並重建安全合規的 `DEFAULT_CONFIG` 繼續執行。
-     - 若 `progress.json` / `scores.json` 損毀導致載入失敗，將該檔自動備份為 `.bak`，隨後在原處重建乾淨的新存檔檔案，避免阻止玩家重啟遊戲。
-     - 若本地 `levels/` 資料夾中包含損毀、格式不對的自訂關卡 JSON 檔案，系統應跳過該檔案，並在 Console 輸出警告，**絕不**讓關卡選擇卡片網格（Level Selector）崩潰。
-     - 匯入分享碼或載入自訂關卡失敗時，於 UI 面板彈窗顯示可讀的錯誤原因（如「地圖外圍牆壁未完全封閉」、「缺少玩家起始點」），禁止拋出 Runtime Traceback。
-  2. **運行時路徑 (Runtime Path) 與打包路徑整合準備**：
-     - 檢查並確保 `data/` 與 `levels/` 資料夾能在打包執行檔同級目錄下正常建立與寫入。
-     - 規劃全域資源加載路徑 Helper (`resource_path` / `app_data_path`），以確保 PyInstaller 打包為單一 EXE 後，能順暢在臨時解壓路徑讀取 assets、fonts、LICENSE 等唯讀靜態資源，徹底根絕相對路徑找不到檔案的問題。
-  3. **簡潔的 About / Credits 致謝畫面**：
-     - 在主選單中加入簡潔美觀的 About / Credits 致謝面板。
-     - 展示 `Pushbox-Pygame` 版本資訊、GitHub 倉庫位址、MIT 授權許可說明，以及 "Built with Python & Pygame"。
-     - 預留列出 CC0 外部音訊與圖像素材的授權透明列表。
-  4. **README 玩家與開發者區塊雙向解耦**：
-     - 重構 `README.md`，劃分為 **For Players（玩家指引）** 與 **For Developers（開發者指引）**。
-     - *For Players* 著重說明 Zip 包下載解壓、點擊運行 EXE 及主要按鍵操控。
-     - *For Developers* 保留 `uv sync`、`uv run python main.py`、`pytest`、`ruff`、`mypy` 等開發除錯指令。
-* **注意事項**：
-  - ❌ 此階段**不新增**任何遊戲玩法或機制。
-  - ❌ **不新增**預設關卡。
-  - ❌ **不做**音效載入與實作。
-  - ❌ **不做**實際的 PyInstaller 二進位打包，僅做打包前的程式路徑防錯與穩定性補強。
-  - ⚠️ 所有防呆與容錯邏輯必須撰寫對應的單元測試（Unit Test），確保不會意外吞掉系統真正的 Bug。
+### v0.8.1 Completed — Release Hardening & Decoupled README
+- [x] **Config / Save / Custom Level Corrupted Data Hardening**: Recovered progress and config settings elegantly from backup files if parsing fails.
+- [x] **Runtime Path Infrastructure**: Implemented standalone resource vs writable data isolation to ensure full compatibility.
+- [x] **README Redesign**: Decoupled player-facing startup details from advanced developer commands to improve usability.
+- [x] **Attribution Credits (About Screen)**: Added credits details into the in-game About screen.
 
 ---
 
-### v0.9.0 — Packaging / Windows Release Build
-* **核心目標**：
-  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。
-* **建議任務**：
-  1. **PyInstaller 打包自動化建置**：
-     - 撰寫穩健的 PyInstaller `.spec` 設定檔或自動化建置腳本（如 `build.py`）。
-     - 編譯產出 Windows 免安裝的獨立可執行檔（`.exe`）。
-     - 確保 `assets/`、`fonts/`、`LICENSE`、`README` 等靜態資料與必要 metadata 被正確複製入 bundle。
-     - 確保使用者的運行時存檔（`data/`）與自訂關卡（`levels/`）不會被打進靜態 bundle，而是在 `.exe` 旁的目錄或系統 AppData 中安全建立。
-  2. **App 專屬 Icon 設計與導入**：
-     - 設計並導出 App 專屬的 `.ico` 桌面圖標。
-     - 允許使用 AI 輔助生成 icon（例如 Midjourney 或 DALL-E 3），但必須妥善保存 prompt、生成日期與後續裁切/去底等後處理流程。
-     - ❌ **嚴禁**直接使用網路上有潛在版權爭議的圖片。
-     * *Icon 風格建議*：簡潔幾何、推箱子意境、綠色目標點，並與 Dracula / Nord 色彩美學保持高度一致。
-  3. **Release 免安裝壓縮包 (Release zip)**：
-     - 建立一鍵編譯打包流程，將 `.exe`、必備資源、README 與授權聲明文件打包成一個 `pushbox-pygame-v0.9.0-windows.zip`。
-     - 在一台完全無 Python 開發環境的乾淨 Windows 虛擬機或主機上進行解壓與啟動測試。
-  4. **打包版本冒煙測試 (Packaging Smoke Test)**：
-     - 驗證首次啟動能順暢載入 `Level 0` 教學關。
-     - 通關教學後能無縫返回主選單，並在點擊「開始遊戲」時順利加載 `Level 1`。
-     - 驗證 Level Selector、求解提示（I 鍵）、關卡編輯器、匯入匯出分享碼、設定換色等功能 100% 正常。
-     - 關閉遊戲再開，驗證 `config.json` 和進度檔仍可正確持久化。
-     - 確保執行檔的加載路徑完全不依賴於本地的任何開發環境相對路徑。
+### v0.9.0.dev0 — Standalone Packaging & Portability (Packaging Preview / Current)
+* **核心目標與當前狀態**：
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已完成 Phase 1（封裝基礎建設）與 Phase 2（本地冒煙測試），目前處於 Phase 3（文件更新）階段。此版本依然是 **Packaging Preview (Unreleased)**，絕非正式的 v0.9.0 釋出。
+  
+* **已完成任務及技術決策 (Milestones & Technical Decisions)**：
+  - [x] **Phase 1: Packaging Infrastructure Completed**: 
+    - 確立 `onedir` 資料夾打包策略，確保依賴項可攜式隨行。
+    - 完成了穩健且可重現的 PyInstaller `pushbox.spec` 設定。
+    - 撰寫了全自動 Windows 打包建置指令指令碼 `scripts/build_windows.py`，支援自動清理工作區、編譯二進位檔、複製靜態元數據（README.md, LICENSE, RELEASE_NOTES.md）並動態生成中文 `quick-start.txt`。
+  - [x] **Phase 2: Local Packaged Smoke Test Completed**:
+    - 通過從乾淨的解壓縮資料夾中啟動測試。
+    - 通過在路徑中包含空格（Space）與中文語系字元（Chinese Characters）的資料夾啟動測試。
+    - **運行時存檔與數據隔離**：確立主動數據路由策略，確保運行時寫入的 `data/` 與自訂關卡 `levels/` 全數建立在 EXE 同級資料夾下（即 siblings），而非臨時資源目錄 `_MEIPASS` 或內部 `_internal/` 下，保證 100% 的存檔便攜性與唯讀資產的隔離性。
+    - **預防性版權資產下架**：手動完全移除了授權不透明之 `player.jpeg` 圖像資產。代之以優雅、程序化向量繪製的 Player Fallback（procedural bear fallback），渲染穩定且絕不拋出 Crash 例外。
+  - [x] **偵錯控制台維持開啟 (Console Debugging)**：`pushbox.spec` 中的 `console=True` 設定為刻意保留（remains intentional），以便於在預覽驗證階段將標準 Traceback 日誌輸出至命令列以進行快速除錯；`console=False`（GUI 模式）將保留至最終正式 Release 核可前夕 (Phase 5) 再予切換。
+
+* **待處理/規劃中任務 (Pending / In Progress Phases)**：
+  - [/] **Phase 3: Documentation Update (In Progress / Current)**:
+    - 同步更新 README.md, RELEASE_NOTES.md, 及 DEVELOPMENT.md 以完整反映打包進度、測試細節與技術決策。
+  - [ ] **Phase 4: Clean Machine Verification (Pending)**:
+    - 將生成的 `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` 置於全新、不包含 Python 環境 of Windows 主機中進行跨環境解壓縮冒煙驗證。
+  - [ ] **Phase 5: Release Prep & Final Package (Pending)**:
+    - 設計並匯入與 Dracula/Nord 配色高度一致的客製化 `.ico` 圖示至 `pushbox.spec`。
+    - 切換 `console=False` 為純 GUI 視窗模式。
+    - 打上 Git Annotated Tag `v1.0.0` 並發布為 GitHub Release Assets（目前無任何 pre-packaged exe 上傳至 GitHub 釋出頁面）。
+
 * **注意事項**：
   - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。
-  - ❌ **不要**在此階段同時做 SFX 音效實作，保持 Packaging 邊界清晰，防止路徑與音訊驅動問題交織導致排錯困難。
-  - ❌ 運行時的本地存檔（`data/`）、測試自訂關卡（`levels/`）與編譯快取（`build/`, `dist/`）**嚴禁** commit 進 GitHub 倉庫，需保持 `.gitignore` 的嚴格生效。
-  - ⚠️ PyInstaller 的打包產物請放入 GitHub Release 的 Assets 中，不要直接 commit 進入代碼庫.
+  - ❌ **不要**在此階段同時做 SFX 音效實作，保持 Packaging 邊界清晰。
+  - ❌ 運行時的本地存檔（`data/`）、測試自訂關卡（`levels/`）與編譯快取（`build/`, `dist/`）**嚴禁** commit 進 GitHub 倉庫。
 
 ---
 

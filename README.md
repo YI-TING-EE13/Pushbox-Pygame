@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v0.8.1--dev-orange.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v0.9.0--dev-orange.svg)](#-roadmap)
 
 ## Overview
 
@@ -34,7 +34,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 - **Level Editor**: Built-in interactive map canvas supporting tool pickers (1-5), paint/erase, undo/redo, dynamic resizing (5x5 to 20x20), and canvas validation prior to local storage.
 - **About / Credits Screen**: In-game credits screen displaying project version, license details, and open-source contributions.
 - **Config / Save Hardening**: Bulletproof local save resilience with automatic `.bak` backups and active data integrity guards.
-- **Runtime Path Helpers**: Pre-wired path resolution routing for future Windows standalone packaging readiness.
+- **Runtime Path Helpers**: Pre-wired path resolution routing for Windows standalone packaging readiness.
 
 ---
 
@@ -42,9 +42,26 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 
 ### Current Status
 
-> [!IMPORTANT]
-> **Packaged Windows binary (.exe) is not yet released; planned for v0.9.0.**
-> Currently, the game is launched from source code and requires a local desktop Python environment.
+> [!NOTE]
+> **Windows Standalone Package (v0.9.0.dev0 - Packaging Preview) is now available!**
+> The Windows `onedir` standalone packaging pipeline has been successfully completed. Local packaged smoke tests have fully passed.
+> 
+> **Verified Smoke Test Scenarios:**
+> - Clean extraction to an empty directory.
+> - Execution from directory paths containing spaces.
+> - Execution from directory paths containing Chinese characters.
+> - Automated runtime creation of `data/` (saves, config) and `levels/` (custom maps) in the exact folder adjacent to the executable.
+> - Procedural vector player character (procedural bear fallback) rendering works beautifully and reliably after removing the external `player.jpeg` asset for licensing compliance.
+> 
+> *Please note that this is a **Packaging Preview / Dev Build** for validation. It is NOT the final stable v0.9.0 release. GitHub Release assets are NOT yet officially published. The executable currently launches with a debugging console enabled (`console=True`) to assist in smoke test diagnostic logs.*
+
+### How to Run the Packaged Version (Preview)
+
+1. **Obtain the ZIP archive**: Get the local preview package `Pushbox-Pygame-v0.9.0.dev0-windows-x64.zip` (compiled via local build pipelines).
+2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
+3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
+   - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
+   - *Portability*: On first launch, the game automatically creates `data/` (for configurations, save progress, and scores) and `levels/` (for custom level files) directories in the **same directory** as the executable, ensuring 100% portability.
 
 ### How to Run from Source for Now
 
@@ -161,6 +178,20 @@ uv run ruff format --check .
 uv run python -m mypy src/ --explicit-package-bases
 ```
 
+### Build Windows Standalone Package
+
+To compile and package the game yourself on a Windows machine:
+
+```bash
+# Sync dependencies including PyInstaller (via build extra)
+uv sync --extra build
+
+# Run the automated build script
+uv run python scripts/build_windows.py
+```
+
+This will compile the game using `pushbox.spec` in `onedir` mode, copy all required documentation, generate a `quick-start.txt` guide, and create a ZIP archive in the `release/` folder alongside its SHA256 checksum.
+
 ---
 
 ## Project Structure
@@ -229,8 +260,8 @@ All user settings, progressions, high scores, and custom maps are stored locally
 
 ## Roadmap
 
-- **v0.8.1 (Current)**: Release hardening (paths refactoring, config/save robustness, About screen, decoupled README).
-- **v0.9.0 (Upcoming)**: Windows standalone packaging and release zips, official screenshots and recording updates.
+- **v0.8.1**: Completed. Release hardening (paths refactoring, config/save robustness, About screen, decoupled README).
+- **v0.9.0 (Packaging Preview / Current)**: Windows standalone packaging infrastructure, build pipelines, quick-start guide, and SHA256 checksum automation. All local packaged smoke tests passed.
 - **v0.9.5**: Optional SFX activation (sound effects and ambient background music).
 - **v1.0.0**: Stable official player-facing release.
 
@@ -238,7 +269,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 
 ## Requirements & Limitations
 
-- **No Packed Windows Exe Yet**: Active Python environment is required for source execution.
+- **Packaging Preview Exe Available**: A Windows `onedir` standalone executable package (`Pushbox-Pygame.exe`) has been compiled and verified for preview; Python source execution continues to be fully supported.
 - **Audio and BGM are not implemented yet**: Optional SFX is planned for v0.9.5. AudioManager currently contains stubs and does not emit audio.
 - **PBX_ sharing is local only**: Custom levels are shared by transferring text codes manually; no central server hosting is present.
 - **BFS Solver Shortest Action Path**: The solver provides a BFS shortest action path hint, not necessarily the minimum push-count solution. The search budget is capped at `50,000` nodes to keep the game UI responsive.
@@ -257,4 +288,4 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
 
 - **Python & Pygame**: For the robust game engine framework.
 - **Open-source community**: Contributors and supporters of standard Python game architectures.
-- *External Asset Credits*: Will be fully documented in this section before the official player-facing release.
+- *External Asset Credits*: Will be fully documented in this section before the official player-facing release. All external image assets (such as `player.jpeg`) have been removed for absolute open-source licensing compliance, transitioning to an elegant, procedurally drawn vector player character.

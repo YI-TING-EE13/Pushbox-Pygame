@@ -4,6 +4,36 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.9.0.dev0 — Packaging Preview (Unreleased)
+
+### Added
+
+* Added Windows onedir packaging infrastructure using PyInstaller.
+* Added `pushbox.spec` as the reproducible packaging configuration.
+* Added `scripts/build_windows.py` to generate the packaged app folder, zip archive, quick-start guide, and SHA256 checksum.
+* Added `build` optional dependency group for PyInstaller.
+
+### Changed
+
+* Updated development version metadata to `0.9.0.dev0` and UI version to `0.9.0-dev`.
+* Removed `player.jpeg` from packaged assets because its redistribution license was unclear; the game now relies on procedural player fallback rendering.
+
+### Verified
+
+* Packaged build passed local smoke tests from a clean extracted folder.
+* Verified launch from paths containing spaces and Chinese characters.
+* Verified runtime `data/` and `levels/` creation next to the executable.
+* Verified no `player.jpeg` is included in dist/release artifacts.
+
+### Notes
+
+* This is not the final v0.9.0 release.
+* GitHub Release asset upload is still pending.
+* The current `.exe` uses `console=True` for debugging during packaging validation.
+* Audio/BGM/SFX remain deferred.
+
+---
+
 ## v0.8.1 — Release Hardening (2026-05-26)
 
 ### Added
