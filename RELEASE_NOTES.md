@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.9.2 — Unreleased
+
+### Fixed
+
+* Fixed a critical multi-window launch bug on Windows standalone packaged executables by introducing a cross-platform `SingleInstanceGuard`.
+* Enforces that only a single game window instance can run concurrently, preventing file lock contentions and progress file corruption.
+* Leverages Win32 Named Mutex (`Local\PushboxPygameSingleInstanceMutex`) on Windows for robust system-managed lifecycle locks with automatic recycling on unexpected termination.
+* Leverages Unix flock lockfile on non-Windows platforms as a lightweight fallback.
+
+### Added
+
+* Added `src/pushbox/utils/single_instance.py` containing the `SingleInstanceGuard` class.
+* Added comprehensive unit test suite `tests/test_single_instance.py` verifying named mutexes, lockfiles, DLL exception catch, and safe re-entrant exit releases.
+* Added Section 9 — Multi-Window Prevention & Single-Instance Guard manual QA checklist to `TESTING.md`.
+
+### Changed
+
+* Updated version metadata to `0.9.2` across `pyproject.toml`, `src/pushbox/__init__.py`, `scripts/build_windows.py`, and `constants.py`.
+* Integrated `SingleInstanceGuard` check inside `main.py` entry point.
+
+### Notes
+
+* No gameplay logic changes.
+* No audio or translation changes in this hotfix release.
+
+---
+
 ## v0.9.1 — 2026-05-27
 
 ### Added

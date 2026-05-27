@@ -296,3 +296,11 @@ The following items currently require manual visual inspection as they are not c
 - [ ] 驗證產出的 `.sha256` 檔案內容格式正確：
   `SHA256哈希值  Pushbox-Pygame-v[版本]-windows-x64.zip`
 
+### 9. Multi-Window Prevention & Single-Instance Guard (v0.9.2 Hotfix)
+- [ ] Launch `Pushbox-Pygame.exe` once. Confirm that a single game window boots up perfectly.
+- [ ] While the first game window is still open, try launching `Pushbox-Pygame.exe` again (both rapidly and slowly).
+- [ ] Confirm that no additional game window appears, and the second instance process exits silently and immediately without crashing or spawning any debug console window.
+- [ ] Open Windows Task Manager (Ctrl+Shift+Esc), locate active processes, and verify that only exactly one `Pushbox-Pygame.exe` process is running.
+- [ ] Kill the primary process in Task Manager, then double-click `Pushbox-Pygame.exe` again. Verify that the game launches successfully without being locked out (stale mutex handle successfully recycled by the OS).
+- [ ] Move the game folder to a Chinese/Unicode path or a path containing spaces. Repeat the single-instance test and verify it still prevents duplicate instances flawlessly.
+

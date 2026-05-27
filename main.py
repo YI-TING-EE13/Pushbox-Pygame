@@ -889,10 +889,19 @@ class GameApp:
         sys.exit()
 
 
-def main():
+def main() -> None:
     """Entry point."""
-    app = GameApp()
-    app.run()
+    from src.pushbox.utils.single_instance import SingleInstanceGuard
+
+    guard = SingleInstanceGuard()
+    if guard.already_running:
+        sys.exit(0)
+
+    try:
+        app = GameApp()
+        app.run()
+    finally:
+        guard.close()
 
 
 if __name__ == "__main__":
