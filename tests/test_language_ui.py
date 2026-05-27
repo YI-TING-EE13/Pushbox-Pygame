@@ -403,3 +403,113 @@ def test_level_editor_ui_localization():
 
     editor._draw_confirm_dialog()
     editor._draw_export_dialog()
+
+
+def test_gameplay_hud_and_onboarding_localization(monkeypatch):
+    """Verify that HUD stats, prompts, and onboarding tip banners localize."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    from src.pushbox.models.game_state import GameState
+    from src.pushbox.models.level import Level
+    from src.pushbox.views.renderer import Renderer
+
+    renderer = Renderer(screen)
+    # Mock game state and Level 0
+    level_0_grid = [
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 4, 0, 0, 3, 2, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+    ]
+    level = Level("Level 0", level_0_grid)
+    game_state = MagicMock(spec=GameState)
+    game_state.level = level
+    game_state.get_stats.return_value = {"moves": 5, "pushes": 3, "time": "00:15"}
+
+    # 1. English Mode
+    i18n.set_language("en")
+    # Call render_ui with show_help=False
+    renderer.render_ui(game_state, show_help=False, control_scheme="方向鍵 / WASD")
+
+    # Check that translations match English
+    assert "Moves: 5" in i18n.t("gameplay.hud_moves").format(moves=5)
+    assert "Pushes: 3" in i18n.t("gameplay.hud_pushes").format(pushes=3)
+    assert "Time: 00:15" in i18n.t("gameplay.hud_time").format(time="00:15")
+    assert "Press H for Help" in i18n.t("gameplay.hud_help_prompt")
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    renderer.render_ui(game_state, show_help=False, control_scheme="方向鍵 / WASD")
+
+    # Check that translations match Chinese
+    assert "步數: 5" in i18n.t("gameplay.hud_moves").format(moves=5)
+    assert "推動: 3" in i18n.t("gameplay.hud_pushes").format(pushes=3)
+    assert "時間: 00:15" in i18n.t("gameplay.hud_time").format(time="00:15")
+    assert "按 H 顯示說明" in i18n.t("gameplay.hud_help_prompt")
+
+
+def test_gameplay_overlays_localization():
+    """Verify that Help, Win, Deadlock, and Pause overlays render safely."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    from src.pushbox.views.renderer import Renderer
+
+    renderer = Renderer(screen)
+
+    # 1. English Mode
+    i18n.set_language("en")
+    renderer._render_help_overlay()
+    renderer.render_win_screen(
+        {"moves": 10, "pushes": 5, "time": "00:30"}, is_record=True, best_moves=8
+    )
+    renderer.render_game_over_screen()
+    renderer.render_pause_screen()
+
+    # Assert English texts are resolved correctly
+    assert i18n.t("gameplay.help_title") == "Game Controls"
+    assert i18n.t("gameplay.deadlock_title") == "DEADLOCK!"
+    assert i18n.t("gameplay.pause_title") == "PAUSED"
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    renderer._render_help_overlay()
+    renderer.render_win_screen(
+        {"moves": 10, "pushes": 5, "time": "00:30"}, is_record=True, best_moves=8
+    )
+    renderer.render_game_over_screen()
+    renderer.render_pause_screen()
+
+    # Assert Chinese texts are resolved correctly
+    assert i18n.t("gameplay.help_title") == "遊戲控制"
+    assert i18n.t("gameplay.deadlock_title") == "死鎖!"
+    assert i18n.t("gameplay.pause_title") == "暫停"
+
+
+def test_solver_hint_localization():
+    """Verify that BFS solver feedback messages are localized correctly."""
+    # 1. English Mode
+    i18n.set_language("en")
+    assert i18n.t("hint.move") == "Hint: Please move along the highlighted path"
+    assert i18n.t("hint.completed") == "Hint: Level is already solved!"
+    assert (
+        i18n.t("hint.complex")
+        == "Hint: State space is too complex, no reliable hint found."
+    )
+    assert (
+        i18n.t("hint.unsolvable")
+        == "Hint: Level may be unsolvable. Press Z to Undo or F5 to Reset."
+    )
+    assert i18n.t("hint.invalid") == "Hint: Current level data cannot generate hints."
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    assert i18n.t("hint.move") == "提示：請沿著高亮方向移動"
+    assert i18n.t("hint.completed") == "目前已在完成狀態"
+    assert i18n.t("hint.complex") == "此局面較複雜，暫時找不到可靠提示。"
+    assert (
+        i18n.t("hint.unsolvable") == "目前局面可能無法完成，建議按 Z 撤銷或 F5 重置。"
+    )
+    assert i18n.t("hint.invalid") == "目前關卡資料無法產生提示。"

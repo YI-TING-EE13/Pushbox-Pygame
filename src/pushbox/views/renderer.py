@@ -8,6 +8,7 @@ import pygame
 
 from ..models.game_state import GameState
 from ..utils.constants import CELL_SIZE, COLORS, CellType, ColorLike
+from ..utils.i18n import get_language, t
 from ..utils.paths import get_resource_path
 
 
@@ -771,12 +772,18 @@ class Renderer:
                 display_text = level_name
             x_pos = draw_stat(display_text, x_pos, COLORS["text_highlight"])
 
-            x_pos = draw_stat(f"步數: {stats['moves']}", x_pos)
-            x_pos = draw_stat(f"推動: {stats['pushes']}", x_pos)
-            x_pos = draw_stat(f"時間: {stats['time']}", x_pos)
+            x_pos = draw_stat(
+                t("gameplay.hud_moves").format(moves=stats["moves"]), x_pos
+            )
+            x_pos = draw_stat(
+                t("gameplay.hud_pushes").format(pushes=stats["pushes"]), x_pos
+            )
+            x_pos = draw_stat(t("gameplay.hud_time").format(time=stats["time"]), x_pos)
 
             # Helper prompt
-            help_surf = self.font.render("按 H 顯示說明", True, COLORS["text_dim"])
+            help_surf = self.font.render(
+                t("gameplay.hud_help_prompt"), True, COLORS["text_dim"]
+            )
             help_rect = help_surf.get_rect(
                 midright=(self.screen.get_width() - 20, bar_height // 2)
             )
@@ -784,8 +791,16 @@ class Renderer:
 
             # Control scheme indicator
             if control_scheme:
+                if control_scheme == "方向鍵 / WASD":
+                    scheme_text = (
+                        "Arrows / WASD" if get_language() == "en" else "方向鍵 / WASD"
+                    )
+                else:
+                    scheme_text = control_scheme
                 scheme_surf = self.font.render(
-                    f"控制: {control_scheme}", True, COLORS["text_dim"]
+                    t("gameplay.hud_control").format(scheme=scheme_text),
+                    True,
+                    COLORS["text_dim"],
                 )
                 scheme_rect = scheme_surf.get_rect(
                     midright=(help_rect.left - 30, bar_height // 2)
@@ -809,9 +824,9 @@ class Renderer:
 
                 # Determine instruction text
                 if is_complete:
-                    tip_text = "提示：目標點變為綠色，通關！"
+                    tip_text = t("gameplay.onboarding_complete")
                 elif moves == 0:
-                    tip_text = "提示：按 WASD 或方向鍵進行移動"
+                    tip_text = t("gameplay.onboarding_move")
                 else:
                     # Check adjacency
                     is_adjacent = False
@@ -822,9 +837,9 @@ class Renderer:
                                 is_adjacent = True
                                 break
                     if is_adjacent:
-                        tip_text = "提示：走到箱子旁，繼續向前推動它"
+                        tip_text = t("gameplay.onboarding_adjacent")
                     else:
-                        tip_text = "提示：走到箱子旁，將它推向紅色的目標點"
+                        tip_text = t("gameplay.onboarding_push")
 
                 # Render tip banner
                 text_surf = font.render(tip_text, True, COLORS["text_highlight"])
@@ -904,16 +919,16 @@ class Renderer:
         )
 
         lines = [
-            "遊戲控制",
+            t("gameplay.help_title"),
             "",
-            "移動: ↑↓←→ / WASD",
-            "撤銷: Z / Backspace",
-            "重做: Y / R",
-            "重置: F5",
-            "選單: M",
-            "退出: Ctrl+Q",
+            t("gameplay.help_move"),
+            t("gameplay.help_undo"),
+            t("gameplay.help_redo"),
+            t("gameplay.help_reset"),
+            t("gameplay.help_menu"),
+            t("gameplay.help_quit"),
             "",
-            "按任意鍵返回遊戲",
+            t("gameplay.help_dismiss"),
         ]
 
         y = rect.top + 30
@@ -961,16 +976,18 @@ class Renderer:
         pygame.draw.rect(self.screen, COLORS["success"], rect, 3, border_radius=15)
 
         if self.big_font:
-            title = self.big_font.render("MISSION COMPLETE!", True, COLORS["success"])
+            title = self.big_font.render(
+                t("gameplay.win_title"), True, COLORS["success"]
+            )
             title_rect = title.get_rect(centerx=rect.centerx, y=rect.y + 40)
             self.screen.blit(title, title_rect)
 
         if self.font:
             y = rect.y + 110
             lines = [
-                f"步數: {stats['moves']}",
-                f"推動: {stats['pushes']}",
-                f"時間: {stats['time']}",
+                t("gameplay.hud_moves").format(moves=stats["moves"]),
+                t("gameplay.hud_pushes").format(pushes=stats["pushes"]),
+                t("gameplay.hud_time").format(time=stats["time"]),
             ]
 
             for line in lines:
@@ -980,20 +997,22 @@ class Renderer:
 
             best = best_moves if best_moves is not None else stats["moves"]
             best_surf = self.font.render(
-                f"歷史最佳: {best} 步", True, COLORS["text_dim"]
+                t("gameplay.best_moves").format(moves=best), True, COLORS["text_dim"]
             )
             self.screen.blit(best_surf, (rect.x + 150, y))
             y += 35
 
             if is_record:
-                rec_surf = self.font.render("🏆 新紀錄!", True, COLORS["warning"])
+                rec_surf = self.font.render(
+                    t("gameplay.new_record"), True, COLORS["warning"]
+                )
                 rec_rect = rec_surf.get_rect(centerx=rect.centerx, y=y)
                 self.screen.blit(rec_surf, rec_rect)
                 y += 35
 
             # Hint
             hint_surf = self.font.render(
-                "按 N 下一關 / R 重玩 / M 選單", True, COLORS["text_dim"]
+                t("gameplay.win_hint"), True, COLORS["text_dim"]
             )
             hint_rect = hint_surf.get_rect(
                 centerx=rect.centerx, bottom=rect.bottom - 30
@@ -1025,21 +1044,23 @@ class Renderer:
         pygame.draw.rect(self.screen, COLORS["error"], rect, 3, border_radius=15)
 
         if self.big_font:
-            title = self.big_font.render("死鎖!", True, COLORS["error"])
+            title = self.big_font.render(
+                t("gameplay.deadlock_title"), True, COLORS["error"]
+            )
             title_rect = title.get_rect(centerx=rect.centerx, y=rect.y + 40)
             self.screen.blit(title, title_rect)
 
         if self.font:
             # Explanation
             msg = self.font.render(
-                "箱子被卡住了，這一關無法繼續。", True, COLORS["text_main"]
+                t("gameplay.deadlock_msg"), True, COLORS["text_main"]
             )
             msg_rect = msg.get_rect(centerx=rect.centerx, y=rect.y + 120)
             self.screen.blit(msg, msg_rect)
 
             # Hint
             hint_surf = self.font.render(
-                "按 Z 撤銷 / R 重玩 / M 選單", True, COLORS["text_dim"]
+                t("gameplay.deadlock_hint"), True, COLORS["text_dim"]
             )
             hint_rect = hint_surf.get_rect(
                 centerx=rect.centerx, bottom=rect.bottom - 30
@@ -1071,23 +1092,25 @@ class Renderer:
         pygame.draw.rect(self.screen, COLORS["warning"], rect, 3, border_radius=15)
 
         if self.big_font:
-            title = self.big_font.render("暫停", True, COLORS["warning"])
+            title = self.big_font.render(
+                t("gameplay.pause_title"), True, COLORS["warning"]
+            )
             title_rect = title.get_rect(centerx=rect.centerx, y=rect.y + 40)
             self.screen.blit(title, title_rect)
 
         if self.font:
             # Explanation
-            msg = self.font.render("遊戲已暫停", True, COLORS["text_main"])
+            msg = self.font.render(t("gameplay.pause_msg"), True, COLORS["text_main"])
             msg_rect = msg.get_rect(centerx=rect.centerx, y=rect.y + 110)
             self.screen.blit(msg, msg_rect)
 
             # Details/Hints
             y = rect.y + 155
             hints = [
-                "Esc / P : 繼續遊戲 (Resume)",
-                "R : 重置關卡 (Restart)",
-                "S : 遊戲設定 (Settings)",
-                "M : 返回主選單 (Main Menu)",
+                t("gameplay.pause_resume"),
+                t("gameplay.pause_restart"),
+                t("gameplay.pause_settings"),
+                t("gameplay.pause_menu"),
             ]
             for hint in hints:
                 surf = self.font.render(hint, True, COLORS["text_dim"])

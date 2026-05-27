@@ -21,6 +21,7 @@ from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.solver import SolverStatus, solve
 from src.pushbox.utils.constants import COLORS
 from src.pushbox.utils.constants import GameState as GameStateEnum
+from src.pushbox.utils.i18n import t
 from src.pushbox.views.level_editor import LevelEditor
 from src.pushbox.views.renderer import Renderer
 from src.pushbox.views.ui_components import (
@@ -217,21 +218,19 @@ class GameApp:
         if res.status == SolverStatus.SOLVED:
             if res.path:
                 self.renderer.hint_path = res.path[:3]
-                self.renderer.hint_message = "提示：請沿著高亮方向移動"
+                self.renderer.hint_message = t("hint.move")
             else:
                 self.renderer.hint_path = []
-                self.renderer.hint_message = "目前已在完成狀態"
+                self.renderer.hint_message = t("hint.completed")
         elif res.status == SolverStatus.NODE_LIMIT_EXCEEDED:
             self.renderer.hint_path = []
-            self.renderer.hint_message = "此局面較複雜，暫時找不到可靠提示。"
+            self.renderer.hint_message = t("hint.complex")
         elif res.status == SolverStatus.UNSOLVED:
             self.renderer.hint_path = []
-            self.renderer.hint_message = (
-                "目前局面可能無法完成，建議按 Z 撤銷或 F5 重置。"
-            )
+            self.renderer.hint_message = t("hint.unsolvable")
         elif res.status == SolverStatus.INVALID_LEVEL:
             self.renderer.hint_path = []
-            self.renderer.hint_message = "目前關卡資料無法產生提示。"
+            self.renderer.hint_message = t("hint.invalid")
 
     def _setup_menu(self) -> None:
         """Setup main menu."""

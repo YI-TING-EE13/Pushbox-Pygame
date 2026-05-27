@@ -27,6 +27,12 @@ All notable changes to this project are documented in this file.
 * Localized all Level Editor validation error messages, save results, playtest validations, and export boundary conditions inside `_save_level()`, `_playtest_level()`, and `_export_level()`.
 * Added integration test `test_level_editor_ui_localization` to `tests/test_language_ui.py` to cover editor screen localizations, and updated `tests/test_level_share_ui.py` to support dynamic zh-TW testing and language restore.
 
+* Added translation keys for `gameplay.*` and `hint.*` namespaces in both English (`en`) and Traditional Chinese (`zh-TW`) to support HUD stats, Level 0 onboarding instructions, overlays (Help, Win, Deadlock, Pause), and BFS solver feedback.
+* Localized gameplay HUD stats (Moves, Pushes, Time, Control scheme) and Level 0 onboarding tips dynamically using `t(...)` in `src/pushbox/views/renderer.py`.
+* Localized overlays including Help keyboard bindings overlay, victory clearance statistics overlay, Deadlock failure warning overlay, and Pause overlay dynamically using `t(...)` in `src/pushbox/views/renderer.py`.
+* Localized solver feedback messages (invalid layout, complex search, unsolved, completed, movement hint path) dynamically using `t(...)` inside `_trigger_hint()` in `main.py`.
+* Added three new integration tests: `test_gameplay_hud_and_onboarding_localization`, `test_gameplay_overlays_localization`, and `test_solver_hint_localization` inside `tests/test_language_ui.py` to ensure complete coverage.
+
 ### Changed
 * Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.
 * Implemented automatic configuration synchronization in `Config.load()`, `Config.reset_to_defaults()`, and `Config.set_language()`.

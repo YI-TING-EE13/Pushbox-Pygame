@@ -310,8 +310,11 @@ gantt
     - Localized exit warning dialog prompts ("防呆警告", "確定退出 (Y)", "留在編輯 (N)") and export sharing overlays ("複製分享碼", "關閉視窗", "分享碼已自動複製").
     - Localized all editor error/status banners (e.g. required player/box, mismatch error, sealed wall validation) inside `_save_level()`, `_playtest_level()`, and `_export_level()`.
     - Added comprehensive test coverage in `tests/test_language_ui.py` (`test_level_editor_ui_localization`) and updated `tests/test_level_share_ui.py` to support dynamic zh-TW testing.
-  - [ ] **Phase C3: Gameplay Overlays and Solver Hints Localization (Planned)**:
-    - Localize gameplay HUD metrics, Level 0 onboarding hints, help overlays, victory celebration records, deadlock warnings (using "DEADLOCK!" as English title), and BFS path solver status banners.
+  - [x] **Phase C3: Gameplay Overlays and Solver Hints Localization (Completed)**:
+    - Localized gameplay HUD metrics (Moves, Pushes, Time, Control scheme) and Level 0 onboarding tip banners using `t(...)` dynamically in `src/pushbox/views/renderer.py`.
+    - Localized Help keyboard shortcuts card, victory clearing stats screen, Deadlock stalemate overlay (using "DEADLOCK!" as English title), and Pause screen overlays using `t(...)` in `src/pushbox/views/renderer.py`.
+    - Localized BFS solver hint messages (move, completed, complex, unsolvable, invalid) inside `_trigger_hint()` in `main.py` using `t(...)`.
+    - Added three new integration tests: `test_gameplay_hud_and_onboarding_localization`, `test_gameplay_overlays_localization`, and `test_solver_hint_localization` inside `tests/test_language_ui.py` to ensure complete coverage, passing all 244 tests.
 
 ---
 
