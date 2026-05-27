@@ -43,12 +43,15 @@ uv run python -m pytest tests/test_solver.py -v
 
 Since this is a graphical game, many UX elements must be verified manually. Follow these steps to ensure the core game loop is functional.
 
+> [!IMPORTANT]
+> UI language defaults to English and supports Traditional Chinese. Steps may show zh-TW labels as examples; verify the equivalent English labels when the language is set to English.
+
 ### Core Gameplay Flow
 1. **Startup**: Run `uv run python main.py`.
 2. **Tutorial**: Verify the tutorial screen appears on first launch or via the menu. Confirm it explains goals and controls.
 3. **Main Menu**: Navigate from the tutorial to the main menu.
 4. **Resize Centering**: Drag and resize the game window vertically and horizontally. Verify that the main menu buttons dynamically reposition to maintain a centered layout.
-5. **Start Game**: Select "開始遊戲" and verify the level loads.
+5. **Start Game**: Select "Start Game" (English) / "開始遊戲" (zh-TW) and verify the level loads.
 6. **HUD Level Label Display**:
    - Launch a default level (e.g., `Level 23`). Verify that `"Level 23"` is clearly displayed in a highlighted soft blue color in the top-left gameplay HUD.
    - Confirm the label does not overlap move counts, timer, pause indicators, or help overlay.
@@ -73,16 +76,16 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 1. **Win Condition**: Push all boxes onto targets. Verify the green "MISSION COMPLETE!" overlay appears.
 2. **Win Screen Actions**: Test `N` (Next Level), `R` (Restart), and `M` (Menu) on the win screen.
 3. **Deadlock (Game Over)**: Push a box into a corner where it cannot be moved (e.g., against two perpendicular walls).
-4. **Game Over Overlay**: Verify the red "死鎖!" card appears.
+4. **Game Over Overlay**: Verify the deadlock card appears ("DEADLOCK!" in English or "死鎖!" in zh-TW).
 5. **Game Over Actions**: Test `Z` (Undo), `R` (Restart), and `M` (Menu) on the game over screen.
 
 ### UI & Persistence
-1. **Level Selection**: From the main menu, go to "選擇關卡". Verify all levels are listed.
+1. **Level Selection**: From the main menu, go to "Select Level" / "選擇關卡". Verify all levels are listed.
 2. **Progress Display**: Verify that completed levels show a green background and a "★ 最佳: X 步" indicator.
 3. **Persistence**: Complete a level, exit the game, and restart. Verify that your progress and best moves are still saved.
 
 ### Solver Hint UI Flow (v0.8.0 Phase 3)
-1. **Triggering Hint via Button**: Start a default game (e.g. `Level 1`). Locate the `"💡 提示 (I)"` HUD button at the bottom of the screen.
+1. **Triggering Hint via Button**: Start a default game (e.g. `Level 1`). Locate the "Hint (I)" / "💡 提示 (I)" HUD button at the bottom of the screen.
    - Click the button. Confirm that a high-contrast highlighted text banner `"提示：請沿著高亮方向移動"` fades in at the top (below stats bar) and that **a beautiful pulsing/glowing border appears around the cell for the first step** and **a semi-transparent highlighted guide line is drawn for the first 3 steps of the path**.
 2. **Triggering Hint via Key**: Press the `I` key. Confirm that the exact same glowing path, pulsed border, and instruction text are rendered instantly.
 3. **Pulsing Highlight and Guide Line**: Verify the guide line follows the center of grid cells, respects dynamic cell sizing, and aligns correctly after window resizing.
@@ -91,14 +94,14 @@ Since this is a graphical game, many UX elements must be verified manually. Foll
 6. **Overlay Blocks**: Try pressing `I` when help (`H`), pause (`Esc`), win, or deadlock screen is open. Confirm no hints are triggered.
 7. **Onboarding Level 0 Exclusivity**: Play Level 0. Look at the HUD buttons: the `"💡 提示 (I)"` button must be **completely hidden** and pressing `I` key must do nothing.
 8. **Solver Status Wording Check**:
-   - **SOLVED with empty path**: Confirm it prints `"目前已在完成狀態"`.
-   - **UNSOLVED**: Push a box to an unsolvable non-target dead corner. Press `I`. Confirm it displays `"目前局面可能無法完成，建議按 Z 撤銷或 F5 重置。"` instead of "no solution".
-   - **NODE_LIMIT_EXCEEDED**: Confirm it displays `"此局面較複雜，暫時找不到可靠提示。"`.
+   - **SOLVED with empty path**: Confirm it prints the localized "already solved" message.
+   - **UNSOLVED**: Push a box to an unsolvable non-target dead corner. Press `I`. Confirm it displays the localized "unsolvable" warning rather than "no solution".
+   - **NODE_LIMIT_EXCEEDED**: Confirm it displays the localized "complex state" hint.
 
 ### Onboarding (Level 0) Tutorial-Only Flow
 1. **Reset to Tutorial State**: Delete the `data/config.json` file if it exists, or edit it to set `"show_tutorial": true`.
 2. **Startup Redirect**: Launch the game (`uv run python main.py`). Verify that the game **directly boots into gameplay showing "Level 0"**, completely skipping the main menu and static tutorial card.
-3. **Instruction Banner display**: Confirm that a high-contrast highlighted text banner (e.g. `"提示：按 WASD 或方向鍵進行移動"`) is beautifully centered inside a rounded semi-transparent window at the top of the gameplay board.
+3. **Instruction Banner display**: Confirm that a high-contrast highlighted text banner is centered at the top of the gameplay board and localized to the active language.
 4. **Adjacency detection & feedback**:
    - Move the player at least one step. Verify that the top instruction updates to `"提示：走到箱子旁，將它推向紅色的目標點"`.
    - Walk next to the box. Verify that the instruction instantly switches to `"提示：走到箱子旁，繼續向前推動它"`.

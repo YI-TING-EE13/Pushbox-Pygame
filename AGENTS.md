@@ -5,6 +5,7 @@ Use this file to get productive quickly in a new coding session.
 ## Project Snapshot
 
 Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame.
+Current release: v0.9.3 (English + Traditional Chinese UI localization is complete).
 
 - Entry point and main loop: `main.py`
 - Controllers (game flow, input): `src/pushbox/controllers/`
@@ -25,7 +26,7 @@ Prioritize:
 - Config values actually wired to runtime behavior (window size, show_tutorial, animation toggle).
 - Tutorial only on first launch; returning users go straight to menu.
 - Completion progress indicator on the main menu (e.g., ★ 12/30).
-- Unified UI language (all Chinese or all English labels, not mixed).
+- Maintain i18n completeness: no mixed-language UI on any single screen; keep translations in sync.
 - Screen transition animations (fade/slide between screens).
 - Dynamic cell sizing so large levels fit any window.
 - Version number displayed on the main menu.

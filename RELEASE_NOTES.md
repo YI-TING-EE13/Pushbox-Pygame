@@ -4,49 +4,21 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## v0.9.3.dev0 — Unreleased
+## v0.9.3 — Traditional Chinese Localization (2026-05-27)
 
 ### Added
-* Added translation utility module `src/pushbox/utils/i18n.py` implementing Python dictionary-based translations supporting English (`en`) as default and Traditional Chinese (`zh-TW`).
-* Added fallback translation lookup API supporting normalization of language identifiers, custom language overrides, missing key fallbacks, and safe error-free handling for unsupported languages.
-* Added `tests/test_i18n.py` testing language defaults, supported sets, translation lookups, overrides, fallback chains, normalization variations, and safe non-mutating context isolated lookups.
-* Added "Language" option to `SettingsScreen` as index 4, displaying current active language (English or 繁體中文) and cycling between "en" and "zh-TW" instantly.
-* Added `tests/test_language_ui.py` to comprehensively test Settings language row structure (7 options), language cycling, config saving, i18n state synchronization, and main menu localized label rebuilding.
-* Added localized AboutScreen support using dynamic translations (`about.*`) and dynamic blit width calculation to prevent overlapping.
-* Added localized TutorialScreen support using dynamic translations (`tutorial.*`) in `TutorialScreen.draw()`.
-* Added three new integration tests verifying About screen, Tutorial screen, and bottom gameplay buttons localization.
-* Added translation keys for `level_selector.*`, `custom_level.*`, `difficulty.*`, and `theme.*` namespaces to `src/pushbox/utils/i18n.py` for both English (`en`) and Traditional Chinese (`zh-TW`).
-* Added localized Level Selector title, paginated controls, Back/Import buttons, page indicators, details panel labels, and built-in difficulties/themes mappings using dynamic translation cycles.
-* Added localized Level Selector Import Dialog with localized titles, instruction descriptions, error messages, and confirm/cancel action labels.
-* Implemented automatic layout refresh in `LevelSelector.draw()` that automatically detects changes in `get_language()` and rebuilds all buttons exactly once.
-* Added `test_level_selector_screen_localization`, `test_level_selector_custom_levels_buttons_localization`, `test_import_dialog_localization`, and `test_i18n_fallback_robustness` to `tests/test_language_ui.py` to comprehensively cover selector localization and fallback behavior.
-* Added translation keys for `editor.*` namespace to `src/pushbox/utils/i18n.py` for English and Traditional Chinese locales.
-* Added localized Level Editor sidebar labels, tool lists, rows/columns counts, and shortcut operation tips dynamically using `t(...)` translations.
-* Refactored Level Editor toolbar buttons and resizing buttons to use a dynamic language switch check that rebuilds buttons exactly once upon language change.
-* Localized exit confirmation dialog and export sharing code dialog overlays with localized title, text, input box placeholder, and confirmation buttons.
-* Localized all Level Editor validation error messages, save results, playtest validations, and export boundary conditions inside `_save_level()`, `_playtest_level()`, and `_export_level()`.
-* Added integration test `test_level_editor_ui_localization` to `tests/test_language_ui.py` to cover editor screen localizations, and updated `tests/test_level_share_ui.py` to support dynamic zh-TW testing and language restore.
-
-* Added translation keys for `gameplay.*` and `hint.*` namespaces in both English (`en`) and Traditional Chinese (`zh-TW`) to support HUD stats, Level 0 onboarding instructions, overlays (Help, Win, Deadlock, Pause), and BFS solver feedback.
-* Localized gameplay HUD stats (Moves, Pushes, Time, Control scheme) and Level 0 onboarding tips dynamically using `t(...)` in `src/pushbox/views/renderer.py`.
-* Localized overlays including Help keyboard bindings overlay, victory clearance statistics overlay, Deadlock failure warning overlay, and Pause overlay dynamically using `t(...)` in `src/pushbox/views/renderer.py`.
-* Localized solver feedback messages (invalid layout, complex search, unsolved, completed, movement hint path) dynamically using `t(...)` inside `_trigger_hint()` in `main.py`.
-* Added three new integration tests: `test_gameplay_hud_and_onboarding_localization`, `test_gameplay_overlays_localization`, and `test_solver_hint_localization` inside `tests/test_language_ui.py` to ensure complete coverage.
+* Introduced a lightweight i18n module with English (`en`) default and Traditional Chinese (`zh-TW`) translations, plus a persisted language setting in config.
+* Localized the core UI: main menu, settings, about, tutorial, level selector (including import dialog), level editor, gameplay HUD/overlays, and solver hint messages.
+* Added comprehensive localization and language-configuration test coverage (`test_i18n.py`, `test_language_ui.py`, and related updates).
 
 ### Changed
-* Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.
-* Implemented automatic configuration synchronization in `Config.load()`, `Config.reset_to_defaults()`, and `Config.set_language()`.
-* Automatically normalizes/falls back unsupported language values inside `config.json` to English safely.
-* Extended `tests/test_config.py` verifying language defaults, partial configuration merges, corrupted json recoveries, and active i18n synchronization.
-* Refactored `_setup_menu()` in `main.py` to use `t(...)` keys for all main menu buttons.
-* Implemented transition-based menu rebuild strategy to automatically refresh main menu button labels in the correct active language exactly once when returning from Settings without rebuilding every frame.
-* Adjusted `tests/test_about.py` button text check using `t("main_menu.about")` instead of hardcoded Chinese text to keep the test robust under localized menus.
-* Refactored `_init_game_buttons()` in `main.py` to localize the four bottom gameplay buttons (Undo, Reset, Redo, Hint) dynamically, rebuilt automatically on transition to the game screen.
+* Updated menu/button rebuild strategies to refresh labels on language changes without per-frame rebuilds.
+* Improved localized layout safety for variable-width text to avoid overlaps in about/tutorial screens.
 
 ### Notes
-* v0.9.3 Phase B1 (Settings Language Option + Main Menu Refresh) and Phase B2 (About Screen, Tutorial Screen, and bottom gameplay buttons) are completed.
-* Phase C is planned for deeper gameplay UI translation (Level Selector, Level Editor, custom sharing dialogs, gameplay deep messages).
-* v0.9.5 audio remains deferred.
+* English is the default language; Traditional Chinese can be toggled in Settings.
+* Deadlock overlay uses "DEADLOCK!" in English builds.
+* Audio/SFX remains deferred to v0.9.5.
 
 ---
 

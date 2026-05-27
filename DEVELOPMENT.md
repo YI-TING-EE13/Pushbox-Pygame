@@ -130,9 +130,9 @@ uv run mypy src/ --explicit-package-bases
 - [x] **README Redesign**: Decoupled player-facing startup details from advanced developer commands to improve usability.
 - [x] **Attribution Credits (About Screen)**：Added credits details into the in-game About screen.
 
-### v0.9.0 — Standalone Packaging & Portability (Release Candidate Ready / Current)
+### v0.9.0 — Standalone Packaging & Portability (Official Release ✅)
 * **核心目標與當前狀態**：
-  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。此版本已成為 **v0.9.0 Release Candidate**，GitHub 線上正式發布與標籤（Tag）仍為 pending 等待最終審查核可。
+  實現一鍵分發，讓非開發者玩家不用安裝 Python、`uv` 或 `pygame`，即可下載壓縮包並流暢執行遊戲。目前已順利完成了 **Phase 1** 至 **Phase 5** 的所有開發、除錯、文件編修與包裝建置工作，產出了純 GUI 視窗模式的 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 發佈包。此版本已正式發佈至 GitHub Releases，tag `v0.9.0` 指向 commit `817cca1`。
   
 * **已完成任務及技術決策 (Milestones & Technical Decisions)**：
   - [x] **Phase 1: Packaging Infrastructure Completed**: 
@@ -150,7 +150,7 @@ uv run mypy src/ --explicit-package-bases
   - [x] **Phase 3: Documentation Update**: 同步更新說明文件，使其完美反映 v0.9.0 正式 Release Candidate 狀態。
   - [x] **Phase 4: Clean Machine / Release Candidate Verification**: 在全新乾淨資料夾與中文空格路徑中成功解壓並驗證首航。
   - [x] **Phase 5: Final Release Prep**: 版本號正式定案為 `0.9.0`，並藉由 `console=False` 純 GUI 模式編譯產出。
-  - * [ ] **Git Tag & GitHub Release Assets Publish (Pending / Waiting Review)**: 待最終核可後，打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 上傳至 GitHub Releases 中。
+  - [x] **Git Tag & GitHub Release Assets Published**: 已打上 `v0.9.0` Git Tag 並將 `Pushbox-Pygame-v0.9.0-windows-x64.zip` 上傳至 GitHub Releases 中。
 
 * **注意事項**：
   - ❌ 此階段**嚴禁**加入新遊戲功能或擴充玩法。
@@ -178,8 +178,8 @@ gantt
     App Icon, Screenshots, README/TESTING docs :done, 2026-06-10, 2026-06-13
     section v0.9.2 (啟動穩定性 Hotfix — 已發布)
     SingleInstanceGuard named mutex, lockfile :done, 2026-06-14, 2026-06-16
-    section v0.9.3 (英文化與 i18n 基礎 — 開發中)
-    i18n infrastructure, language settings :active, 2026-06-17, 2026-06-19
+    section v0.9.3 (英文化與 i18n 基礎 — 已發布)
+    i18n infrastructure, language settings :done, 2026-05-27, 2026-05-27
     section v0.9.5 (選配最小音效 SFX — 已規劃)
     AudioManager fallback, Kenney SFX : 2026-06-20, 2026-06-25
     section v1.0.0 (正式版發布)
@@ -278,9 +278,11 @@ gantt
 
 ---
 
-### v0.9.3 — English UI & i18n Foundation (In Development 🚧)
+### v0.9.3 — English UI & i18n Foundation (Official Release ✅)
 * **核心目標**：
   提供完整英文 UI 與多國語言支持（i18n）。預設為英文，並可在設定選單中即時切換為繁體中文（zh-TW）。
+* **發布狀態**：
+  已正式發佈至 GitHub Releases，tag `v0.9.3` 指向 commit `d7e35de`。
 * **開發任務與進度 (Development Milestones & Progress)**：
   - [x] **Phase A: i18n Infrastructure & Config Support (Completed)**:
     - 建立零外部依賴的 Python 字典架構 `src/pushbox/utils/i18n.py`。
