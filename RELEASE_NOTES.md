@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.9.3.dev0 — Unreleased
+
+### Added
+* Added translation utility module `src/pushbox/utils/i18n.py` implementing Python dictionary-based translations supporting English (`en`) as default and Traditional Chinese (`zh-TW`).
+* Added fallback translation lookup API supporting normalization of language identifiers, custom language overrides, missing key fallbacks, and safe error-free handling for unsupported languages.
+* Added `tests/test_i18n.py` testing language defaults, supported sets, translation lookups, overrides, fallback chains, normalization variations, and safe non-mutating context isolated lookups.
+
+### Changed
+* Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.
+* Implemented automatic configuration synchronization in `Config.load()`, `Config.reset_to_defaults()`, and `Config.set_language()`.
+* Automatically normalizes/falls back unsupported language values inside `config.json` to English safely.
+* Extended `tests/test_config.py` verifying language defaults, partial configuration merges, corrupted json recoveries, and active i18n synchronization.
+
+---
+
 ## v0.9.2 — Launch Stability Hotfix (2026-05-27)
 
 ### Fixed

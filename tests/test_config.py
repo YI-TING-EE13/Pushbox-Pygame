@@ -120,3 +120,84 @@ def test_invalid_config_type_fallback(tmp_path, capsys):
     # Verify a warning was output to stderr
     captured = capsys.readouterr()
     assert "Config is not a dictionary" in captured.err
+
+
+def test_config_default_has_language(tmp_path):
+    """Verify that DEFAULT_CONFIG has language 'en' and missing config
+    defaults to 'en'.
+    """
+    config_file = tmp_path / "config.json"
+    cfg = Config(config_path=str(config_file))
+
+    assert cfg.get_language() == "en"
+
+    with open(config_file, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["language"] == "en"
+
+
+def test_config_partial_merge_restores_language(tmp_path):
+    """Verify that loading a partial config without language merges it back to 'en'."""
+    config_file = tmp_path / "config.json"
+    # Save a config with only theme customized
+    partial_data = {"theme": "dracula_purple"}
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump(partial_data, f)
+
+    cfg = Config(config_path=str(config_file))
+    assert cfg.get("theme") == "dracula_purple"
+    assert cfg.get_language() == "en"
+
+
+def test_config_synchronizes_i18n_state(tmp_path):
+    """Verify that loading a config with language 'zh-TW' syncs
+    the i18n module state.
+    """
+    config_file = tmp_path / "config.json"
+    data = {"language": "zh-TW"}
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    from src.pushbox.utils import i18n
+
+    # Set active language to English first
+    i18n.set_language("en")
+    assert i18n.get_language() == "en"
+
+    cfg = Config(config_path=str(config_file))
+    assert cfg.get_language() == "zh-TW"
+    assert i18n.get_language() == "zh-TW"  # Synced successfully!
+
+
+def test_config_unsupported_language_falls_back_safely(tmp_path):
+    """Verify that a config with unsupported language (e.g. 'fr')
+    normalizes/falls back to 'en'.
+    """
+    config_file = tmp_path / "config.json"
+    data = {"language": "fr"}
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    from src.pushbox.utils import i18n
+
+    # Set to Chinese first
+    i18n.set_language("zh-TW")
+
+    cfg = Config(config_path=str(config_file))
+    # Loaded value should normalize to 'en'
+    assert cfg.get_language() == "en"
+    assert i18n.get_language() == "en"
+
+
+def test_config_corrupted_json_recovery_defaults_language(tmp_path):
+    """Verify corrupted json rebuilds and defaults language to 'en'."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text("{corrupted json", encoding="utf-8")
+
+    from src.pushbox.utils import i18n
+
+    i18n.set_language("zh-TW")
+
+    cfg = Config(config_path=str(config_file))
+    assert cfg.get_language() == "en"
+    assert i18n.get_language() == "en"

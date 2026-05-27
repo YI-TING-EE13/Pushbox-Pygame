@@ -176,10 +176,10 @@ gantt
     PyInstaller spec, Release zip, GitHub Release :done, 2026-06-03, 2026-06-09
     section v0.9.1 (視覺拋光 — 已發布)
     App Icon, Screenshots, README/TESTING docs :done, 2026-06-10, 2026-06-13
-    section v0.9.2 (啟動穩定性 Hotfix — 開發中)
-    SingleInstanceGuard named mutex, lockfile :active, 2026-06-14, 2026-06-16
-    section v0.9.3 (英文化與 i18n 基礎 — 已規劃)
-    i18n infrastructure, language settings : 2026-06-17, 2026-06-19
+    section v0.9.2 (啟動穩定性 Hotfix — 已發布)
+    SingleInstanceGuard named mutex, lockfile :done, 2026-06-14, 2026-06-16
+    section v0.9.3 (英文化與 i18n 基礎 — 開發中)
+    i18n infrastructure, language settings :active, 2026-06-17, 2026-06-19
     section v0.9.5 (選配最小音效 SFX — 已規劃)
     AudioManager fallback, Kenney SFX : 2026-06-20, 2026-06-25
     section v1.0.0 (正式版發布)
@@ -278,13 +278,20 @@ gantt
 
 ---
 
-### v0.9.3 — English UI & i18n Foundation (Planned 📅)
+### v0.9.3 — English UI & i18n Foundation (In Development 🚧)
 * **核心目標**：
   提供完整英文 UI 與多國語言支持（i18n）。預設為英文，並可在設定選單中即時切換為繁體中文（zh-TW）。
-* **預期任務**：
-  1. **零外部依賴 Python 字典架構**：新增 `src/pushbox/utils/i18n.py` 靜態翻譯字典，避免打包時外部 JSON Locale 檔案遺失。
-  2. **組態與設定擴展**：組態檔中加入 `"language": "en"` 屬性；SettingsScreen 擴展 Language 切換列。
-  3. **視窗與文字自適應**：檢視並重排 UI 佈局，預防較長英文單字在圓角按鈕和元件中發生排版溢出或崩潰。
+* **開發任務與進度 (Development Milestones & Progress)**：
+  - [x] **Phase A: i18n Infrastructure & Config Support (Completed)**:
+    - 建立零外部依賴的 Python 字典架構 `src/pushbox/utils/i18n.py`。
+    - 組態與設定擴展：`DEFAULT_CONFIG` 中加入 `"language": "en"` 屬性，在 `Config.load()`, `Config.reset_to_defaults()`, `Config.set_language()` 中同步 active i18n state。
+    - 實作防禦性的語言格式化、錯誤處理與 English fallback，確保任何異常或未知語言字串絕不引發 Crash。
+    - 新增完整的 `test_i18n.py` 與擴充 `test_config.py` 驗證 i18n 與設定檔整合，227 個測試全部通過。
+  - [ ] **Phase B: Main Shell UI Localization (Planned)**:
+    - 翻譯主選單 (Main Menu)、設定頁 (Settings Screen)、關於/致謝頁 (About Screen)、遊戲教學頁 (Tutorial Screen)。
+    - 重構 `SettingsScreen` 選項，增加 Language 選項並微調 spacing 確保高端 glassmorphic 佈局美感。
+  - [ ] **Phase C: Gameplay & Editor UI Localization (Planned)**:
+    - 翻譯遊戲內 HUD (Moves, Pushes, Time, Best, Controls)、Deadlock/Pause 提示、關卡選擇器 (Level Selector) 及關卡編輯器 (Level Editor)。
 
 ---
 

@@ -22,6 +22,7 @@ class Config:
         "animation_enabled": True,
         "show_tutorial": True,
         "theme": "default",
+        "language": "en",
     }
 
     def __init__(self, config_path: Optional[str] = None) -> None:
@@ -133,6 +134,14 @@ class Config:
 
         set_theme(self.get_string("theme", "nord_blue"))
 
+        # Synchronize active language with loaded config
+        from .i18n import normalize_language, set_language
+
+        raw_lang = self.get_string("language", "en")
+        normalized_lang = normalize_language(raw_lang)
+        self._config["language"] = normalized_lang
+        set_language(normalized_lang)
+
     def save(self) -> None:
         """Save configuration to file."""
         # Ensure directory exists
@@ -193,6 +202,18 @@ class Config:
         """Check if animations are enabled."""
         return self.get_bool("animation_enabled", True)
 
+    def get_language(self) -> str:
+        """Get current language setting."""
+        return self.get_string("language", "en")
+
+    def set_language(self, language: str) -> None:
+        """Set language setting and sync i18n state."""
+        from .i18n import normalize_language, set_language
+
+        normalized = normalize_language(language)
+        self.set("language", normalized)
+        set_language(normalized)
+
     def reset_to_defaults(self) -> None:
         """Reset configuration to defaults."""
         self._config = self.DEFAULT_CONFIG.copy()
@@ -200,3 +221,8 @@ class Config:
         from .constants import set_theme
 
         set_theme(self.get_string("theme", "nord_blue"))
+
+        # Synchronize active language
+        from .i18n import set_language
+
+        set_language(self.get_string("language", "en"))
