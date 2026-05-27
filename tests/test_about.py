@@ -90,10 +90,12 @@ def test_about_screen_integration_in_main_app(monkeypatch):
     )
 
     app = GameApp()
-    # Check that "關於遊戲" exists in menu buttons
+    # Check that "關於遊戲" (or translated "About Game") exists in menu buttons
+    from src.pushbox.utils.i18n import t
+
     about_btn = None
     for btn in app.menu.buttons:
-        if btn.text == "關於遊戲":
+        if btn.text == t("main_menu.about"):
             about_btn = btn
             break
     assert about_btn is not None, "About game button must exist on the menu."

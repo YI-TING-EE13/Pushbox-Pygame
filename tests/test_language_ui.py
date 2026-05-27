@@ -1,0 +1,147 @@
+"""Tests for Settings language option, main menu localization, and i18n."""
+
+import os
+import sys
+from unittest.mock import MagicMock
+
+import pygame
+import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from main import GameApp
+from src.pushbox.utils import i18n
+from src.pushbox.utils.config import Config
+from src.pushbox.views.ui_components import SettingsScreen
+
+
+@pytest.fixture(autouse=True)
+def restore_language():
+    """Ensure global active language is restored to 'en' after each test."""
+    yield
+    i18n.set_language("en")
+
+
+def test_main_menu_defaults_to_english(monkeypatch):
+    """Verify main menu button labels default to English."""
+    monkeypatch.setattr(
+        pygame.display, "set_mode", MagicMock(return_value=pygame.Surface((1024, 768)))
+    )
+
+    app = GameApp()
+    # Reset language
+    i18n.set_language("en")
+    app._setup_menu()
+
+    labels = [btn.text for btn in app.menu.buttons]
+    assert "Start Game" in labels
+    assert "Settings" in labels
+    assert "About Game" in labels
+    assert "Quit" in labels
+
+
+def test_main_menu_rebuilds_to_zh_tw(monkeypatch):
+    """Verify main menu buttons rebuild to zh-TW correctly."""
+    monkeypatch.setattr(
+        pygame.display, "set_mode", MagicMock(return_value=pygame.Surface((1024, 768)))
+    )
+
+    app = GameApp()
+    i18n.set_language("zh-TW")
+    app._setup_menu()
+
+    labels = [btn.text for btn in app.menu.buttons]
+    assert "開始遊戲" in labels
+    assert "設定" in labels
+    assert "關於遊戲" in labels
+    assert "退出" in labels
+
+
+def test_settings_screen_options_structure():
+    """Verify SettingsScreen exposes exactly 7 options and contains Language option."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    # Mock Config and SaveManager
+    mock_config = MagicMock(spec=Config)
+    mock_config.get_control_scheme.return_value = "arrows"
+    mock_config.get_string.return_value = "nord_blue"
+    mock_config.get_bool.return_value = True
+    mock_config.get_language.return_value = "en"
+
+    mock_save = MagicMock()
+
+    settings = SettingsScreen(screen, mock_config, mock_save)
+
+    assert settings.options_count == 7
+    # Options: 0: Control, 1: Theme, 2: Animation, 3: Show Tutorial,
+    # 4: Language, 5: Reset Progress, 6: Back
+    assert settings.selected_index == 0
+
+
+def test_settings_language_toggle_and_sync():
+    """Verify toggling language updates config, syncs i18n, and cycles back."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    config = Config()
+    config.set_language("en")  # Start with English
+    assert i18n.get_language() == "en"
+
+    mock_save = MagicMock()
+    settings = SettingsScreen(screen, config, mock_save)
+
+    # Option index 4 is Language
+    # 1. Cycle to zh-TW
+    settings._trigger_option(4)
+    assert config.get_language() == "zh-TW"
+    assert i18n.get_language() == "zh-TW"
+
+    # 2. Cycle back to en
+    settings._trigger_option(4)
+    assert config.get_language() == "en"
+    assert i18n.get_language() == "en"
+
+    # 3. Ensure triggering Language does not reset progress
+    settings._trigger_option(4)
+    assert mock_save.reset_progress.call_count == 0
+
+
+def test_settings_adjust_option_via_keys():
+    """Verify left/right key adjustment triggers language toggle."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    config = Config()
+    config.set_language("en")
+
+    mock_save = MagicMock()
+    settings = SettingsScreen(screen, config, mock_save)
+
+    # 1. Toggle via right key adjustment on index 4
+    settings._adjust_option(4, right=True)
+    assert config.get_language() == "zh-TW"
+    assert i18n.get_language() == "zh-TW"
+
+    # 2. Toggle via left key adjustment on index 4
+    settings._adjust_option(4, right=False)
+    assert config.get_language() == "en"
+    assert i18n.get_language() == "en"
+
+
+def test_settings_screen_draw_no_crash():
+    """Verify that drawing the settings screen in both languages does not crash."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    config = Config()
+    mock_save = MagicMock()
+    settings = SettingsScreen(screen, config, mock_save)
+
+    # Draw in English
+    config.set_language("en")
+    settings.draw()
+
+    # Draw in Traditional Chinese
+    config.set_language("zh-TW")
+    settings.draw()

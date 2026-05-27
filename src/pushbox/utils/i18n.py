@@ -28,6 +28,8 @@ TRANSLATIONS = {
         # Settings Screen
         "settings.title": "Settings",
         "settings.control": "Control Scheme",
+        "settings.control.arrows": "Keyboard ↑↓←→",
+        "settings.control.wasd": "Keyboard WASD",
         "settings.theme": "Theme",
         "settings.animation": "Animations",
         "settings.tutorial": "Tutorial",
@@ -97,6 +99,8 @@ TRANSLATIONS = {
         # Settings Screen
         "settings.title": "設定",
         "settings.control": "控制方式",
+        "settings.control.arrows": "鍵盤 ↑↓←→",
+        "settings.control.wasd": "鍵盤 WASD",
         "settings.theme": "主題配色",
         "settings.animation": "動畫效果",
         "settings.tutorial": "新手教學",

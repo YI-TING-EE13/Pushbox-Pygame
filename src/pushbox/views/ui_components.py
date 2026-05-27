@@ -1423,10 +1423,11 @@ class SettingsScreen:
         # 1: Theme (nord_blue / classic_green / dracula_purple)
         # 2: Animation Enabled (True / False)
         # 3: Show Tutorial (True / False)
-        # 4: Reset Progress (Button)
-        # 5: Back to Menu (Button)
+        # 4: Language (en / zh-TW)
+        # 5: Reset Progress (Button)
+        # 6: Back to Menu (Button)
         self.selected_index = 0
-        self.options_count = 6
+        self.options_count = 7
 
         # Callback when exiting settings
         self.on_back: Optional[Callable[[], None]] = None
@@ -1483,6 +1484,8 @@ class SettingsScreen:
 
     def _trigger_option(self, index: int) -> None:
         """Trigger or toggle the setting at the given index."""
+        from src.pushbox.utils.i18n import t
+
         if index == 0:
             # Control Scheme
             current = self.config.get_control_scheme()
@@ -1509,18 +1512,23 @@ class SettingsScreen:
             current = self.config.get_bool("show_tutorial", True)
             self.config.set("show_tutorial", not current)
         elif index == 4:
+            # Language
+            current = self.config.get_language()
+            next_lang = "zh-TW" if current == "en" else "en"
+            self.config.set_language(next_lang)
+        elif index == 5:
             # Reset Progress
             self.save_manager.reset_progress()
-            self.feedback_text = "進度已重置！"
+            self.feedback_text = t("settings.feedback.progress_reset")
             self.feedback_timer = 120
-        elif index == 5:
+        elif index == 6:
             # Back
             if self.on_back:
                 self.on_back()
 
     def _adjust_option(self, index: int, right: bool) -> None:
         """Adjust option with left/right arrow keys."""
-        if index in [0, 2, 3]:
+        if index in [0, 2, 3, 4]:
             self._trigger_option(index)
         elif index == 1:
             # Theme Left/Right adjustment
@@ -1541,16 +1549,16 @@ class SettingsScreen:
         screen_w = self.screen.get_width()
         screen_h = self.screen.get_height()
 
-        card_w, card_h = 560, 520
+        card_w, card_h = 560, 540
         card_x = (screen_w - card_w) // 2
         card_y = (screen_h - card_h) // 2
 
-        # Option rows start at card_y + 105, spacing is 58
-        y_start = card_y + 105
-        row_h = 44
+        # Option rows start at card_y + 90, spacing is 54
+        y_start = card_y + 90
+        row_h = 40
 
         for i in range(self.options_count):
-            row_y = y_start + i * 58
+            row_y = y_start + i * 54
             rect = pygame.Rect(card_x + 40, row_y, card_w - 80, row_h)
             if rect.collidepoint(mouse_pos):
                 return i
@@ -1558,6 +1566,7 @@ class SettingsScreen:
 
     def draw(self) -> None:
         """Render settings screen interface."""
+        from src.pushbox.utils.i18n import t
 
         if self.feedback_timer > 0:
             self.feedback_timer -= 1
@@ -1571,7 +1580,7 @@ class SettingsScreen:
         screen_h = self.screen.get_height()
 
         # Settings Card (Glassmorphism card layout)
-        card_w, card_h = 560, 520
+        card_w, card_h = 560, 540
         card_x = (screen_w - card_w) // 2
         card_y = (screen_h - card_h) // 2
 
@@ -1582,49 +1591,61 @@ class SettingsScreen:
         pygame.draw.rect(self.screen, COLORS["wall"], card_rect, 2, border_radius=15)
 
         # Title
-        title_surf = self.title_font.render("設定", True, COLORS["text_highlight"])
+        title_surf = self.title_font.render(
+            t("settings.title"), True, COLORS["text_highlight"]
+        )
         title_rect = title_surf.get_rect(centerx=screen_w // 2, y=card_y + 35)
         self.screen.blit(title_surf, title_rect)
 
         # Option rows
-        y_start = card_y + 105
+        y_start = card_y + 90
         row_w = card_w - 80
-        row_h = 44
+        row_h = 40
 
         theme_names = {
-            "nord_blue": "極光冰川",
-            "classic_green": "經典綠",
-            "dracula_purple": "德古拉暗紫",
-            "default": "極光冰川",
+            "nord_blue": t("settings.theme.nord_blue"),
+            "classic_green": t("settings.theme.classic_green"),
+            "dracula_purple": t("settings.theme.dracula_purple"),
+            "default": t("settings.theme.nord_blue"),
         }
         active_theme = self.config.get_string("theme", "nord_blue")
-        theme_val = theme_names.get(active_theme, "極光冰川")
+        theme_val = theme_names.get(active_theme, t("settings.theme.nord_blue"))
 
         labels = [
             (
-                "控制方式",
-                "鍵盤 ↑↓←→"
+                t("settings.control"),
+                t("settings.control.arrows")
                 if self.config.get_control_scheme() == "arrows"
-                else "鍵盤 WASD",
+                else t("settings.control.wasd"),
             ),
             (
-                "主題配色",
+                t("settings.theme"),
                 theme_val,
             ),
             (
-                "動畫效果",
-                "開啟" if self.config.get_bool("animation_enabled", True) else "關閉",
+                t("settings.animation"),
+                t("settings.toggle.on")
+                if self.config.get_bool("animation_enabled", True)
+                else t("settings.toggle.off"),
             ),
             (
-                "新手教學",
-                "開啟" if self.config.get_bool("show_tutorial", True) else "關閉",
+                t("settings.tutorial"),
+                t("settings.toggle.on")
+                if self.config.get_bool("show_tutorial", True)
+                else t("settings.toggle.off"),
             ),
-            ("重置所有遊戲進度", "危險區域"),
-            ("返回主選單", ""),
+            (
+                t("settings.language"),
+                t("settings.language.zh_tw")
+                if self.config.get_language() == "zh-TW"
+                else t("settings.language.en"),
+            ),
+            (t("settings.danger_zone"), t("settings.danger_zone_lbl")),
+            (t("settings.back_to_menu"), ""),
         ]
 
         for i, (label, _value) in enumerate(labels):
-            row_y = y_start + i * 58
+            row_y = y_start + i * 54
             rect = pygame.Rect(card_x + 40, row_y, row_w, row_h)
             selected = i == self.selected_index
 
@@ -1641,8 +1662,8 @@ class SettingsScreen:
 
             # Draw Label Text
             label_color = COLORS["text_highlight"] if selected else COLORS["text_main"]
-            # Red color for reset button
-            if i == 4:
+            # Red color for reset button at index 5
+            if i == 5:
                 label_color = COLORS["error"] if selected else (200, 80, 90)
 
             label_surf = self.font.render(label, True, label_color)
@@ -1690,7 +1711,15 @@ class SettingsScreen:
                 toggle_text = (
                     "↑↓←→"
                     if i == 0 and is_on
-                    else ("WASD" if i == 0 else ("開" if is_on else "關"))
+                    else (
+                        "WASD"
+                        if i == 0
+                        else (
+                            t("settings.toggle.on")
+                            if is_on
+                            else t("settings.toggle.off")
+                        )
+                    )
                 )
                 txt_surf = self.small_font.render(
                     toggle_text, True, COLORS["background"]
@@ -1706,8 +1735,17 @@ class SettingsScreen:
                     )
                 self.screen.blit(txt_surf, txt_rect)
 
-            elif i == 1:
-                # Theme selector pill box
+            elif i in [1, 4]:
+                # Theme or Language selector pill box
+                val_text = (
+                    theme_val
+                    if i == 1
+                    else (
+                        t("settings.language.zh_tw")
+                        if self.config.get_language() == "zh-TW"
+                        else t("settings.language.en")
+                    )
+                )
                 pill_w, pill_h = 130, 26
                 pill_rect = pygame.Rect(
                     rect.right - pill_w - 20,
@@ -1731,28 +1769,30 @@ class SettingsScreen:
                     border_radius=13,
                 )
 
-                # Draw theme name inside pill
+                # Draw theme/language name inside pill
                 txt_surf = self.small_font.render(
-                    theme_val,
+                    val_text,
                     True,
                     COLORS["text_highlight"] if selected else COLORS["text_main"],
                 )
                 txt_rect = txt_surf.get_rect(center=pill_rect.center)
                 self.screen.blit(txt_surf, txt_rect)
 
-            elif i == 4:
+            elif i == 5:
                 # Danger button text / status
                 danger_surf = self.small_font.render(
-                    "重置進度", True, COLORS["text_highlight"]
+                    t("settings.reset_progress"), True, COLORS["text_highlight"]
                 )
                 danger_rect = danger_surf.get_rect(
                     right=rect.right - 20, centery=rect.centery
                 )
                 self.screen.blit(danger_surf, danger_rect)
 
-            elif i == 5:
+            elif i == 6:
                 # Back button arrow
-                back_surf = self.small_font.render("Back", True, COLORS["text_dim"])
+                back_surf = self.small_font.render(
+                    t("button.back"), True, COLORS["text_dim"]
+                )
                 back_rect = back_surf.get_rect(
                     right=rect.right - 20, centery=rect.centery
                 )

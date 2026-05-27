@@ -287,9 +287,14 @@ gantt
     - 組態與設定擴展：`DEFAULT_CONFIG` 中加入 `"language": "en"` 屬性，在 `Config.load()`, `Config.reset_to_defaults()`, `Config.set_language()` 中同步 active i18n state。
     - 實作防禦性的語言格式化、錯誤處理與 English fallback，確保任何異常或未知語言字串絕不引發 Crash。
     - 新增完整的 `test_i18n.py` 與擴充 `test_config.py` 驗證 i18n 與設定檔整合，227 個測試全部通過。
-  - [ ] **Phase B: Main Shell UI Localization (Planned)**:
-    - 翻譯主選單 (Main Menu)、設定頁 (Settings Screen)、關於/致謝頁 (About Screen)、遊戲教學頁 (Tutorial Screen)。
-    - 重構 `SettingsScreen` 選項，增加 Language 選項並微調 spacing 確保高端 glassmorphic 佈局美感。
+  - [x] **Phase B1: Settings Language Option & Main Menu Localization Refresh (Completed)**:
+    - 重構 `main.py` 的 `_setup_menu()` 以使用 `t(...)` 翻譯所有的主選單按鈕文字。
+    - 實作「轉場觸發之選單重構」策略：當從設定頁返回主選單時，重構選單按鈕的翻譯，避免每幀重複建立，保證語言切換即時更新。
+    - 擴充 `SettingsScreen` 為 7 個選項，於索引 4 插入「語言設定 (Language)」選項，並使用 `Config.set_language(...)` 實時切換與存檔。
+    - 重新調優設定卡片高寬與間距（`card_h = 540`, `spacing = 54`, `row_h = 40`），並以一體化、置中對齊的文字 pill-box 渲染主題與語言選取器，避免視覺裁剪。
+    - 新增 `tests/test_language_ui.py` 並調整 `tests/test_about.py` 以完整驗證主選單、語言切換、設定排版與 i18n 同步狀態。
+  - [ ] **Phase B2: About/Tutorial Screens & Common UI Localization (Planned)**:
+    - 翻譯關於致謝頁 (About Screen)、教學說明頁 (Tutorial Screen) 與通用確認/取消按鈕。
   - [ ] **Phase C: Gameplay & Editor UI Localization (Planned)**:
     - 翻譯遊戲內 HUD (Moves, Pushes, Time, Best, Controls)、Deadlock/Pause 提示、關卡選擇器 (Level Selector) 及關卡編輯器 (Level Editor)。
 

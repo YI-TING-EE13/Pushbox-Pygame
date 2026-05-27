@@ -233,14 +233,16 @@ class GameApp:
 
     def _setup_menu(self) -> None:
         """Setup main menu."""
+        from src.pushbox.utils.i18n import t
+
         self.menu.buttons.clear()
-        self.menu.add_button("開始遊戲", self._start_game, -150)
-        self.menu.add_button("選擇關卡", self._show_level_select, -90)
-        self.menu.add_button("編輯器", lambda: self._show_editor(), -30)
-        self.menu.add_button("教學說明", self._show_tutorial, 30)
-        self.menu.add_button("設定", self._show_settings, 90)
-        self.menu.add_button("關於遊戲", self._show_about, 150)
-        self.menu.add_button("退出", self._quit, 210)
+        self.menu.add_button(t("main_menu.start"), self._start_game, -150)
+        self.menu.add_button(t("main_menu.level_select"), self._show_level_select, -90)
+        self.menu.add_button(t("main_menu.editor"), lambda: self._show_editor(), -30)
+        self.menu.add_button(t("main_menu.tutorial"), self._show_tutorial, 30)
+        self.menu.add_button(t("main_menu.settings"), self._show_settings, 90)
+        self.menu.add_button(t("main_menu.about"), self._show_about, 150)
+        self.menu.add_button(t("main_menu.quit"), self._quit, 210)
 
     def _show_about(self) -> None:
         """Show about game screen."""
@@ -588,6 +590,7 @@ class GameApp:
                     self.controller.is_paused = False
                     self.controller.input_handler.clear_input_state()
                     self.menu_selected_index = 0
+                    self._setup_menu()
                 elif self.transition_target == "editor":
                     self.controller.is_playtest = False
                     self.controller.game_state = None
@@ -622,7 +625,11 @@ class GameApp:
         elif self.current_screen == "menu":
             for idx, button in enumerate(self.menu.buttons):
                 button.selected = idx == self.menu_selected_index
-            current = self.controller.get_current_level_name() or "未選擇"
+            from src.pushbox.utils.i18n import t
+
+            current = self.controller.get_current_level_name() or t(
+                "main_menu.unselected"
+            )
             progress = self.controller.save_manager.get_all_progress()
             self.menu.draw(
                 self.controller.get_available_levels(),
