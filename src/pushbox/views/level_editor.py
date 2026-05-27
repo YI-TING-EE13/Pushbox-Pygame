@@ -99,6 +99,8 @@ class LevelEditor:
 
     def _init_buttons(self) -> None:
         """Initialize editor UI buttons including grid resizing and action bar."""
+        from ..utils.i18n import t
+
         self.buttons = []
 
         # --- Map Size Controls (In Sidebar) ---
@@ -135,7 +137,7 @@ class LevelEditor:
                 515,
                 220,
                 36,
-                "匯出關卡 (E)",
+                t("editor.btn_export"),
                 self._export_level,
                 self.font,
                 bg_color=COLORS["text_highlight"],
@@ -150,7 +152,9 @@ class LevelEditor:
 
         # Undo/Redo
         self.buttons.append(
-            ModernButton(start_x, bar_y, btn_w, 40, "Undo(Z)", self._undo, self.font)
+            ModernButton(
+                start_x, bar_y, btn_w, 40, t("editor.btn_undo"), self._undo, self.font
+            )
         )
         self.buttons.append(
             ModernButton(
@@ -158,7 +162,7 @@ class LevelEditor:
                 bar_y,
                 btn_w,
                 40,
-                "Redo(Y)",
+                t("editor.btn_redo"),
                 self._redo,
                 self.font,
             )
@@ -172,7 +176,7 @@ class LevelEditor:
                 bar_y,
                 btn_w,
                 40,
-                "清除(C)",
+                t("editor.btn_clear"),
                 self._clear_grid,
                 self.font,
                 bg_color=COLORS["warning"],
@@ -187,7 +191,7 @@ class LevelEditor:
                 bar_y,
                 btn_w,
                 40,
-                "退出",
+                t("editor.btn_exit"),
                 self._request_exit,
                 self.font,
                 bg_color=COLORS["error"],
@@ -199,7 +203,7 @@ class LevelEditor:
                 bar_y,
                 btn_w,
                 40,
-                "儲存(S)",
+                t("editor.btn_save"),
                 self._save_level,
                 self.font,
                 bg_color=COLORS["success"],
@@ -211,7 +215,7 @@ class LevelEditor:
                 bar_y,
                 btn_w,
                 40,
-                "試玩(T)",
+                t("editor.btn_playtest"),
                 self._playtest_level,
                 self.font,
                 bg_color=COLORS["text_highlight"],
@@ -247,22 +251,26 @@ class LevelEditor:
 
     def _undo(self) -> None:
         """Undo the last grid modification."""
+        from ..utils.i18n import t
+
         if len(self.history) > 1:
             current_state = self.history.pop()
             self.redo_stack.append(current_state)
             previous_state = self.history[-1]
             self.grid = [row[:] for row in previous_state]
             self._update_dimensions()
-            self.show_status("撤銷")
+            self.show_status(t("editor.status_undo"))
 
     def _redo(self) -> None:
         """Redo the last undone grid modification."""
+        from ..utils.i18n import t
+
         if self.redo_stack:
             next_state = self.redo_stack.pop()
             self.history.append(next_state)
             self.grid = [row[:] for row in next_state]
             self._update_dimensions()
-            self.show_status("重做")
+            self.show_status(t("editor.status_redo"))
 
     def _update_dimensions(self) -> None:
         """Update rows and columns attributes based on the current grid shape."""
@@ -459,34 +467,40 @@ class LevelEditor:
 
     def _clear_grid(self) -> None:
         """Clear all cells on the grid and reset player status."""
+        from ..utils.i18n import t
+
         self.grid = [
             [CellType.EMPTY for _ in range(self.cols)] for _ in range(self.rows)
         ]
         self.player_placed = False
-        self.show_status("網格已清除")
+        self.show_status(t("editor.status_cleared"))
 
     def _save_level(self) -> None:
         """Perform grid validation checks and invoke the save callback."""
+        from ..utils.i18n import t
+
         has_player = any(CellType.PLAYER in row for row in self.grid)
         if not has_player:
-            self.show_status("錯誤: 必須放置玩家!")
+            self.show_status(t("editor.status_error_player"))
             return
 
         box_count = sum(row.count(CellType.BOX) for row in self.grid)
         target_count = sum(row.count(CellType.TARGET) for row in self.grid)
 
         if box_count == 0:
-            self.show_status("錯誤: 至少需要一個箱子!")
+            self.show_status(t("editor.status_error_box"))
             return
         if box_count != target_count:
             self.show_status(
-                f"無法儲存: 箱子({box_count})與目標({target_count})數量必須相同!"
+                t("editor.status_error_counts").format(
+                    box_count=box_count, target_count=target_count
+                )
             )
             return
 
         level_name = self.name_input.text.strip()
         if not level_name:
-            self.show_status("請輸入關卡名稱!")
+            self.show_status(t("editor.status_error_name"))
             return
 
         trimmed_grid = [row[:] for row in self.grid]
@@ -498,6 +512,12 @@ class LevelEditor:
 
     def draw(self) -> None:
         """Draw the entire editor interface including sidebar, tools, and grid."""
+        from ..utils.i18n import get_language, t
+
+        if getattr(self, "_last_language", "") != get_language():
+            self._init_buttons()
+            self._last_language = get_language()
+
         self.screen.fill(COLORS["background"])
 
         # --- Draw Sidebar ---
@@ -516,12 +536,12 @@ class LevelEditor:
 
         # Title
         if self.title_font:
-            title = self.title_font.render("關卡編輯器", True, COLORS["text_main"])
+            title = self.title_font.render(t("editor.title"), True, COLORS["text_main"])
             self.screen.blit(title, (20, 20))
 
         # Name Input
         if self.font:
-            label = self.font.render("關卡名稱:", True, COLORS["text_dim"])
+            label = self.font.render(t("editor.label_name"), True, COLORS["text_dim"])
             self.screen.blit(label, (20, 35))
         self.name_input.draw(self.screen)
 
@@ -588,15 +608,25 @@ class LevelEditor:
 
     def _draw_tool_selector(self) -> None:
         """Draw the sidebar tool selector showing available grid elements."""
+        from ..utils.i18n import t
+
         tool_x = 20
         tool_y = 130
         tool_height = 40
 
         if self.font:
-            label = self.font.render("選擇工具:", True, COLORS["text_dim"])
+            label = self.font.render(t("editor.label_tools"), True, COLORS["text_dim"])
             self.screen.blit(label, (tool_x, tool_y - 25))
 
-        for i, (name, tool_type, color) in enumerate(self.TOOLS):
+        tool_keys = {
+            CellType.WALL: "editor.tool_wall",
+            CellType.EMPTY: "editor.tool_floor",
+            CellType.TARGET: "editor.tool_target",
+            CellType.BOX: "editor.tool_box",
+            CellType.PLAYER: "editor.tool_player",
+        }
+
+        for i, (_name, tool_type, color) in enumerate(self.TOOLS):
             btn_rect = pygame.Rect(
                 tool_x, tool_y + i * (tool_height + 6), 220, tool_height
             )
@@ -622,7 +652,8 @@ class LevelEditor:
             )
 
             if self.font:
-                text = self.font.render(name, True, COLORS["text_main"])
+                loc_name = t(tool_keys.get(tool_type, "editor.tool_wall"))
+                text = self.font.render(loc_name, True, COLORS["text_main"])
                 self.screen.blit(
                     text,
                     (btn_rect.left + 40, btn_rect.centery - text.get_height() // 2),
@@ -630,16 +661,22 @@ class LevelEditor:
 
     def _draw_size_controls(self) -> None:
         """Draw grid size adjustment labels in the sidebar."""
+        from ..utils.i18n import t
+
         y_base = 390
         if self.font:
-            label = self.font.render("地圖大小:", True, COLORS["text_dim"])
+            label = self.font.render(t("editor.label_size"), True, COLORS["text_dim"])
             self.screen.blit(label, (20, y_base))
 
             # Labels for Rows/Cols
-            r_label = self.font.render(f"行數: {self.rows}", True, COLORS["text_main"])
+            r_label = self.font.render(
+                t("editor.label_rows").format(rows=self.rows), True, COLORS["text_main"]
+            )
             self.screen.blit(r_label, (55, y_base + 35))
 
-            c_label = self.font.render(f"列數: {self.cols}", True, COLORS["text_main"])
+            c_label = self.font.render(
+                t("editor.label_cols").format(cols=self.cols), True, COLORS["text_main"]
+            )
             self.screen.blit(c_label, (55, y_base + 85))
 
     def _draw_grid(self) -> None:
@@ -717,6 +754,8 @@ class LevelEditor:
 
     def _draw_hints(self) -> None:
         """Draw shortcut hints in sidebar."""
+        from ..utils.i18n import t
+
         if not self.small_font:
             return
 
@@ -731,19 +770,21 @@ class LevelEditor:
         )
         y += 15
 
-        label = self.small_font.render("操作提示:", True, COLORS["text_dim"])
+        label = self.small_font.render(
+            t("editor.hints_title"), True, COLORS["text_dim"]
+        )
         self.screen.blit(label, (20, y))
         y += 25
 
         hints = [
-            "左鍵：放置 | 右鍵：清除",
-            "1-5：切換工具",
-            "Z：撤銷 | Y / R：重做",
-            "Ctrl + S：儲存關卡",
-            "C：清空地圖",
-            "T：試玩關卡",
-            "E：匯出關卡",
-            "Esc：離開編輯器",
+            t("editor.hint_mouse"),
+            t("editor.hint_tools"),
+            t("editor.hint_undoredo"),
+            t("editor.hint_save"),
+            t("editor.hint_clear"),
+            t("editor.hint_playtest"),
+            t("editor.hint_export"),
+            t("editor.hint_exit"),
         ]
 
         for hint in hints:
@@ -767,20 +808,24 @@ class LevelEditor:
 
     def _playtest_level(self) -> None:
         """Validate grid layout and request a playtest session."""
+        from ..utils.i18n import t
+
         has_player = any(CellType.PLAYER in row for row in self.grid)
         if not has_player:
-            self.show_status("錯誤: 必須放置玩家!")
+            self.show_status(t("editor.status_error_player"))
             return
 
         box_count = sum(row.count(CellType.BOX) for row in self.grid)
         target_count = sum(row.count(CellType.TARGET) for row in self.grid)
 
         if box_count == 0:
-            self.show_status("錯誤: 至少需要一個箱子!")
+            self.show_status(t("editor.status_error_box"))
             return
         if box_count != target_count:
             self.show_status(
-                f"無法試玩: 箱子({box_count})與目標({target_count})數量必須相同!"
+                t("editor.status_error_playtest_counts").format(
+                    box_count=box_count, target_count=target_count
+                )
             )
             return
 
@@ -792,6 +837,8 @@ class LevelEditor:
 
     def _draw_confirm_dialog(self) -> None:
         """Draw a beautiful confirmation overlay dialog."""
+        from ..utils.i18n import t
+
         # 1. Full-screen dark semi-transparent overlay
         overlay = pygame.Surface(
             (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
@@ -815,12 +862,14 @@ class LevelEditor:
         # 4. Draw warning title / message
         if self.font and self.small_font:
             # Title
-            title_text = self.font.render("防呆警告", True, COLORS["error"])
+            title_text = self.font.render(
+                t("editor.confirm_title"), True, COLORS["error"]
+            )
             self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
 
             # Body text
             msg_text = self.small_font.render(
-                "地圖有未儲存的變更，確定要退出嗎？", True, COLORS["text_main"]
+                t("editor.confirm_message"), True, COLORS["text_main"]
             )
             self.screen.blit(msg_text, (dialog_x + 30, dialog_y + 65))
 
@@ -839,8 +888,10 @@ class LevelEditor:
 
         # Draw button labels
         if self.font:
-            yes_lbl = self.font.render("確定退出 (Y)", True, COLORS["background"])
-            no_lbl = self.font.render("留在編輯 (N)", True, COLORS["text_main"])
+            yes_lbl = self.font.render(
+                t("editor.confirm_yes"), True, COLORS["background"]
+            )
+            no_lbl = self.font.render(t("editor.confirm_no"), True, COLORS["text_main"])
             self.screen.blit(
                 yes_lbl, yes_lbl.get_rect(center=self.confirm_yes_rect.center)
             )
@@ -868,20 +919,24 @@ class LevelEditor:
 
     def _export_level(self) -> None:
         """Validate layout and export grid to PBX_ share code."""
+        from ..utils.i18n import t
+
         has_player = any(CellType.PLAYER in row for row in self.grid)
         if not has_player:
-            self.show_status("錯誤: 必須放置玩家!")
+            self.show_status(t("editor.status_error_player"))
             return
 
         box_count = sum(row.count(CellType.BOX) for row in self.grid)
         target_count = sum(row.count(CellType.TARGET) for row in self.grid)
 
         if box_count == 0:
-            self.show_status("錯誤: 至少需要一個箱子!")
+            self.show_status(t("editor.status_error_box"))
             return
         if box_count != target_count:
             self.show_status(
-                f"無法匯出: 箱子({box_count})與目標({target_count})數量必須相同!"
+                t("editor.status_error_counts").format(
+                    box_count=box_count, target_count=target_count
+                )
             )
             return
 
@@ -891,14 +946,14 @@ class LevelEditor:
                 self.grid[0][c] != CellType.WALL
                 or self.grid[self.rows - 1][c] != CellType.WALL
             ):
-                self.show_status("無法匯出: 外圍邊界必須完全封閉為牆壁!")
+                self.show_status(t("editor.status_error_perimeter"))
                 return
         for r in range(self.rows):
             if (
                 self.grid[r][0] != CellType.WALL
                 or self.grid[r][self.cols - 1] != CellType.WALL
             ):
-                self.show_status("無法匯出: 外圍邊界必須完全封閉為牆壁!")
+                self.show_status(t("editor.status_error_perimeter"))
                 return
 
         level_name = self.name_input.text.strip() or "Custom Level"
@@ -938,11 +993,11 @@ class LevelEditor:
 
             copied = best_effort_copy_to_clipboard(self.export_code)
             if copied:
-                self.show_status("已複製至剪貼簿！")
+                self.show_status(t("editor.status_copied"))
             else:
-                self.show_status("分享碼已生成，請手動複製！")
+                self.show_status(t("editor.status_generated_manual"))
         except Exception as e:
-            self.show_status(f"匯出失敗: {e}")
+            self.show_status(t("editor.status_export_fail").format(error=str(e)))
 
     def _copy_to_clipboard(self, text: str) -> bool:
         """Best-effort copy text to clipboard."""
@@ -954,6 +1009,8 @@ class LevelEditor:
 
     def _draw_export_dialog(self) -> None:
         """Draw the export code sharing dialog overlay."""
+        from ..utils.i18n import t
+
         # 1. Full-screen dark semi-transparent overlay
         overlay = pygame.Surface(
             (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
@@ -977,17 +1034,17 @@ class LevelEditor:
         # 4. Text
         if self.font and self.small_font:
             title_text = self.font.render(
-                "匯出關卡分享碼", True, COLORS["text_highlight"]
+                t("editor.export_title"), True, COLORS["text_highlight"]
             )
             self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
 
             msg_text1 = self.small_font.render(
-                "分享碼已自動複製到您的剪貼簿！", True, COLORS["success"]
+                t("editor.export_success"), True, COLORS["success"]
             )
             self.screen.blit(msg_text1, (dialog_x + 30, dialog_y + 60))
 
             msg_text2 = self.small_font.render(
-                "若未成功，請點擊下方輸入框選取，或使用 Ctrl+C 手動複製：",
+                t("editor.export_manual_hint"),
                 True,
                 COLORS["text_dim"],
             )
@@ -1015,8 +1072,12 @@ class LevelEditor:
         )
 
         if self.font:
-            copy_lbl = self.font.render("複製分享碼", True, COLORS["background"])
-            close_lbl = self.font.render("關閉視窗", True, COLORS["text_main"])
+            copy_lbl = self.font.render(
+                t("editor.btn_copy_code"), True, COLORS["background"]
+            )
+            close_lbl = self.font.render(
+                t("editor.btn_close_window"), True, COLORS["text_main"]
+            )
             self.screen.blit(
                 copy_lbl, copy_lbl.get_rect(center=self.export_copy_rect.center)
             )
@@ -1026,6 +1087,8 @@ class LevelEditor:
 
     def _check_export_click(self, pos: tuple[int, int]) -> bool:
         """Check clicks inside the export sharing dialog."""
+        from ..utils.i18n import t
+
         if not self.show_export_dialog:
             return False
 
@@ -1034,7 +1097,7 @@ class LevelEditor:
 
         if copy_rect and copy_rect.collidepoint(pos):
             self._copy_to_clipboard(self.export_code)
-            self.show_status("已複製至剪貼簿！")
+            self.show_status(t("editor.status_copied"))
             return True
         elif close_rect and close_rect.collidepoint(pos):
             self.show_export_dialog = False

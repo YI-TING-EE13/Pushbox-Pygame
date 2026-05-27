@@ -20,6 +20,12 @@ All notable changes to this project are documented in this file.
 * Added localized Level Selector Import Dialog with localized titles, instruction descriptions, error messages, and confirm/cancel action labels.
 * Implemented automatic layout refresh in `LevelSelector.draw()` that automatically detects changes in `get_language()` and rebuilds all buttons exactly once.
 * Added `test_level_selector_screen_localization`, `test_level_selector_custom_levels_buttons_localization`, `test_import_dialog_localization`, and `test_i18n_fallback_robustness` to `tests/test_language_ui.py` to comprehensively cover selector localization and fallback behavior.
+* Added translation keys for `editor.*` namespace to `src/pushbox/utils/i18n.py` for English and Traditional Chinese locales.
+* Added localized Level Editor sidebar labels, tool lists, rows/columns counts, and shortcut operation tips dynamically using `t(...)` translations.
+* Refactored Level Editor toolbar buttons and resizing buttons to use a dynamic language switch check that rebuilds buttons exactly once upon language change.
+* Localized exit confirmation dialog and export sharing code dialog overlays with localized title, text, input box placeholder, and confirmation buttons.
+* Localized all Level Editor validation error messages, save results, playtest validations, and export boundary conditions inside `_save_level()`, `_playtest_level()`, and `_export_level()`.
+* Added integration test `test_level_editor_ui_localization` to `tests/test_language_ui.py` to cover editor screen localizations, and updated `tests/test_level_share_ui.py` to support dynamic zh-TW testing and language restore.
 
 ### Changed
 * Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.

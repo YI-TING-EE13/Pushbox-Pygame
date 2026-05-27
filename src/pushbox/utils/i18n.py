@@ -123,6 +123,66 @@ TRANSLATIONS = {
         "custom_level.import_hint": ("Press Enter or click 'Confirm Import' to load."),
         "custom_level.confirm": "Confirm Import",
         "custom_level.cancel": "Cancel",
+        # Level Editor
+        "editor.title": "Level Editor",
+        "editor.label_name": "Level Name:",
+        "editor.label_tools": "Select Tool:",
+        "editor.label_size": "Map Size:",
+        "editor.label_rows": "Rows: {rows}",
+        "editor.label_cols": "Cols: {cols}",
+        "editor.hints_title": "Operations:",
+        "editor.hint_mouse": "L-Click: Paint | R-Click: Erase",
+        "editor.hint_tools": "1-5: Switch Tools",
+        "editor.hint_undoredo": "Z: Undo | Y/R: Redo",
+        "editor.hint_save": "Ctrl + S: Save Level",
+        "editor.hint_clear": "C: Clear Grid",
+        "editor.hint_playtest": "T: Playtest",
+        "editor.hint_export": "E: Export Level",
+        "editor.hint_exit": "Esc: Exit Editor",
+        "editor.tool_wall": "Wall (1)",
+        "editor.tool_floor": "Floor (2)",
+        "editor.tool_target": "Target (3)",
+        "editor.tool_box": "Box (4)",
+        "editor.tool_player": "Player (5)",
+        "editor.btn_undo": "Undo(Z)",
+        "editor.btn_redo": "Redo(Y)",
+        "editor.btn_clear": "Clear(C)",
+        "editor.btn_playtest": "Playtest(T)",
+        "editor.btn_save": "Save(S)",
+        "editor.btn_exit": "Exit",
+        "editor.btn_export": "Export (E)",
+        "editor.status_undo": "Undo",
+        "editor.status_redo": "Redo",
+        "editor.status_cleared": "Grid cleared",
+        "editor.status_error_player": "Error: Player is required!",
+        "editor.status_error_box": "Error: At least one box is required!",
+        "editor.status_error_counts": (
+            "Cannot Save: Boxes ({box_count}) and targets ({target_count}) must match!"
+        ),
+        "editor.status_error_playtest_counts": (
+            "Cannot Playtest: Boxes ({box_count}) and "
+            "targets ({target_count}) must match!"
+        ),
+        "editor.status_error_perimeter": (
+            "Cannot Export: Perimeter must be fully sealed with walls!"
+        ),
+        "editor.status_error_name": "Please enter a level name!",
+        "editor.status_copied": "Copied to clipboard!",
+        "editor.status_generated_manual": (
+            "Share code generated. Please copy manually!"
+        ),
+        "editor.status_export_fail": "Export failed: {error}",
+        "editor.confirm_title": "Confirm Exit",
+        "editor.confirm_message": ("Unsaved changes will be lost. Exit anyway?"),
+        "editor.confirm_yes": "Exit (Y)",
+        "editor.confirm_no": "Cancel (N)",
+        "editor.export_title": "Export Level Code",
+        "editor.export_success": ("Share code successfully copied to clipboard!"),
+        "editor.export_manual_hint": (
+            "Otherwise, select and copy from the input box below:"
+        ),
+        "editor.btn_copy_code": "Copy Code",
+        "editor.btn_close_window": "Close",
     },
     "zh-TW": {
         # Common / Buttons
@@ -237,6 +297,61 @@ TRANSLATIONS = {
         "custom_level.import_hint": ("按下 Enter 鍵或點擊下方「確認匯入」即可載入。"),
         "custom_level.confirm": "確認匯入",
         "custom_level.cancel": "取消返回",
+        # Level Editor
+        "editor.title": "關卡編輯器",
+        "editor.label_name": "關卡名稱:",
+        "editor.label_tools": "選擇工具:",
+        "editor.label_size": "地圖大小:",
+        "editor.label_rows": "行數: {rows}",
+        "editor.label_cols": "列數: {cols}",
+        "editor.hints_title": "操作提示:",
+        "editor.hint_mouse": "左鍵：放置 | 右鍵：清除",
+        "editor.hint_tools": "1-5：切換工具",
+        "editor.hint_undoredo": "Z：撤銷 | Y / R：重做",
+        "editor.hint_save": "Ctrl + S：儲存關卡",
+        "editor.hint_clear": "C：清空地圖",
+        "editor.hint_playtest": "T：試玩關卡",
+        "editor.hint_export": "E：匯出關卡",
+        "editor.hint_exit": "Esc：離開編輯器",
+        "editor.tool_wall": "牆壁 (1)",
+        "editor.tool_floor": "地板 (2)",
+        "editor.tool_target": "目標 (3)",
+        "editor.tool_box": "箱子 (4)",
+        "editor.tool_player": "玩家 (5)",
+        "editor.btn_undo": "撤銷(Z)",
+        "editor.btn_redo": "重做(Y)",
+        "editor.btn_clear": "清除(C)",
+        "editor.btn_playtest": "試玩(T)",
+        "editor.btn_save": "儲存(S)",
+        "editor.btn_exit": "退出",
+        "editor.btn_export": "匯出關卡 (E)",
+        "editor.status_undo": "撤銷",
+        "editor.status_redo": "重做",
+        "editor.status_cleared": "網格已清除",
+        "editor.status_error_player": "錯誤: 必須放置玩家!",
+        "editor.status_error_box": "錯誤: 至少需要一個箱子!",
+        "editor.status_error_counts": (
+            "無法儲存: 箱子({box_count})與目標({target_count})數量必須相同!"
+        ),
+        "editor.status_error_playtest_counts": (
+            "無法試玩: 箱子({box_count})與目標({target_count})數量必須相同!"
+        ),
+        "editor.status_error_perimeter": ("無法匯出: 外圍邊界必須完全封閉為牆壁!"),
+        "editor.status_error_name": "請輸入關卡名稱!",
+        "editor.status_copied": "已複製至剪貼簿！",
+        "editor.status_generated_manual": "分享碼已生成，請手動複製！",
+        "editor.status_export_fail": "匯出失敗: {error}",
+        "editor.confirm_title": "防呆警告",
+        "editor.confirm_message": "地圖有未儲存的變更，確定要退出嗎？",
+        "editor.confirm_yes": "確定退出 (Y)",
+        "editor.confirm_no": "留在編輯 (N)",
+        "editor.export_title": "匯出關卡分享碼",
+        "editor.export_success": "分享碼已自動複製到您的剪貼簿！",
+        "editor.export_manual_hint": (
+            "若未成功，請點擊下方輸入框選取，或使用 Ctrl+C 手動複製："
+        ),
+        "editor.btn_copy_code": "複製分享碼",
+        "editor.btn_close_window": "關閉視窗",
     },
 }
 

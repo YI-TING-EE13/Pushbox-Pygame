@@ -19,8 +19,13 @@ from src.pushbox.views.ui_components import InputBox, LevelSelector
 @pytest.fixture(autouse=True)
 def init_pygame() -> None:
     """Headless Pygame initialization fixture."""
+    from src.pushbox.utils import i18n
+
+    i18n.set_language("zh-TW")
     pygame.init()
     pygame.display.set_mode((800, 720))
+    yield
+    i18n.set_language("en")
 
 
 def test_level_editor_export_valid() -> None:

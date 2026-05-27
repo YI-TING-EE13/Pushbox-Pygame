@@ -346,3 +346,60 @@ def test_i18n_fallback_robustness():
     # Set unsupported language remains on English
     i18n.set_language("fr")
     assert i18n.get_language() == "en"
+
+
+def test_level_editor_ui_localization():
+    """Verify LevelEditor UI components localize correctly and do not crash on draw."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    from src.pushbox.utils.constants import CellType
+    from src.pushbox.views.level_editor import LevelEditor
+
+    editor = LevelEditor(screen)
+
+    # 1. English Mode
+    i18n.set_language("en")
+    editor.draw()  # Triggers button layout refresh and draw
+
+    assert editor._last_language == "en"
+    # Sidebar export button is at index 4
+    # (0: rows-, 1: rows+, 2: cols-, 3: cols+, 4: export)
+    assert editor.buttons[4].text == "Export (E)"
+    # Bottom toolbar functional buttons
+    assert editor.buttons[5].text == "Undo(Z)"
+    assert editor.buttons[6].text == "Redo(Y)"
+    assert editor.buttons[7].text == "Clear(C)"
+    assert editor.buttons[8].text == "Exit"
+    assert editor.buttons[9].text == "Save(S)"
+    assert editor.buttons[10].text == "Playtest(T)"
+
+    # Test error status and overlays
+    editor.grid[2][2] = CellType.BOX
+    editor.grid[3][3] = CellType.TARGET
+    editor._save_level()
+    assert editor.status_message == "Error: Player is required!"
+
+    editor.show_confirm_dialog = True
+    editor.show_export_dialog = True
+    editor._draw_confirm_dialog()
+    editor._draw_export_dialog()
+
+    # 2. Traditional Chinese Mode
+    i18n.set_language("zh-TW")
+    editor.draw()
+
+    assert editor._last_language == "zh-TW"
+    assert editor.buttons[4].text == "匯出關卡 (E)"
+    assert editor.buttons[5].text == "撤銷(Z)"
+    assert editor.buttons[6].text == "重做(Y)"
+    assert editor.buttons[7].text == "清除(C)"
+    assert editor.buttons[8].text == "退出"
+    assert editor.buttons[9].text == "儲存(S)"
+    assert editor.buttons[10].text == "試玩(T)"
+
+    editor._save_level()
+    assert editor.status_message == "錯誤: 必須放置玩家!"
+
+    editor._draw_confirm_dialog()
+    editor._draw_export_dialog()

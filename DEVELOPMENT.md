@@ -303,8 +303,13 @@ gantt
     - Localized the custom level Import Dialog including title headings, pasting instruction notices, text box prompts, action button labels, and error warning messages.
     - Implemented a robust check-refresh strategy inside `LevelSelector.draw()` that automatically detects changes in `get_language()` and rebuilds button text elements exactly once.
     - Appended 4 comprehensive integration tests to `tests/test_language_ui.py` covering selector states, custom buttons, dialog components, and safe fallback rules.
-  - [ ] **Phase C2: Level Editor Localization (Planned)**:
-    - Localize sidebar labels, grid settings, tool palette descriptions, bottom action buttons, unsaved warnings, and export share code dialogs.
+  - [x] **Phase C2: Level Editor Localization (Completed)**:
+    - Localized the level editor sidebar labels ("Level Name:", "Select Tool:", "Map Size:"), rows/columns counts ("Rows: {rows}", "Cols: {cols}"), and shortcut operation guides dynamically using `t(...)` translations.
+    - Localized all level editor tool descriptions ("Wall (1)", "Floor (2)", "Target (3)", "Box (4)", "Player (5)") dynamically in `_draw_tool_selector()`.
+    - Refactored the toolbar button panel and resizing buttons using a dynamic refresh check in `draw()` that reconstructs buttons exactly once upon language switches.
+    - Localized exit warning dialog prompts ("防呆警告", "確定退出 (Y)", "留在編輯 (N)") and export sharing overlays ("複製分享碼", "關閉視窗", "分享碼已自動複製").
+    - Localized all editor error/status banners (e.g. required player/box, mismatch error, sealed wall validation) inside `_save_level()`, `_playtest_level()`, and `_export_level()`.
+    - Added comprehensive test coverage in `tests/test_language_ui.py` (`test_level_editor_ui_localization`) and updated `tests/test_level_share_ui.py` to support dynamic zh-TW testing.
   - [ ] **Phase C3: Gameplay Overlays and Solver Hints Localization (Planned)**:
     - Localize gameplay HUD metrics, Level 0 onboarding hints, help overlays, victory celebration records, deadlock warnings (using "DEADLOCK!" as English title), and BFS path solver status banners.
 
