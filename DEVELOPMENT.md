@@ -250,31 +250,30 @@ gantt
 
 ---
 
-### v0.9.2 — Launch Stability Hotfix (In Development 🔧)
+### v0.9.2 — Launch Stability Hotfix (Official Release ✅)
 * **核心目標**：
-  解決玩家回報的「雙擊 Pushbox-Pygame.exe 時可能會開啟多個遊戲視窗」之啟動問題。透過 Win32 Named Mutex 及 Unix flock 鎖定檔案實現零外部依賴的單一實例防護（SingleInstanceGuard），確保同一時間只允許一個遊戲實例在背景安全運行，預防多個實例爭奪讀寫導致設定檔與存檔損毀。
+  解決玩家回報的「雙擊 Pushbox-Pygame.exe 時可能會開啟多個遊戲視窗」之啟動問題。透過 Win32 Named Mutex 及 Unix flock 鎖定檔案實現零外部依賴的單一實例防護（SingleInstanceGuard），確保同一時間只允許一個遊戲實例在背景安全運行，預防多個實例爭奪讀寫導致設定檔與存檔損毀。已正式發佈至 GitHub Releases，tag `v0.9.2` 指向 commit `94a5626`。
 
 * **開發任務 (Development Milestones)**：
-  - [ ] **Phase A: Single-Instance Guard Implementation**:
+  - [x] **Phase A: Single-Instance Guard Implementation**:
     - 新增 `src/pushbox/utils/single_instance.py` 封裝 `SingleInstanceGuard`。
     - 在 Windows 下呼叫 `CreateMutexW` 及檢查 `ERROR_ALREADY_EXISTS (183)`。使用 `Local\` 命名空間避免權限或多 session 衝突。
     - 對 Unix-like 系統使用 `tempfile` + `fcntl.flock` 實現相容鎖。
     - 任何例外或系統限制均進行防禦性捕獲，Fallback 至 no-op 以保障程式在任何異常環境下都能順利啟動。
-  - [ ] **Phase B: main.py Integration & Silent Exit**:
+  - [x] **Phase B: main.py Integration & Silent Exit**:
     - 在 `main.py` 的進入點 `main()` 最前端嘗試獲取 `SingleInstanceGuard` 實例。
     - 若 `guard.already_running` 成立，使用 `sys.exit(0)` 安靜退出（不彈出多餘警告或 message box），保證純 GUI 打包模式無殘留命令列輸出。
     - 保證第一個實例在退出時安全執行 `guard.close()` 進行鎖釋放。
-  - [ ] **Phase C: Comprehensive Unit Testing**:
+  - [x] **Phase C: Comprehensive Unit Testing**:
     - 新增 `tests/test_single_instance.py` 單元測試。
     - 模擬 mock 出 Windows ctypes CreateMutexW / GetLastError 行為（ERROR_ALREADY_EXISTS / NULL 失敗 / Exception）以及 Unix-like flock / missing fcntl 相容性。
     - 確保測試套件不受實機 Windows API 或 PyInstaller 打包限制。
-  - [ ] **Phase D: Standalone Compile & Local Smoke Test**:
+  - [x] **Phase D: Standalone Compile & Local Smoke Test**:
     - 提升版本號至 `0.9.2`，跑完 `pytest` / `ruff` / `mypy` 品質門禁。
     - 執行 `scripts/build_windows.py` 打包產出 `Pushbox-Pygame-v0.9.2-windows-x64.zip`。
     - 實機手動重複點擊 EXE 驗證防護，確認 Task Manager 僅保留唯一實例，安靜退出正常。
 
 * **注意事項**：
-  - ❌ 在正式發布 tag / GitHub Release 之前，此狀態代表 Release Prep 進行中。
   - ❌ 音效/BGM/SFX 仍保持 planned/deferred (v0.9.5)。
 
 ---

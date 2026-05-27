@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## v0.9.2 — Unreleased
+## v0.9.2 — Launch Stability Hotfix (2026-05-27)
 
 ### Fixed
 
