@@ -1,6 +1,6 @@
 [project]
 name = "pushbox-pygame"
-version = "0.9.1.dev0"
+version = "0.9.1"
 description = "A Python/Pygame Sokoban game with built-in levels, custom level editor, undo/redo, progress saving, and documented testing workflows."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v0.9.1--dev-orange.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v0.9.1-blue.svg)](#-roadmap)
 
 ## Overview
 
@@ -37,7 +37,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 - **About / Credits Screen**: In-game credits screen displaying project version, license details, and open-source contributions.
 - **Config / Save Hardening**: Bulletproof local save resilience with automatic `.bak` backups and active data integrity guards.
 - **Runtime Path Helpers**: Pre-wired path resolution routing for Windows standalone packaging readiness.
-- **Custom App Icon (Upcoming v0.9.1)**: Incorporated a beautifully custom-coded **Nord geometric bear pushing a crate** icon (`pushbox.ico`) into the PyInstaller packaging pipeline.
+- **Custom App Icon (v0.9.1)**: Incorporated a beautifully custom-coded **Nord geometric bear pushing a crate** icon (`pushbox.ico`) into the PyInstaller packaging pipeline.
 
 ---
 
@@ -46,7 +46,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Windows Standalone Package (v0.9.0 Official Release) is now available!**
+> **Windows Standalone Package (v0.9.1 Official Release) is now available!**
 > The Windows `onedir` standalone packaging pipeline has been officially released, and compiled in pure GUI windowed mode (`console=False`). Standalone ZIP packages are officially published on GitHub Releases.
 > 
 > **Verified Smoke Test Scenarios:**
@@ -56,11 +56,11 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 > - Automated runtime sibling creation of `data/` (saves, configurations) and `levels/` (custom editor levels) next to the executable for absolute save file portability.
 > - Procedural vector player character (procedural bear fallback) rendering works reliably and beautifully without requiring external `player.jpeg` image files.
 > 
-> *Active development on the `main` branch is targeted towards the upcoming **v0.9.1-dev** polish version (unreleased), which features a custom-designed desktop application icon. The stable release remains **v0.9.0**.*
+> *The stable release is **v0.9.1**, which features a premium custom-designed desktop application icon, complete visual showcases, and detailed release testing checklists.*
 
 ### How to Run the Packaged Version
 
-1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.0-windows-x64.zip` (generated via the official local build pipelines).
+1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.1-windows-x64.zip` (generated via the official local build pipelines).
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
@@ -265,7 +265,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 
 - **v0.8.1**: Completed. Release hardening (paths refactoring, config/save robustness, About screen, decoupled README).
 - **v0.9.0 (Official Release)**: Standalone Windows packaging infrastructure completed under pure GUI mode (`console=False`). Standalone ZIP packages officially published on GitHub Releases.
-- **v0.9.1 (Upcoming Polish - In Development)**: Complete Visual Showcase gallery, detailed release smoke-test checklists, PyInstaller pipeline upgrades, and an elegant custom **Nord geometric bear** desktop application icon (`pushbox.ico`).
+- **v0.9.1 (Official Polish Release)**: Complete Visual Showcase gallery, detailed release smoke-test checklists, PyInstaller pipeline upgrades, and an elegant custom **Nord geometric bear** desktop application icon (`pushbox.ico`).
 - **v0.9.5 (Planned)**: Optional SFX activation (sound effects and ambient background music).
 - **v1.0.0 (Planned)**: Stable official player-facing release.
 

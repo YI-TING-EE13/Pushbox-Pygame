@@ -214,9 +214,9 @@ gantt
 
 ---
 
-### v0.9.1 — Visual Polish & Documentation (In Development 🔧)
+### v0.9.1 — Visual Polish & Documentation (Release Prep Candidate 🚀)
 * **核心目標**：
-  為專案補齊高品質的視覺展示素材與詳盡的 release QA 文件，讓 GitHub / README 頁面對外呈現更完整的產品形象，同時為 Windows standalone 打包流程加入自訂桌面應用程式圖標。此階段嚴格不修改 gameplay code 或 packaging pipeline。
+  為專案補齊高品質的視覺展示素材與詳盡的 release QA 文件，讓 GitHub / README 頁面對外呈現更完整的產品形象，同時為 Windows standalone 打包流程加入自訂桌面應用程式圖標。已完成 Phase A 至 Phase C 以及發布前置版本對齊與 QA 準備工作。
 
 * **已完成任務 (Completed Milestones)**：
   - [x] **Phase A: Icon / Screenshot Decision Brief**:
@@ -233,15 +233,20 @@ gantt
     - 更新 `tests/test_about.py` 動態比對 `APP_VERSION`。
   - [x] **Phase C: Screenshot / README / TESTING docs**:
     - 產出 3 張遊戲截圖 PNG：`docs/images/main-menu.png`、`docs/images/gameplay-hint.png`、`docs/images/level-editor.png`。
-    - 更新 `README.md`：新增 Visual Showcase 3 欄截圖表格、更新版本徽章至 `v0.9.1-dev`、更新 Features/Roadmap/Requirements 段落以反映 v0.9.0 正式發佈與 v0.9.1 開發中狀態。
+    - 更新 `README.md`：新增 Visual Showcase 3 欄截圖表格、更新版本徽章至 `v0.9.1`、更新 Features/Roadmap/Requirements 段落以反映 v0.9.1 正式發佈與 Roadmap 規劃。
     - 更新 `TESTING.md`：新增 Section 6 — Packaged Standalone Release Smoke-Test Checklist。
-    - 更新 `RELEASE_NOTES.md`：新增 `v0.9.1.dev0 — Unreleased` 條目、更新 v0.9.0 為正式發佈狀態。
+    - 更新 `RELEASE_NOTES.md`：新增 `v0.9.1 — 2026-05-27` 正式條目、更新 v0.9.0 為正式發佈狀態。
     - 更新 `DEVELOPMENT.md`：記錄 Phase B 已完成、Phase C 已完成。
+  - [x] **Phase D: Release Prep Candidate Verification**:
+    - 版本號統一升級至 `0.9.1` / `v0.9.1`（`pyproject.toml`, `__init__.py`, `constants.py`, `build_windows.py`）。
+    - 透過 `uv sync` 同步更新 `uv.lock`。
+    - 通過 `pytest`、`ruff`、`mypy` 等所有品質門禁與測試。
+    - 執行 `scripts/build_windows.py` 正式本地編譯打包產出 `v0.9.1` ZIP 與 `.sha256`。
+    - 順利通過 `TESTING.md` 的 Clean folder 實機 Smoke-Test 與相容性測試，達到 Release-Ready 狀態。
 
 * **注意事項**：
-  - ❌ 此階段**嚴禁**修改 gameplay code、UI logic、packaging pipeline 或版本號。
-  - ❌ **不要**宣稱 v0.9.1 已正式 release。
-  - ❌ **不要**修改 v0.9.0 的 download link 或 GitHub Release assets。
+  - ❌ 在正式發布 tag / GitHub Release 之前，此狀態代表 Release Prep 完成。
+  - ❌ 音效/BGM/SFX 仍保持 planned/deferred (v0.9.5)。
 
 ---
 

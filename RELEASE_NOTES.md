@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## v0.9.1.dev0 — Unreleased
+## v0.9.1 — 2026-05-27
 
 ### Added
 
@@ -17,15 +17,15 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-* Updated version metadata to `0.9.1.dev0` (`pyproject.toml`, `src/pushbox/__init__.py`, `scripts/build_windows.py`) and UI version string to `v0.9.1-dev` (`constants.py`).
+* Updated version metadata to `0.9.1` across `pyproject.toml`, `src/pushbox/__init__.py`, `scripts/build_windows.py`, and `constants.py`.
 * Updated `pushbox.spec` to embed the custom `.ico` icon into the PyInstaller packaging pipeline.
 * Updated `scripts/build_windows.py` with a pre-build existence check for the icon file.
 * Updated `tests/test_about.py` to dynamically compare against `APP_VERSION` from `constants.py`.
-* Updated `README.md` roadmap, status, and features to reflect the official v0.9.0 release and upcoming v0.9.1 polish.
+* Updated `README.md` roadmap, status, and features to reflect the official v0.9.1 release.
 
 ### Notes
 
-* This is an in-development polish version. It has **not** been released.
+* Official Polish Release, featuring an elegant packaged application icon, visual showcases, and comprehensive release QA validation.
 * Audio/BGM/SFX remain deferred and planned for v0.9.5.
 
 ---

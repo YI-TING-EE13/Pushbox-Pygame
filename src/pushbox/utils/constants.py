@@ -7,7 +7,7 @@ Color = tuple[int, int, int]
 ColorWithAlpha = tuple[int, int, int, int]
 ColorLike = Union[Color, ColorWithAlpha]
 
-APP_VERSION = "0.9.1-dev"
+APP_VERSION = "0.9.1"
 
 
 class CellType(IntEnum):
