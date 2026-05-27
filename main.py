@@ -97,6 +97,8 @@ class GameApp:
 
     def _init_game_buttons(self) -> None:
         """Initialize in-game control buttons."""
+        from src.pushbox.utils.i18n import t
+
         font = pygame.font.SysFont("microsoftyahei", 20)
         try:
             font = pygame.font.Font(None, 24)
@@ -117,7 +119,7 @@ class GameApp:
             btn_y,
             btn_w,
             btn_h,
-            "撤銷 (Z)",
+            t("game.buttons.undo"),
             self.controller._on_undo,
             font,
             bg_color=COLORS["button_default"],
@@ -128,7 +130,7 @@ class GameApp:
             btn_y,
             btn_w,
             btn_h,
-            "重置 (F5)",
+            t("game.buttons.reset"),
             self.controller._on_reset,
             font,
             bg_color=COLORS["warning"],
@@ -140,7 +142,7 @@ class GameApp:
             btn_y,
             btn_w,
             btn_h,
-            "重做 (Y)",
+            t("game.buttons.redo"),
             self.controller._on_redo,
             font,
             bg_color=COLORS["button_default"],
@@ -151,7 +153,7 @@ class GameApp:
             btn_y,
             btn_w,
             btn_h,
-            "💡 提示 (I)",
+            t("game.buttons.hint"),
             self._trigger_hint,
             font,
             bg_color=COLORS["button_default"],
@@ -606,6 +608,8 @@ class GameApp:
                         self._on_edit_level,
                         self._on_delete_level,
                     )
+                elif self.transition_target == "game":
+                    self._init_game_buttons()
 
                 self.transition_state = "fade_in"
         elif self.transition_state == "fade_in":

@@ -416,6 +416,8 @@ class TutorialScreen:
 
     def draw(self) -> None:
         """Draw tutorials instruction card, targets, shortcuts, and progress prompts."""
+        from src.pushbox.utils.i18n import t
+
         self.screen.fill(COLORS["background"])
         self.time += 0.05
 
@@ -436,7 +438,9 @@ class TutorialScreen:
         )
 
         if self.title_font:
-            title = self.title_font.render("遊戲教學", True, COLORS["text_highlight"])
+            title = self.title_font.render(
+                t("tutorial.title"), True, COLORS["text_highlight"]
+            )
             title_rect = title.get_rect(centerx=card_rect.centerx, y=card_rect.y + 25)
             self.screen.blit(title, title_rect)
             pygame.draw.line(
@@ -449,24 +453,30 @@ class TutorialScreen:
 
         sections = [
             (
-                "🎯 遊戲目標",
+                t("tutorial.goal.title"),
                 [
-                    "將所有箱子推到目標點上",
-                    "箱子只能推，不能拉",
-                    "精準規劃路線，避免卡死",
+                    t("tutorial.goal.line1"),
+                    t("tutorial.goal.line2"),
+                    t("tutorial.goal.line3"),
                 ],
             ),
             (
-                "🎮 控制方式",
+                t("tutorial.control.title"),
                 [
-                    "方向鍵 / WASD：移動",
-                    "Z / Backspace：撤銷",
-                    "Y / R：重做",
-                    "F5 / Delete：重置",
-                    "Ctrl+Q：退出遊戲",
+                    t("tutorial.control.line1"),
+                    t("tutorial.control.line2"),
+                    t("tutorial.control.line3"),
+                    t("tutorial.control.line4"),
+                    t("tutorial.control.line5"),
                 ],
             ),
-            ("💡 提示", ["點擊按鈕亦可操作", "按 H 鍵查看說明"]),
+            (
+                t("tutorial.tip.title"),
+                [
+                    t("tutorial.tip.line1"),
+                    t("tutorial.tip.line2"),
+                ],
+            ),
         ]
 
         y = card_rect.y + 85
@@ -485,7 +495,7 @@ class TutorialScreen:
         if self.font:
             alpha = int((math.sin(self.time * 0.1) + 1) * 127.5)
             prompt = self.font.render(
-                "按任意鍵開始遊戲...", True, COLORS["text_highlight"]
+                t("tutorial.start_prompt"), True, COLORS["text_highlight"]
             )
             prompt.set_alpha(alpha)
             prompt_rect = prompt.get_rect(
@@ -1890,6 +1900,8 @@ class AboutScreen:
 
     def draw(self) -> None:
         """Draw the glassmorphic About card and credits info onto the screen."""
+        from src.pushbox.utils.i18n import t
+
         # 1. Fill screen background (auto-adapt to theme bg)
         self.screen.fill(COLORS["background"])
 
@@ -1915,7 +1927,7 @@ class AboutScreen:
         y_pos = card_y + 25
         if self.title_font:
             title_surf = self.title_font.render(
-                "關於遊戲 / Credits", True, COLORS["text_highlight"]
+                t("about.title"), True, COLORS["text_highlight"]
             )
             title_rect = title_surf.get_rect(centerx=card_rect.centerx, y=y_pos)
             self.screen.blit(title_surf, title_rect)
@@ -1933,24 +1945,32 @@ class AboutScreen:
 
         # 6. Content lines (Slightly larger font)
         if self.font:
-            for line in self.content_lines:
+            dynamic_content_lines = [
+                "Pushbox-Pygame",
+                f"{t('about.version')}: v{self.app_version}",
+                t("about.built_with"),
+                f"{t('about.license')}: {self.license_info}",
+                f"{t('about.github')}: {self.github_url}",
+            ]
+            for line in dynamic_content_lines:
                 is_title = line.startswith("Pushbox")
                 color = COLORS["text_highlight"] if is_title else COLORS["text_main"]
-                if line.startswith("Description:"):
-                    desc_label = self.font.render(
-                        "遊戲簡介: ", True, COLORS["text_dim"]
-                    )
-                    self.screen.blit(desc_label, (card_rect.left + 50, y_pos))
-
-                    desc_body = self.font.render(
-                        line[12:].strip(), True, COLORS["text_main"]
-                    )
-                    self.screen.blit(desc_body, (card_rect.left + 140, y_pos))
-                else:
-                    surf = self.font.render(line, True, color)
-                    self.screen.blit(surf, (card_rect.left + 50, y_pos))
+                surf = self.font.render(line, True, color)
+                self.screen.blit(surf, (card_rect.left + 50, y_pos))
                 y_pos += 32
 
+            # Render Description row with dynamic offset to prevent overlap
+            desc_label = self.font.render(
+                t("about.intro_lbl"), True, COLORS["text_dim"]
+            )
+            self.screen.blit(desc_label, (card_rect.left + 50, y_pos))
+
+            label_width = desc_label.get_width()
+            desc_body = self.font.render(
+                t("about.intro_desc"), True, COLORS["text_main"]
+            )
+            self.screen.blit(desc_body, (card_rect.left + 50 + label_width + 10, y_pos))
+            y_pos += 32
             y_pos += 10
 
         # 7. Credits separation line
@@ -1966,9 +1986,7 @@ class AboutScreen:
         # 8. Credits lines (Slightly smaller, dimmer font)
         if self.small_font:
             credits_title = (
-                self.font.render(
-                    "開發與授權致謝 (Credits):", True, COLORS["text_highlight"]
-                )
+                self.font.render(t("about.credits_lbl"), True, COLORS["text_highlight"])
                 if self.font
                 else None
             )
@@ -1976,7 +1994,12 @@ class AboutScreen:
                 self.screen.blit(credits_title, (card_rect.left + 50, y_pos))
                 y_pos += 30
 
-            for line in self.credit_lines:
+            dynamic_credit_lines = [
+                t("about.code_design"),
+                t("about.thanks"),
+                t("about.external_assets"),
+            ]
+            for line in dynamic_credit_lines:
                 surf = self.small_font.render(line, True, COLORS["text_dim"])
                 self.screen.blit(surf, (card_rect.left + 50, y_pos))
                 y_pos += 26
@@ -1998,6 +2021,6 @@ class AboutScreen:
         )
 
         if self.font:
-            btn_lbl = self.font.render("返回主選單 (Esc)", True, btn_fg)
+            btn_lbl = self.font.render(t("about.back"), True, btn_fg)
             lbl_rect = btn_lbl.get_rect(center=self.back_button_rect.center)
             self.screen.blit(btn_lbl, lbl_rect)

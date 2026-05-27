@@ -145,3 +145,74 @@ def test_settings_screen_draw_no_crash():
     # Draw in Traditional Chinese
     config.set_language("zh-TW")
     settings.draw()
+
+
+def test_about_screen_localization():
+    """Verify AboutScreen draw and localized labels."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    from src.pushbox.views.ui_components import AboutScreen
+
+    about = AboutScreen(screen)
+
+    # 1. English Mode
+    i18n.set_language("en")
+    assert i18n.t("about.title") == "About / Credits"
+    assert i18n.t("about.intro_lbl") == "Description: "
+    about.draw()
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    assert i18n.t("about.title") == "關於遊戲 / Credits"
+    assert i18n.t("about.intro_lbl") == "遊戲簡介: "
+    about.draw()
+
+
+def test_tutorial_screen_localization():
+    """Verify TutorialScreen draw and localized labels."""
+    pygame.init()
+    screen = pygame.Surface((1024, 768))
+
+    from src.pushbox.views.ui_components import TutorialScreen
+
+    tutorial = TutorialScreen(screen)
+
+    # 1. English Mode
+    i18n.set_language("en")
+    assert i18n.t("tutorial.title") == "How to Play"
+    assert i18n.t("tutorial.goal.title") == "🎯 Objective"
+    tutorial.draw()
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    assert i18n.t("tutorial.title") == "遊戲教學"
+    assert i18n.t("tutorial.goal.title") == "🎯 遊戲目標"
+    tutorial.draw()
+
+
+def test_bottom_gameplay_buttons_localization(monkeypatch):
+    """Verify bottom gameplay buttons localization and re-init."""
+    monkeypatch.setattr(
+        pygame.display,
+        "set_mode",
+        MagicMock(return_value=pygame.Surface((1024, 768))),
+    )
+
+    app = GameApp()
+
+    # 1. English Mode
+    i18n.set_language("en")
+    app._init_game_buttons()
+    assert app.btn_undo.text == "Undo (Z)"
+    assert app.btn_reset.text == "Reset (F5)"
+    assert app.btn_redo.text == "Redo (Y)"
+    assert app.btn_hint.text == "💡 Hint (I)"
+
+    # 2. Chinese Mode
+    i18n.set_language("zh-TW")
+    app._init_game_buttons()
+    assert app.btn_undo.text == "撤銷 (Z)"
+    assert app.btn_reset.text == "重置 (F5)"
+    assert app.btn_redo.text == "重做 (Y)"
+    assert app.btn_hint.text == "💡 提示 (I)"

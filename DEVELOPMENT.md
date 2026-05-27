@@ -293,10 +293,13 @@ gantt
     - 擴充 `SettingsScreen` 為 7 個選項，於索引 4 插入「語言設定 (Language)」選項，並使用 `Config.set_language(...)` 實時切換與存檔。
     - 重新調優設定卡片高寬與間距（`card_h = 540`, `spacing = 54`, `row_h = 40`），並以一體化、置中對齊的文字 pill-box 渲染主題與語言選取器，避免視覺裁剪。
     - 新增 `tests/test_language_ui.py` 並調整 `tests/test_about.py` 以完整驗證主選單、語言切換、設定排版與 i18n 同步狀態。
-  - [ ] **Phase B2: About/Tutorial Screens & Common UI Localization (Planned)**:
-    - 翻譯關於致謝頁 (About Screen)、教學說明頁 (Tutorial Screen) 與通用確認/取消按鈕。
+  - [x] **Phase B2: About/Tutorial Screens & bottom gameplay buttons UI Localization (Completed)**:
+    - 重構 `AboutScreen` 的 `draw()` 方法，以動態 blit 寬度計算（`desc_label.get_width()` 加上間距）取代原硬編碼之大字元偏移量，徹底避免中英文長度不同造成的字串 overlap 裁剪。
+    - 重構 `TutorialScreen` 的 `draw()`，將其網格各區域、操作控制與提示 bullets 以 `t(...)` 動態組合形式載入，消除中英文混合狀態。
+    - 重構 `main.py` 的 `_init_game_buttons()`，將底部的四個按鈕（撤銷、重設、重做與提示）改用動態 localized 標籤，並在進入 `"game"` 畫面時執行單次語系重構以維護極致流暢性。
+    - 新增 3 個針對 About 頁面、Tutorial 頁面與底部按鈕的 localization 整合測試以確保 regression-free，全套 236 個測試高標通過。
   - [ ] **Phase C: Gameplay & Editor UI Localization (Planned)**:
-    - 翻譯遊戲內 HUD (Moves, Pushes, Time, Best, Controls)、Deadlock/Pause 提示、關卡選擇器 (Level Selector) 及關卡編輯器 (Level Editor)。
+    - 翻譯遊戲內 HUD 狀態（Moves, Pushes, Time, Best, Controls）、Deadlock/Pause 提示、關卡選擇器 (Level Selector) 及關卡編輯器 (Level Editor) 的深層中文字串。
 
 ---
 

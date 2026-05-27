@@ -55,6 +55,15 @@ TRANSLATIONS = {
         ),
         "about.credits_lbl": "Development & Credits:",
         "about.back": "Back to Menu (Esc)",
+        "about.version": "Version",
+        "about.built_with": "Built with Python & Pygame",
+        "about.license": "License",
+        "about.github": "GitHub",
+        "about.code_design": "Code & Design: Project contributors",
+        "about.thanks": "Thanks: Python, Pygame, and the open-source community",
+        "about.external_assets": (
+            "External assets: See project documentation for asset source records."
+        ),
         # Tutorial Screen
         "tutorial.title": "How to Play",
         "tutorial.goal.title": "🎯 Objective",
@@ -126,6 +135,13 @@ TRANSLATIONS = {
         ),
         "about.credits_lbl": "開發與授權致謝 (Credits):",
         "about.back": "返回主選單 (Esc)",
+        "about.version": "版本",
+        "about.built_with": "基於 Python 與 Pygame 開發",
+        "about.license": "授權方式",
+        "about.github": "開源專案",
+        "about.code_design": "程式與設計：專案貢獻者",
+        "about.thanks": "致謝：Python, Pygame 與開源社群",
+        "about.external_assets": "外部資源：請參考專案文件中的素材來源紀錄。",
         # Tutorial Screen
         "tutorial.title": "遊戲教學",
         "tutorial.goal.title": "🎯 遊戲目標",

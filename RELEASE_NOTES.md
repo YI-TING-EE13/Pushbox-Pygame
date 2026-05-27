@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file.
 * Added `tests/test_i18n.py` testing language defaults, supported sets, translation lookups, overrides, fallback chains, normalization variations, and safe non-mutating context isolated lookups.
 * Added "Language" option to `SettingsScreen` as index 4, displaying current active language (English or 繁體中文) and cycling between "en" and "zh-TW" instantly.
 * Added `tests/test_language_ui.py` to comprehensively test Settings language row structure (7 options), language cycling, config saving, i18n state synchronization, and main menu localized label rebuilding.
+* Added localized AboutScreen support using dynamic translations (`about.*`) and dynamic blit width calculation to prevent overlapping.
+* Added localized TutorialScreen support using dynamic translations (`tutorial.*`) in `TutorialScreen.draw()`.
+* Added three new integration tests verifying About screen, Tutorial screen, and bottom gameplay buttons localization.
 
 ### Changed
 * Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.
@@ -21,12 +24,12 @@ All notable changes to this project are documented in this file.
 * Refactored `_setup_menu()` in `main.py` to use `t(...)` keys for all main menu buttons.
 * Implemented transition-based menu rebuild strategy to automatically refresh main menu button labels in the correct active language exactly once when returning from Settings without rebuilding every frame.
 * Adjusted `tests/test_about.py` button text check using `t("main_menu.about")` instead of hardcoded Chinese text to keep the test robust under localized menus.
+* Refactored `_init_game_buttons()` in `main.py` to localize the four bottom gameplay buttons (Undo, Reset, Redo, Hint) dynamically, rebuilt automatically on transition to the game screen.
 
 ### Notes
-* v0.9.3 Phase B1 (Settings Language Option + Main Menu Localization Refresh) is completed.
-* About Screen, Tutorial Screen, and Common buttons are still planned for later Phase B2.
-* v0.9.4 is planned for deeper UI translation (Level Editor, Level Selector, gameplay HUD, bottom gameplay buttons).
-* v0.9.5 audio is intentionally deferred.
+* v0.9.3 Phase B1 (Settings Language Option + Main Menu Refresh) and Phase B2 (About Screen, Tutorial Screen, and bottom gameplay buttons) are completed.
+* Phase C is planned for deeper gameplay UI translation (Level Selector, Level Editor, custom sharing dialogs, gameplay deep messages).
+* v0.9.5 audio remains deferred.
 
 ---
 
