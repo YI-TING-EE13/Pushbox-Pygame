@@ -140,8 +140,24 @@ class GameController:
         if not self.game_state or self.is_paused:
             return
 
+        # Determine if a push is possible prior to the move
+        is_push = False
+        player_pos = self.game_state.level.get_player_position()
+        if player_pos:
+            pr, pc = player_pos
+            dr, dc = direction
+            nr, nc = pr + dr, pc + dc
+            if self.game_state.level.is_valid_position(nr, nc):
+                cell = self.game_state.level.get_cell(nr, nc)
+                is_push = cell in [CellType.BOX, CellType.BOX_ON_TARGET]
+
         success = self.game_state.move(direction)
         if success:
+            if is_push:
+                self.audio.play_push()
+            else:
+                self.audio.play_move()
+
             self._trigger_event("move", direction)
 
             # Check if box was pushed onto a target
@@ -153,6 +169,7 @@ class GameController:
                         self.current_level
                         and self.current_level.initial_grid[br, bc] == CellType.TARGET
                     ):
+                        self.audio.play_target()
                         self._trigger_event("box_on_target", (br, bc))
 
             # Check for win/game over
@@ -162,12 +179,16 @@ class GameController:
                 self._trigger_event("game_over")
         else:
             if self.game_state.status == GameStateEnum.PLAYING:
+                self.audio.play_bump()
                 self._trigger_event("invalid_move")
 
     def _handle_win(self) -> None:
         """Handle level completion."""
         if not self.game_state or not self.current_level:
             return
+
+        # Play victory fanfare once
+        self.audio.play_win()
 
         # Update save data
         stats = self.game_state.get_stats()
@@ -190,6 +211,7 @@ class GameController:
         if self.game_state and self.game_state.move_history:
             command = self.game_state.move_history[-1]
             if self.game_state.undo():
+                self.audio.play_undo()
                 self._trigger_event("undo", command)
 
     def _on_redo(self) -> None:
@@ -199,6 +221,7 @@ class GameController:
         if self.game_state and self.game_state.redo_stack:
             command = self.game_state.redo_stack[-1]
             if self.game_state.redo():
+                self.audio.play_redo()
                 self._trigger_event("redo", command)
 
     def _on_reset(self) -> None:
