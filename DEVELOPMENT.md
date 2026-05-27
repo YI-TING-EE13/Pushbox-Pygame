@@ -298,8 +298,15 @@ gantt
     - 重構 `TutorialScreen` 的 `draw()`，將其網格各區域、操作控制與提示 bullets 以 `t(...)` 動態組合形式載入，消除中英文混合狀態。
     - 重構 `main.py` 的 `_init_game_buttons()`，將底部的四個按鈕（撤銷、重設、重做與提示）改用動態 localized 標籤，並在進入 `"game"` 畫面時執行單次語系重構以維護極致流暢性。
     - 新增 3 個針對 About 頁面、Tutorial 頁面與底部按鈕的 localization 整合測試以確保 regression-free，全套 236 個測試高標通過。
-  - [ ] **Phase C: Gameplay & Editor UI Localization (Planned)**:
-    - 翻譯遊戲內 HUD 狀態（Moves, Pushes, Time, Best, Controls）、Deadlock/Pause 提示、關卡選擇器 (Level Selector) 及關卡編輯器 (Level Editor) 的深層中文字串。
+  - [x] **Phase C1: Level Selector Localization (Completed)**:
+    - Localized level selector titles, pagination commands ("Prev"/"Next"), return back, import buttons, built-in difficulty and theme mappings, details panel notes, statuses, and custom levels action badges ("Edit"/"Delete").
+    - Localized the custom level Import Dialog including title headings, pasting instruction notices, text box prompts, action button labels, and error warning messages.
+    - Implemented a robust check-refresh strategy inside `LevelSelector.draw()` that automatically detects changes in `get_language()` and rebuilds button text elements exactly once.
+    - Appended 4 comprehensive integration tests to `tests/test_language_ui.py` covering selector states, custom buttons, dialog components, and safe fallback rules.
+  - [ ] **Phase C2: Level Editor Localization (Planned)**:
+    - Localize sidebar labels, grid settings, tool palette descriptions, bottom action buttons, unsaved warnings, and export share code dialogs.
+  - [ ] **Phase C3: Gameplay Overlays and Solver Hints Localization (Planned)**:
+    - Localize gameplay HUD metrics, Level 0 onboarding hints, help overlays, victory celebration records, deadlock warnings (using "DEADLOCK!" as English title), and BFS path solver status banners.
 
 ---
 

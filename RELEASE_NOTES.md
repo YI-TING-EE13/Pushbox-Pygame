@@ -15,6 +15,11 @@ All notable changes to this project are documented in this file.
 * Added localized AboutScreen support using dynamic translations (`about.*`) and dynamic blit width calculation to prevent overlapping.
 * Added localized TutorialScreen support using dynamic translations (`tutorial.*`) in `TutorialScreen.draw()`.
 * Added three new integration tests verifying About screen, Tutorial screen, and bottom gameplay buttons localization.
+* Added translation keys for `level_selector.*`, `custom_level.*`, `difficulty.*`, and `theme.*` namespaces to `src/pushbox/utils/i18n.py` for both English (`en`) and Traditional Chinese (`zh-TW`).
+* Added localized Level Selector title, paginated controls, Back/Import buttons, page indicators, details panel labels, and built-in difficulties/themes mappings using dynamic translation cycles.
+* Added localized Level Selector Import Dialog with localized titles, instruction descriptions, error messages, and confirm/cancel action labels.
+* Implemented automatic layout refresh in `LevelSelector.draw()` that automatically detects changes in `get_language()` and rebuilds all buttons exactly once.
+* Added `test_level_selector_screen_localization`, `test_level_selector_custom_levels_buttons_localization`, `test_import_dialog_localization`, and `test_i18n_fallback_robustness` to `tests/test_language_ui.py` to comprehensively cover selector localization and fallback behavior.
 
 ### Changed
 * Integrated active translation language configuration into `src/pushbox/utils/config.py` defaulting to `"en"`.

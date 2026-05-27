@@ -542,6 +542,7 @@ class LevelSelector:
         self.current_page = 0
         self.levels_per_page = 9
         self.nav_buttons: list[ModernButton] = []
+        self._last_language = ""
         import os
 
         self.developer_mode = os.environ.get("SDL_VIDEODRIVER") == "dummy"
@@ -598,6 +599,10 @@ class LevelSelector:
 
     def _layout_buttons(self, level_names: list[str], progress: dict) -> None:
         """Position and colorize level selection grid cards and pagination items."""
+        from ..utils.i18n import get_language, t
+
+        self._last_language = get_language()
+
         self.level_buttons.clear()
         self.action_buttons.clear()
 
@@ -683,7 +688,7 @@ class LevelSelector:
                     y - 25,
                     60,
                     20,
-                    "編輯",
+                    t("level_selector.edit"),
                     handle_edit,
                     self.small_font,
                     bg_color=(50, 50, 150),
@@ -699,7 +704,7 @@ class LevelSelector:
                     y - 25,
                     60,
                     20,
-                    "刪除",
+                    t("level_selector.delete"),
                     handle_delete,
                     self.small_font,
                     bg_color=(150, 50, 50),
@@ -720,7 +725,7 @@ class LevelSelector:
             btn_y,
             btn_w,
             btn_h,
-            "返回",
+            t("level_selector.back"),
             handle_back,
             self.font,
             bg_color=(60, 40, 40),
@@ -735,7 +740,7 @@ class LevelSelector:
             btn_y,
             btn_w,
             btn_h,
-            "匯入關卡",
+            t("level_selector.import"),
             handle_click_import,
             self.font,
             bg_color=COLORS["text_highlight"],
@@ -771,7 +776,7 @@ class LevelSelector:
                 nav_y,
                 btn_w,
                 btn_h,
-                "◀ 上一頁",
+                t("level_selector.prev_page"),
                 handle_prev,
                 self.small_font,
                 bg_color=(50, 50, 50) if self.current_page > 0 else (30, 30, 30),
@@ -781,7 +786,7 @@ class LevelSelector:
                 nav_y,
                 btn_w,
                 btn_h,
-                "下一頁 ▶",
+                t("level_selector.next_page"),
                 handle_next,
                 self.small_font,
                 bg_color=(50, 50, 50)
@@ -922,6 +927,8 @@ class LevelSelector:
         The minimap is sized to fit within the available panel height and
         is hidden entirely when vertical space is insufficient.
         """
+        from ..utils.i18n import t
+
         if (
             not (0 <= self.selected_index < len(self.level_buttons))
             or not self.font
@@ -1004,8 +1011,11 @@ class LevelSelector:
             if len(note) > 50:
                 note = note[:47] + "..."
 
-            # Line 1: Basic Info
-            info_text = f"{level_name} · {diff} · {theme} · {boxes} boxes"
+            # Line 1: Basic Info (Localized theme, difficulty, boxes)
+            loc_diff = t(f"difficulty.{diff}")
+            loc_theme = t(f"theme.{theme}")
+            loc_boxes = f"{boxes} {t('level_selector.boxes')}"
+            info_text = f"{level_name} · {loc_diff} · {loc_theme} · {loc_boxes}"
             info_surf = self.font.render(info_text, True, COLORS["text_highlight"])
             info_rect = info_surf.get_rect(
                 centerx=text_center_x,
@@ -1014,7 +1024,7 @@ class LevelSelector:
             screen.blit(info_surf, info_rect)
 
             # Line 2: Note Description
-            note_text = f"說明: {note}"
+            note_text = t("level_selector.note_label").format(note=note)
             note_surf = self.small_font.render(note_text, True, COLORS["text_dim"])
             note_rect = note_surf.get_rect(
                 centerx=text_center_x,
@@ -1024,14 +1034,20 @@ class LevelSelector:
 
             # Line 3: Completion status
             if is_locked:
-                status_text = "狀態: 🔒 尚未解鎖"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.locked")
+                )
                 status_color = COLORS["error"]
             elif level_progress.get("completed"):
                 best_moves = level_progress.get("best_moves", "-")
-                status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.completed").format(moves=best_moves)
+                )
                 status_color = COLORS["success"]
             else:
-                status_text = "狀態: 未完成"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.uncompleted")
+                )
                 status_color = COLORS["text_dim"]
 
             status_surf = self.small_font.render(status_text, True, status_color)
@@ -1057,7 +1073,9 @@ class LevelSelector:
             screen.blit(info_surf, info_rect)
 
             # Line 2: Type indicator
-            type_text = "類型: 自訂關卡"
+            type_text = t("level_selector.type_label").format(
+                type=t("level_selector.custom_level")
+            )
             type_surf = self.small_font.render(type_text, True, COLORS["text_dim"])
             type_rect = type_surf.get_rect(
                 centerx=text_center_x,
@@ -1067,14 +1085,20 @@ class LevelSelector:
 
             # Line 3: Completion status
             if is_locked:
-                status_text = "狀態: 🔒 尚未解鎖"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.locked")
+                )
                 status_color = COLORS["error"]
             elif level_progress.get("completed"):
                 best_moves = level_progress.get("best_moves", "-")
-                status_text = f"狀態: 已完成 · 最佳: {best_moves} 步"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.completed").format(moves=best_moves)
+                )
                 status_color = COLORS["success"]
             else:
-                status_text = "狀態: 未完成"
+                status_text = t("level_selector.status_label").format(
+                    status=t("level_selector.uncompleted")
+                )
                 status_color = COLORS["text_dim"]
 
             status_surf = self.small_font.render(status_text, True, status_color)
@@ -1140,7 +1164,9 @@ class LevelSelector:
                         pygame.draw.rect(screen, color, cell_draw_rect)
             else:
                 # No map data available
-                no_map_surf = self.small_font.render("無地圖", True, COLORS["text_dim"])
+                no_map_surf = self.small_font.render(
+                    t("level_selector.no_map"), True, COLORS["text_dim"]
+                )
                 no_map_rect = no_map_surf.get_rect(center=minimap_rect.center)
                 screen.blit(no_map_surf, no_map_rect)
 
@@ -1149,6 +1175,11 @@ class LevelSelector:
 
     def draw(self, progress: dict) -> None:
         """Render level selector grids, titles, pagination, and record stars."""
+        from ..utils.i18n import get_language, t
+
+        if getattr(self, "_last_language", "") != get_language():
+            self._layout_buttons(self.level_names_all, self.progress_all)
+
         self.screen.fill(COLORS["background"])
 
         btn_y = self.screen.get_height() - 80
@@ -1161,7 +1192,9 @@ class LevelSelector:
             self.import_button.rect.y = btn_y
 
         if self.title_font:
-            title = self.title_font.render("選擇關卡", True, COLORS["text_main"])
+            title = self.title_font.render(
+                t("level_selector.title"), True, COLORS["text_main"]
+            )
             title_rect = title.get_rect(centerx=self.screen.get_width() // 2, y=40)
             self.screen.blit(title, title_rect)
 
@@ -1200,7 +1233,9 @@ class LevelSelector:
             for button in self.nav_buttons:
                 button.draw(self.screen)
             if self.font and self.small_font:
-                page_text = f"頁面: {self.current_page + 1} / {total_pages}"
+                page_text = t("level_selector.page_indicator").format(
+                    current=self.current_page + 1, total=total_pages
+                )
                 page_surface = self.font.render(page_text, True, COLORS["text_main"])
                 page_rect = page_surface.get_rect(
                     centerx=self.screen.get_width() // 2,
@@ -1209,7 +1244,7 @@ class LevelSelector:
                 self.screen.blit(page_surface, page_rect)
 
                 # Helper prompt hint for page switching controls
-                hint_text = "換頁：Tab / Shift+Tab 或 PageUp / PageDown"
+                hint_text = t("level_selector.page_hint")
                 hint_surface = self.small_font.render(hint_text, True, (150, 150, 150))
                 hint_rect = hint_surface.get_rect(
                     centerx=self.screen.get_width() // 2,
@@ -1298,10 +1333,16 @@ class LevelSelector:
         except LevelShareError as e:
             self.import_error_message = str(e)
         except Exception as e:
-            self.import_error_message = f"匯入失敗，請確認分享碼完整。({e})"
+            from ..utils.i18n import t
+
+            self.import_error_message = t("custom_level.import_fail").format(
+                error=str(e)
+            )
 
     def _draw_import_dialog(self) -> None:
         """Draw the import code entry dialog overlay."""
+        from ..utils.i18n import t
+
         # 1. Full-screen dark semi-transparent overlay
         overlay = pygame.Surface(
             (self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA
@@ -1324,11 +1365,13 @@ class LevelSelector:
 
         # 4. Text
         if self.font and self.small_font:
-            title_text = self.font.render("匯入關卡", True, COLORS["text_highlight"])
+            title_text = self.font.render(
+                t("custom_level.import_title"), True, COLORS["text_highlight"]
+            )
             self.screen.blit(title_text, (dialog_x + 30, dialog_y + 25))
 
             msg_text1 = self.small_font.render(
-                "請在下方框內貼上（Ctrl+V）或輸入 PBX_ 關卡分享碼：",
+                t("custom_level.import_msg"),
                 True,
                 COLORS["text_main"],
             )
@@ -1341,7 +1384,7 @@ class LevelSelector:
                 self.screen.blit(err_text, (dialog_x + 30, dialog_y + 82))
             else:
                 hint_text = self.small_font.render(
-                    "按下 Enter 鍵或點擊下方「確認匯入」即可載入。",
+                    t("custom_level.import_hint"),
                     True,
                     COLORS["text_dim"],
                 )
@@ -1369,8 +1412,12 @@ class LevelSelector:
         )
 
         if self.font:
-            confirm_lbl = self.font.render("確認匯入", True, COLORS["background"])
-            cancel_lbl = self.font.render("取消返回", True, COLORS["text_main"])
+            confirm_lbl = self.font.render(
+                t("custom_level.confirm"), True, COLORS["background"]
+            )
+            cancel_lbl = self.font.render(
+                t("custom_level.cancel"), True, COLORS["text_main"]
+            )
             self.screen.blit(
                 confirm_lbl,
                 confirm_lbl.get_rect(center=self.import_confirm_rect.center),
