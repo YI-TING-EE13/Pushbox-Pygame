@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v0.9.2-blue.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v0.9.3-blue.svg)](#-roadmap)
 
 ## Overview
 
@@ -46,7 +46,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Windows Standalone Package (v0.9.2 Official Release) is now available!**
+> **Windows Standalone Package (v0.9.3 Official Release) is now available!**
 > The Windows `onedir` standalone packaging pipeline has been officially released, and compiled in pure GUI windowed mode (`console=False`). Standalone ZIP packages are officially published on GitHub Releases.
 > 
 > **Verified Smoke Test Scenarios:**
@@ -55,13 +55,13 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 > - Pure GUI windowed mode execution with **no terminal command console (CMD) windows appearing**.
 > - Automated runtime sibling creation of `data/` (saves, configurations) and `levels/` (custom editor levels) next to the executable for absolute save file portability.
 > - Procedural vector player character (procedural bear fallback) rendering works reliably and beautifully without requiring external `player.jpeg` image files.
-> - **Single-Instance Protection (v0.9.2)**: A ctypes Win32 named mutex ensures that repeatedly launching the executable only opens a single game window. Any additional instances exit silently.
+> - **Single-Instance Protection (introduced in v0.9.2)**: A ctypes Win32 named mutex ensures that repeatedly launching the executable only opens a single game window. Any additional instances exit silently.
 > 
-> *The stable release is **v0.9.2**, which features a premium custom-designed desktop application icon, single-instance guard launch protection, complete visual showcases, and detailed release testing checklists.*
+> *The stable release is **v0.9.3**, which features comprehensive English and Traditional Chinese localization, a premium custom-designed desktop application icon, single-instance guard launch protection, complete visual showcases, and detailed release testing checklists.*
 
 ### How to Run the Packaged Version
 
-1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.2-windows-x64.zip` (generated via the official local build pipelines).
+1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.3-windows-x64.zip` (generated via the official local build pipelines).
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
@@ -268,6 +268,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 - **v0.9.0 (Official Release)**: Standalone Windows packaging infrastructure completed under pure GUI mode (`console=False`). Standalone ZIP packages officially published on GitHub Releases.
 - **v0.9.1 (Official Polish Release)**: Complete Visual Showcase gallery, detailed release smoke-test checklists, PyInstaller pipeline upgrades, and an elegant custom **Nord geometric bear** desktop application icon (`pushbox.ico`).
 - **v0.9.2 (Launch Stability Hotfix)**: Fixed repeated executable launches opening multiple game windows via a ctypes Win32 named mutex. Second instance exits silently.
+- **v0.9.3 (Traditional Chinese Localization)**: Added comprehensive English and Traditional Chinese localization across core UI screens and persisted language settings.
 - **v0.9.5 (Planned)**: Optional SFX activation (sound effects and ambient background music).
 - **v1.0.0 (Planned)**: Stable official player-facing release.
 
