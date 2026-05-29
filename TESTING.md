@@ -307,3 +307,26 @@ The following items currently require manual visual inspection as they are not c
 - [ ] Kill the primary process in Task Manager, then double-click `Pushbox-Pygame.exe` again. Verify that the game launches successfully without being locked out (stale mutex handle successfully recycled by the OS).
 - [ ] Move the game folder to a Chinese/Unicode path or a path containing spaces. Repeat the single-instance test and verify it still prevents duplicate instances flawlessly.
 
+
+## 7. Section 10 — Optional SFX Manual Smoke-Test Checklist (v0.9.5)
+
+This section provides a checklist to verify that the newly wired gameplay sound effects perform correctly under normal execution and degrade gracefully in fallback conditions.
+
+### 1. Gameplay SFX Audibility
+- [ ] **Player Step (`move.wav`)**: Start a default level (e.g. Level 1). Walk onto an empty floor tile. Verify a short, crisp step sound plays synchronously with each step.
+- [ ] **Box Push (`push.wav`)**: Push a single box onto an empty floor tile. Verify that a sliding push sound plays instead of the normal step sound.
+- [ ] **Invalid Bump (`bump.wav`)**: Run into a wall or try to push two boxes. Verify that a muffled bump sound plays, indicating an invalid move.
+- [ ] **Target Chime (`target.wav`)**: Push a box onto a target tile. Verify that a bright, metallic chime plays on top of the push sound.
+- [ ] **Undo / Redo (`undo.wav` / `redo.wav`)**: Press `U` / `Backspace` after moving. Verify that an undo sound plays. Press `R` to redo the action, verifying a redo sound plays.
+- [ ] **Victory Fanfare (`win.wav`)**: Complete any level. Verify that a triumphant chiptune-like fanfare chimes exactly once upon level completion. Confirm the fanfare does not loop or repeat indefinitely.
+
+### 2. Silent Overlays & Blocks
+- [ ] **Pause Screen Silence**: Press `P` or `Esc` to pause. Press direction keys. Confirm no walking or pushing chimes play.
+- [ ] **Help Screen Silence**: Press `H` to toggle help card. Press direction keys. Confirm no sounds are emitted.
+- [ ] **Settings Mute Slider**: Go to Settings. Drag "Sound Volume" to `0%`. Return to gameplay and confirm that **all sound effects are completely muted**. Confirm no exceptions occur.
+
+### 3. Graceful Driver & Resource Degradation
+- [ ] **Driver Fallback**: Boot the game on a machine with missing audio drivers, or simulate a driver failure. Confirm the game launches smoothly without throwing Pygame mixer errors and runs silently.
+- [ ] **Asset Fallback**: Delete or rename the `src/pushbox/assets/sounds/` folder. Launch the game and play. Confirm the game runs without crashes or missing-asset exceptions, defaulting to silent mode.
+
+

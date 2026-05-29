@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Package settings
 APP_NAME = "Pushbox-Pygame"
-VERSION = "0.9.3"
+VERSION = "0.9.5"
 ZIP_NAME = f"{APP_NAME}-v{VERSION}-windows-x64.zip"
 
 

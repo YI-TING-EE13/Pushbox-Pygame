@@ -5,7 +5,7 @@ Use this file to get productive quickly in a new coding session.
 ## Project Snapshot
 
 Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame.
-Current release: v0.9.3 (English + Traditional Chinese UI localization is complete).
+Current release: v0.9.5 (English + Traditional Chinese UI localization is complete, with optional synthesized CC0 SFX).
 
 - Entry point and main loop: `main.py`
 - Controllers (game flow, input): `src/pushbox/controllers/`
@@ -31,7 +31,7 @@ Prioritize:
 - Dynamic cell sizing so large levels fit any window.
 - Version number displayed on the main menu.
 
-Audio is **intentionally deferred**. Keep the `AudioManager` stub and empty `assets/sounds/` as-is. Do not implement audio playback or source audio files unless the user explicitly requests it.
+Audio SFX is **implemented** as a lightweight, robust set of procedurally generated CC0 wave sounds, wired dynamically to core gameplay mechanics with active mute sliders in settings. Background Music (BGM) remains **deferred**. Keep the empty `assets/sounds/` generated `.wav` files and do not add third-party/unknown license audio assets unless explicitly approved.
 
 ## Core Gameplay Rules
 

@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v0.9.5 — Optional SFX Release (2026-05-29)
+
+### Added
+* Implemented a robust, defensive `AudioManager` foundation supporting optional sound effects.
+* Integrated procedurally generated wave sounds synthesized directly via Python (`move.wav`, `push.wav`, `bump.wav`, `target.wav`, `undo.wav`, `redo.wav`, `win.wav`, `click.wav`) to avoid license ambiguity and heavy file bloat.
+* Added a license compliance manifest `CREDITS.md` documenting CC0 procedural generation parameters and open-source license standards.
+* Wired all gameplay sound effects cleanly to controller pipelines (`GameController`) including player movement, crate pushes, wall bumps, target alignments, undo/redo stacks, and victory fanfare chimes.
+* Implemented full suite of integration tests in `tests/test_audio_wiring.py` validating SFX triggers, action sequences, and silent-fallback safety.
+
+### Changed
+* Configured the `AudioManager` singleton to degrade gracefully (mute mode) when Pygame sound drivers or asset directories are missing, preventing crash triggers.
+* Refined game loop input blocks to prevent audio overlap bugs during screen transition fades and pause blocks.
+
+### Notes
+* Sound settings are pre-wired to configuration values, ensuring complete client-side adjustability.
+* Background Music (BGM) is deferred to future milestones.
+
+---
+
 ## v0.9.3 — Traditional Chinese Localization (2026-05-27)
 
 ### Added

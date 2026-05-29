@@ -180,8 +180,8 @@ gantt
     SingleInstanceGuard named mutex, lockfile :done, 2026-06-14, 2026-06-16
     section v0.9.3 (英文化與 i18n 基礎 — 已發布)
     i18n infrastructure, language settings :done, 2026-05-27, 2026-05-27
-    section v0.9.5 (選配最小音效 SFX — 已規劃)
-    AudioManager fallback, Kenney SFX : 2026-06-20, 2026-06-25
+    section v0.9.5 (選配最小音效 SFX — 已發布 ✅)
+    AudioManager fallback, CC0 procedural SFX :done, 2026-05-28, 2026-05-29
     section v1.0.0 (正式版發布)
     Final QA, GitHub Release, Docs finalization : 2026-06-26, 2026-06-30
 ```
@@ -320,9 +320,12 @@ gantt
 
 ---
 
-### v0.9.5 — Optional SFX / 最小音效系統
+### v0.9.5 — Optional SFX / 最小音效系統 (Official Release ✅)
 * **核心目標**：
   以極低的工程成本為遊戲操作導入必要的清脆短音效，大幅提升 Game Feel，但絕不允許音效系統成為阻礙 v1.0.0 發布的 Blocker。
+  
+  **狀態：Phase A, B, C 已全數完成！** 透過專屬的 Python 合成器 `scripts/generate_sfx.py` 程序化合成 8 個 100% 乾淨的 CC0 `.wav` 音訊（總體積僅 ~57KB）。`AudioManager` 具備極致的防禦性防 Crash 靜音回退。Gameplay 音效已精準 wired 並通過 262 個 pytest 綠燈驗證。
+
 * **建議任務**：
   1. **只做 SFX（短音效），暫緩 BGM（背景音樂）**：
      - 僅收集並加載以下核心操作音效（格式建議為 `.wav` 以確保高相容性）：
