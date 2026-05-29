@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v0.9.5-blue.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v1.0.0-blue.svg)](#-roadmap)
 
 ## Overview
 
@@ -46,7 +46,7 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Windows Standalone Package (v0.9.5 Official Release) is now available!**
+> **Windows Standalone Package (v1.0.0 Official Stable Release) is now available!**
 > The Windows `onedir` standalone packaging pipeline has been officially released, and compiled in pure GUI windowed mode (`console=False`). Standalone ZIP packages are officially published on GitHub Releases.
 > 
 > **Verified Smoke Test Scenarios:**
@@ -58,11 +58,11 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 > - **Single-Instance Protection**: A ctypes Win32 named mutex ensures that repeatedly launching the executable only opens a single game window. Any additional instances exit silently.
 > - **Optional SFX Support**: Implemented a defense-in-depth gameplay SFX system powered by lightweight procedurally generated CC0 wave sounds, completely optional and safe against driver initialization errors.
 > 
-> *The stable release is **v0.9.5**, which features an optional procedural CC0 SFX audio system, comprehensive English and Traditional Chinese localization, a premium custom-designed desktop application icon, and single-instance guard launch protection.*
+> *The stable release is **v1.0.0**, which consolidates the fully featured, highly stable puzzle adventure, including an optional procedural CC0 SFX audio system, comprehensive i18n English/Traditional Chinese localization, an in-game solver hint helper, and custom app icon packaging.*
 
 ### How to Run the Packaged Version
 
-1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v0.9.5-windows-x64.zip` (generated via the official local build pipelines).
+1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v1.0.0-windows-x64.zip` (generated via the official local build pipelines).
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
@@ -271,8 +271,8 @@ All user settings, progressions, high scores, and custom maps are stored locally
 - **v0.9.2 (Launch Stability Hotfix)**: Fixed repeated executable launches opening multiple game windows via a ctypes Win32 named mutex. Second instance exits silently.
 - **v0.9.3 (Traditional Chinese Localization)**: Added comprehensive English and Traditional Chinese localization across core UI screens and persisted language settings.
 - **v0.9.5 (Official SFX Release ✅)**: Implemented an optional procedurally generated CC0 gameplay sound effects framework (move, push, bump, target, undo, redo, and win).
-- **v1.0.0 (Planned)**: Stable official player-facing release.
-- **Future BGM (Deferred)**: Ambient background music may be planned as a post-v1.0.0 addition.
+- **v1.0.0 (Official Stable Release ✅)**: Stable official player-facing release.
+- **Future BGM & Features (Deferred)**: Background music, online sharing servers, and cloud saving remain deferred.
 
 ---
 
@@ -281,7 +281,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 - **Official Windows Package Ready**: A standalone Windows executable package (`Pushbox-Pygame.exe`) is officially published and supported; running directly from Python source code continues to be fully supported as well.
 - **Custom Desktop App Icon Included**: The main branch now incorporates a beautifully custom-coded **Nord geometric bear pushing a crate** desktop application icon (`pushbox.ico`).
 - **Optional Gameplay SFX**: Built-in 100% license-safe CC0 wave sound effects synthesized directly within the project. The system is designed to degrade gracefully (silent fallback) if the audio hardware is unavailable.
-- **Background Music (BGM) is deferred**: Ambient BGM is not implemented in v0.9.5. AudioManager keeps background audio deferred to prioritize stable core puzzle features.
+- **Background Music (BGM) is deferred**: Ambient BGM is not implemented in v1.0.0. AudioManager keeps background audio deferred to prioritize stable core puzzle features.
 - **PBX_ sharing is local only**: Custom levels are shared by transferring text codes manually; no central server hosting is present.
 - **BFS Solver Shortest Action Path**: The solver provides a BFS shortest action path hint, not necessarily the minimum push-count solution. The search budget is capped at `50,000` nodes to keep the game UI responsive.
 

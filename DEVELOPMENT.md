@@ -182,8 +182,8 @@ gantt
     i18n infrastructure, language settings :done, 2026-05-27, 2026-05-27
     section v0.9.5 (選配最小音效 SFX — 已發布 ✅)
     AudioManager fallback, CC0 procedural SFX :done, 2026-05-28, 2026-05-29
-    section v1.0.0 (正式版發布)
-    Final QA, GitHub Release, Docs finalization : 2026-06-26, 2026-06-30
+    section v1.0.0 (正式版發布 ✅)
+    Final QA, GitHub Release, Docs finalization :done, 2026-05-29, 2026-05-29
 ```
 
 ### v0.8.1 Completed — Release Hardening & Decoupled README
@@ -357,9 +357,12 @@ gantt
 
 ---
 
-### v1.0.0 — Release Candidate / 正式版發布
+### v1.0.0 — Stable Official Release (Official Release ✅)
 * **核心目標**：
   完成高標準的最終品質驗收，建立 v1.0.0 正式 Tag，在 GitHub Release 發布 Windows 解壓即玩的免安裝包，為廣大解謎愛好者獻上完美休閒作品。
+  
+  **狀態：v1.0.0 穩定版發布準備已順利完成！** 版本號全面升級至 `1.0.0`，完成了 `README`、`RELEASE_NOTES` 的文件同步，並通過了 262 個 pytest 綠燈、Ruff 與 MyPy 類型門禁。
+
 * **建議任務**：
   1. **Final QA（極致化黑箱/白箱驗收）**：
      - 在開發環境下，從乾淨的 `git clone` 啟動，能以 `uv run` 完美執行並通過所有單元測試。

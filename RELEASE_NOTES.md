@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v1.0.0 — Stable Official Release (2026-05-29)
+
+### Added
+* Official Stable player-facing release of **Pushbox-Pygame**, consolidating all core features and release candidates.
+* Pristine packaging infrastructure that generates standalone windowed (`console=False`) Windows executables.
+* Custom, beautifully packaged application geometric bear desktop icon (`pushbox.ico`).
+* Strict system `SingleInstanceGuard` protection preventing multi-window launch lock contentions.
+* Comprehensive **English & Traditional Chinese (zh-TW)** localization settings with real-time UI menu reconstruction.
+* Optional defense-in-depth gameplay Sound Effects (SFX) synthesized procedural CC0 waveform sounds.
+* Interactive tutorial Level 0 onboarding with responsive context chimes.
+* Full AI BFS hint solver overlays, paginated Level Selector detail panels, level editor map bounds checker, and Base64-PBX sharing import/export pipelines.
+
+### Notes
+* Consolidates all previous product milestones.
+* Background Music (BGM), online database hubs, and cloud saving remain deferred.
+
+---
+
 ## v0.9.5 — Optional SFX Release (2026-05-29)
 
 ### Added

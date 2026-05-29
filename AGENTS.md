@@ -5,7 +5,7 @@ Use this file to get productive quickly in a new coding session.
 ## Project Snapshot
 
 Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame.
-Current release: v0.9.5 (English + Traditional Chinese UI localization is complete, with optional synthesized CC0 SFX).
+Current release: v1.0.0 (English + Traditional Chinese UI localization is complete, with optional synthesized CC0 SFX).
 
 - Entry point and main loop: `main.py`
 - Controllers (game flow, input): `src/pushbox/controllers/`
