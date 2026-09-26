@@ -1,5 +1,7 @@
 """Regression coverage for v1.0.0 review remediation."""
 
+import ast
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pygame
@@ -8,9 +10,10 @@ import pytest
 from main import GameApp
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.game_state import GameState
-from src.pushbox.models.level import Level, LevelManager
+from src.pushbox.models.level import Level, LevelManager, LevelPersistenceError
 from src.pushbox.utils import i18n
 from src.pushbox.utils.constants import CellType
+from src.pushbox.utils.constants import GameState as GameStateEnum
 from src.pushbox.views.level_editor import LevelEditor
 from src.pushbox.views.renderer import Renderer
 from src.pushbox.views.ui_components import LevelSelector, Menu
@@ -85,6 +88,109 @@ def test_dirty_editor_exit_routes_require_confirmation(
         assert app.editor is None
 
 
+@pytest.mark.parametrize(
+    "exit_event",
+    [
+        pygame.event.Event(pygame.QUIT),
+        pygame.event.Event(pygame.KEYDOWN, key=pygame.K_q, mod=pygame.KMOD_CTRL),
+    ],
+    ids=["window-close", "ctrl-q"],
+)
+def test_dirty_editor_testplay_exit_prompts_and_cancel_preserves_draft(
+    exit_event: pygame.event.Event,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = _make_editor_app()
+    draft = [row[:] for row in app.editor.grid]
+    monkeypatch.setattr(app.controller.config, "is_animation_enabled", lambda: False)
+    app._on_editor_playtest(Level("Valid Playtest", VALID_EDITOR_GRID))
+
+    assert app.current_screen == "game"
+    assert app.controller.is_playtest is True
+    with patch("pygame.event.get", return_value=[exit_event]):
+        app.handle_events()
+
+    assert app.current_screen == "editor"
+    assert app.editor.show_confirm_dialog is True
+    assert app.running is True
+    assert app.editor.grid == draft
+    assert app.controller.gameplay_active is False
+
+    with patch(
+        "pygame.event.get",
+        return_value=[pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n)],
+    ):
+        app.handle_events()
+
+    assert app.current_screen == "editor"
+    assert app.editor.show_confirm_dialog is False
+    assert app.editor.grid == draft
+    assert app.running is True
+
+
+@pytest.mark.parametrize(
+    "exit_event",
+    [
+        pygame.event.Event(pygame.QUIT),
+        pygame.event.Event(pygame.KEYDOWN, key=pygame.K_q, mod=pygame.KMOD_CTRL),
+    ],
+    ids=["window-close", "ctrl-q"],
+)
+def test_confirmed_dirty_editor_testplay_exit_quits(
+    exit_event: pygame.event.Event,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = _make_editor_app()
+    monkeypatch.setattr(app.controller.config, "is_animation_enabled", lambda: False)
+    app._on_editor_playtest(Level("Valid Playtest", VALID_EDITOR_GRID))
+    with patch("pygame.event.get", return_value=[exit_event]):
+        app.handle_events()
+    assert app.editor.show_confirm_dialog is True
+
+    with patch(
+        "pygame.event.get",
+        return_value=[pygame.event.Event(pygame.KEYDOWN, key=pygame.K_y)],
+    ):
+        app.handle_events()
+
+    assert app.running is False
+
+
+def test_clean_editor_testplay_quit_does_not_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = _make_editor_app()
+    app.editor.grid = [row[:] for row in app.editor.original_grid]
+    monkeypatch.setattr(app.controller.config, "is_animation_enabled", lambda: False)
+    app._on_editor_playtest(Level("Valid Playtest", VALID_EDITOR_GRID))
+
+    with patch("pygame.event.get", return_value=[pygame.event.Event(pygame.QUIT)]):
+        app.handle_events()
+
+    assert app.running is False
+    assert app.editor.show_confirm_dialog is False
+
+
+def test_m_from_editor_testplay_returns_to_preserved_draft(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = _make_editor_app()
+    draft = [row[:] for row in app.editor.grid]
+    monkeypatch.setattr(app.controller.config, "is_animation_enabled", lambda: False)
+    app._on_editor_playtest(Level("Valid Playtest", VALID_EDITOR_GRID))
+
+    with patch(
+        "pygame.event.get",
+        return_value=[pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m)],
+    ):
+        app.handle_events()
+
+    assert app.current_screen == "editor"
+    assert app.editor.grid == draft
+    assert app.editor.show_confirm_dialog is False
+    assert app.controller.is_playtest is False
+
+
 def test_cancel_editor_exit_keeps_editor_open() -> None:
     app = _make_editor_app()
     with patch(
@@ -132,7 +238,7 @@ def test_pause_settings_return_preserves_pause_and_active_timer(
 
 def test_controller_timer_uses_only_active_gameplay_delta() -> None:
     controller = GameController()
-    level = Level("Timer", [[1, 1, 1], [1, 4, 1], [1, 1, 1]])
+    level = Level("Timer", VALID_EDITOR_GRID)
     controller.current_level = level
     controller.game_state = GameState(level)
 
@@ -268,7 +374,7 @@ def test_share_import_errors_follow_active_ui_language() -> None:
 
 def test_custom_level_completion_does_not_record_campaign_progress() -> None:
     controller = GameController()
-    level = Level("Campaign-Looking Name", [[1, 1, 1], [1, 4, 1], [1, 1, 1]])
+    level = Level("Campaign-Looking Name", VALID_EDITOR_GRID)
     controller.current_level = level
     controller.game_state = GameState(level)
     controller.save_manager.update_level_progress = lambda *_args: pytest.fail(
@@ -277,9 +383,7 @@ def test_custom_level_completion_does_not_record_campaign_progress() -> None:
 
     controller._handle_win()
 
-    completed_builtin = Level(
-        "Level 1", [[1, 1, 1], [1, 4, 1], [1, 1, 1]], source="builtin"
-    )
+    completed_builtin = Level("Level 1", VALID_EDITOR_GRID, source="builtin")
     controller.current_level = completed_builtin
     controller.game_state = GameState(completed_builtin)
     progress_calls: list[tuple[object, ...]] = []
@@ -313,3 +417,119 @@ def test_completion_records_injected_active_gameplay_time() -> None:
 
     assert update_progress.call_count == 1
     assert update_progress.call_args.args == ("Level 1", 1, 0.35, 1)
+
+
+VALID_EDITOR_GRID = [
+    [1, 1, 1, 1, 1],
+    [1, 4, 3, 2, 1],
+    [1, 1, 1, 1, 1],
+]
+
+def test_transition_out_blocks_events_time_and_progress(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = GameApp()
+    monkeypatch.setattr(app.controller.config, "is_animation_enabled", lambda: True)
+    app.current_screen = "game"
+    app.game_buttons = []
+    level = Level(
+        "Level 1",
+        [
+            [1, 1, 1, 1, 1],
+            [1, 4, 3, 2, 1],
+            [1, 1, 1, 1, 1],
+        ],
+        source="builtin",
+    )
+    app.controller.load_level_instance(level)
+    app.controller.set_gameplay_active(True)
+    app.controller.game_state.elapsed_time = 0.75
+    save_progress = MagicMock(return_value=False)
+    app.controller.save_manager.update_level_progress = save_progress
+    initial_grid = app.controller.game_state.level.grid.copy()
+
+    app._start_transition("menu")
+    with patch(
+        "pygame.event.get",
+        return_value=[pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)],
+    ):
+        app.handle_events()
+    app.update(0.5)
+
+    assert (app.controller.game_state.level.grid == initial_grid).all()
+    assert app.controller.game_state.status == GameStateEnum.PLAYING
+    assert app.controller.game_state.elapsed_time == pytest.approx(0.75)
+    save_progress.assert_not_called()
+    assert app.transition_state == "fade_out"
+
+
+def test_active_game_still_accepts_transition_test_move() -> None:
+    controller = GameController()
+    level = Level(
+        "Level 1",
+        [
+            [1, 1, 1, 1, 1],
+            [1, 4, 3, 2, 1],
+            [1, 1, 1, 1, 1],
+        ],
+        source="builtin",
+    )
+    controller.load_level_instance(level)
+    controller.set_gameplay_active(True)
+    update_progress = MagicMock(return_value=False)
+    controller.save_manager.update_level_progress = update_progress
+
+    assert (
+        controller.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
+        is True
+    )
+
+    assert controller.game_state.status == GameStateEnum.WON
+    update_progress.assert_called_once()
+
+
+def test_editor_save_reports_expected_persistence_failure() -> None:
+    app = _make_editor_app()
+    app.controller.level_manager.save_level = MagicMock(
+        side_effect=LevelPersistenceError("disk failure")
+    )
+    previous_language = i18n.get_language()
+    i18n.set_language("en")
+    level = Level("Save Failure", VALID_EDITOR_GRID)
+
+    assert app._on_editor_save(level) is False
+    assert app.editor.status_message == (
+        "Could not save the level. Check that the levels folder is writable."
+    )
+    assert app.editor.grid[0][0] == CellType.WALL
+    i18n.set_language(previous_language)
+
+
+def test_remediation_annotations_remain_python39_compatible() -> None:
+    module_path = Path(__file__).resolve().parents[1] / "main.py"
+    syntax_tree = ast.parse(module_path.read_text(encoding="utf-8"))
+
+    annotation_nodes = []
+    for node in ast.walk(syntax_tree):
+        if isinstance(node, ast.AnnAssign):
+            annotation_nodes.append(node.annotation)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            annotation_nodes.extend(
+                argument.annotation
+                for argument in [
+                    *node.args.posonlyargs,
+                    *node.args.args,
+                    *([node.args.vararg] if node.args.vararg else []),
+                    *node.args.kwonlyargs,
+                    *([node.args.kwarg] if node.args.kwarg else []),
+                ]
+                if argument.annotation is not None
+            )
+            if node.returns is not None:
+                annotation_nodes.append(node.returns)
+
+    assert not any(
+        isinstance(part, ast.BinOp) and isinstance(part.op, ast.BitOr)
+        for annotation in annotation_nodes
+        for part in ast.walk(annotation)
+    )

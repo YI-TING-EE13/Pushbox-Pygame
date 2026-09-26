@@ -192,6 +192,11 @@ TRANSLATIONS = {
         "editor.status_cleared": "Grid cleared",
         "editor.status_error_player": "Error: Player is required!",
         "editor.status_error_box": "Error: At least one box is required!",
+        "editor.status_error_goal": "Error: At least one goal is required!",
+        "editor.status_error_invalid_level": "Error: The level layout is invalid!",
+        "editor.status_error_save_failed": (
+            "Could not save the level. Check that the levels folder is writable."
+        ),
         "editor.status_error_counts": (
             "Cannot Save: Boxes ({box_count}) and targets ({target_count}) must match!"
         ),
@@ -448,6 +453,9 @@ TRANSLATIONS = {
         "editor.status_cleared": "網格已清除",
         "editor.status_error_player": "錯誤: 必須放置玩家!",
         "editor.status_error_box": "錯誤: 至少需要一個箱子!",
+        "editor.status_error_goal": "錯誤: 至少需要一個目標!",
+        "editor.status_error_invalid_level": "錯誤: 關卡配置不合法!",
+        "editor.status_error_save_failed": "關卡儲存失敗，請確認 levels 資料夾可寫入。",
         "editor.status_error_counts": (
             "無法儲存: 箱子({box_count})與目標({target_count})數量必須相同!"
         ),

@@ -115,9 +115,14 @@ def test_manual_path_injection_override(tmp_path):
     lvl_mgr = LevelManager(levels_dir=str(custom_levels))
     assert lvl_mgr.levels_dir == custom_levels
     # Perform a custom level save to verify it writes to the custom directory
+    from level_fixtures import with_isolated_objectives
+
     from src.pushbox.models.level import Level
 
-    custom_lvl = Level("Injected Level", [[1, 1, 1], [1, 4, 1], [1, 1, 1]])
+    custom_lvl = Level(
+        "Injected Level",
+        with_isolated_objectives([[1, 1, 1], [1, 4, 1], [1, 1, 1]]),
+    )
     lvl_mgr.save_level(custom_lvl)
     assert custom_levels.exists()
     assert (custom_levels / f"{custom_lvl.level_id}.json").exists()

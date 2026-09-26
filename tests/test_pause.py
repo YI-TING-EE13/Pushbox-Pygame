@@ -4,6 +4,8 @@ import sys
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from level_fixtures import with_isolated_objectives
+
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.game_state import GameState
 from src.pushbox.models.level import Level
@@ -15,9 +17,10 @@ def test_pause_toggle_during_playing():
     """Test that toggle_pause switches is_paused during PLAYING state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     assert controller.game_state.status == GameStateEnum.PLAYING
     assert not controller.is_paused
@@ -35,9 +38,10 @@ def test_pause_blocked_during_non_playing():
     """Test that toggle_pause does not enter pause in WON or GAME_OVER state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Test WON state blocking pause
     controller.game_state.status = GameStateEnum.WON
@@ -54,9 +58,10 @@ def test_pause_blocks_movement_and_resume_restores_it():
     """Test that movement input is ignored during pause and restored after resume."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Move normally
     controller._on_move((0, 1))
@@ -82,7 +87,7 @@ def test_pause_freezes_timer_and_offset_adjusts():
     """Test timer updates only with supplied active gameplay deltas."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
 
@@ -110,9 +115,10 @@ def test_reset_exits_pause():
     """Test that resetting the level clears the pause state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     controller.toggle_pause()
     assert controller.is_paused

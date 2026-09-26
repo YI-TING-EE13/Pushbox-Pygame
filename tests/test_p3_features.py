@@ -7,6 +7,8 @@ import pytest
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from level_fixtures import with_isolated_objectives
+
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.level import Level
 from src.pushbox.utils.constants import COLORS, THEMES, set_theme
@@ -59,8 +61,9 @@ def test_undo_redo_events_with_command_context():
         [1, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1],
     ]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.load_level_instance(level, is_playtest=False)
+    controller.set_gameplay_active(True)
 
     # 1. Execute a move (push right)
     controller._on_move((0, 1))

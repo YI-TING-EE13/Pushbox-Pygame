@@ -33,6 +33,7 @@ def test_box_on_target_event_trigger():
     level = Level("Test Target", grid)
     controller = GameController()
     controller.load_level_instance(level)
+    controller.set_gameplay_active(True)
 
     box_on_target_triggered = False
     triggered_pos = None

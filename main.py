@@ -13,11 +13,12 @@ Pushbox-Pygame - A modern Sokoban puzzle game
 """
 
 import sys
-from typing import Any
+from typing import Any, Optional
 
 import pygame
 
 from src.pushbox.controllers.game_controller import GameController
+from src.pushbox.models.level import LevelPersistenceError
 from src.pushbox.models.solver import SolverStatus, solve
 from src.pushbox.utils.constants import COLORS
 from src.pushbox.utils.constants import GameState as GameStateEnum
@@ -64,7 +65,7 @@ class GameApp:
             self.screen, self.controller.config, self.controller.save_manager
         )
         self.about = AboutScreen(self.screen)
-        self.editor: LevelEditor | None = None
+        self.editor: Optional[LevelEditor] = None
 
         # In-Game UI Buttons
         self.game_buttons = []
@@ -88,7 +89,7 @@ class GameApp:
         self.transition_target = None
         self.transition_speed = 15  # Alpha speed per frame
         self.transition_state = "none"  # "none", "fade_out", "fade_in"
-        self._pending_editor_exit: str | None = None
+        self._pending_editor_exit: Optional[str] = None
         self._settings_origin_screen = "menu"
 
         # Setup callbacks
@@ -328,6 +329,10 @@ class GameApp:
         """Handle editor save."""
         try:
             self.controller.level_manager.save_level(level)
+        except LevelPersistenceError:
+            if self.editor:
+                self.editor.show_status(t("editor.status_error_save_failed"))
+            return False
         except ValueError:
             if self.editor:
                 self.editor.show_status(t("editor.status_error_name_conflict"))
@@ -341,7 +346,12 @@ class GameApp:
 
     def _on_editor_playtest(self, level) -> None:
         """Start playtesting a level from editor."""
-        self.controller.load_level_instance(level, is_playtest=True)
+        try:
+            self.controller.load_level_instance(level, is_playtest=True)
+        except ValueError:
+            if self.editor:
+                self.editor.show_status(t("editor.status_error_invalid_level"))
+            return
         self._start_transition("game")
 
     def _back_to_editor(self) -> None:
@@ -377,8 +387,21 @@ class GameApp:
         """Route app-level editor exits through the editor's dirty check."""
         if not self.editor:
             return
+        if self.editor.is_dirty() and self.controller.is_playtest:
+            self.current_screen = "editor"
+            self.controller.set_gameplay_active(False)
+            self.controller.is_playtest = False
+            self.transition_state = "none"
+            self.transition_alpha = 0
+            self.transition_target = None
         self._pending_editor_exit = action
         self.editor._request_exit()
+
+    def _has_active_editor_session(self) -> bool:
+        """Return whether an editor draft remains active, including test-play."""
+        return self.editor is not None and (
+            self.current_screen == "editor" or self.controller.is_playtest
+        )
 
     def _complete_editor_exit(self) -> None:
         """Complete the editor exit after its confirmation dialog accepts."""
@@ -405,7 +428,7 @@ class GameApp:
         """Handle pygame events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                if self.current_screen == "editor" and self.editor:
+                if self._has_active_editor_session():
                     self._request_editor_exit("quit")
                     if not self.running:
                         return
@@ -419,7 +442,7 @@ class GameApp:
                 and event.key == pygame.K_q
                 and (getattr(event, "mod", 0) & pygame.KMOD_CTRL)
             ):
-                if self.current_screen == "editor" and self.editor:
+                if self._has_active_editor_session():
                     self._request_editor_exit("quit")
                     if not self.running:
                         return
@@ -479,6 +502,8 @@ class GameApp:
                     elif event.key == pygame.K_m:
                         if self.current_screen == "editor" and self.editor:
                             self._request_editor_exit("menu")
+                        elif self.controller.is_playtest and self.editor:
+                            self._back_to_editor()
                         elif self.current_screen == "settings":
                             self.settings.handle_event(event)
                         elif self.current_screen != "tutorial":
@@ -524,6 +549,8 @@ class GameApp:
                 self.menu.handle_event(event)
 
             elif self.current_screen == "game":
+                if not self.controller.gameplay_active:
+                    continue
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     if self.controller.is_playtest:
                         self._back_to_editor()
@@ -626,7 +653,7 @@ class GameApp:
                 else:
                     self._back_to_menu()
 
-    def update(self, delta_seconds: float | None = None) -> None:
+    def update(self, delta_seconds: Optional[float] = None) -> None:
         """Update game state."""
         if delta_seconds is None:
             delta_seconds = self.clock.get_time() / 1000.0

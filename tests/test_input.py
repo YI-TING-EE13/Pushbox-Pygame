@@ -7,6 +7,8 @@ import pygame
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from level_fixtures import with_isolated_objectives
+
 from main import GameApp
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.game_state import GameState
@@ -21,9 +23,10 @@ def test_arrow_keys_movement():
     controller = GameController()
 
     grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Position starts at (1, 2)
     assert controller.game_state.level.get_player_position() == (1, 2)
@@ -43,9 +46,10 @@ def test_wasd_keys_movement():
     controller = GameController()
 
     grid = [[1, 1, 1, 1, 1], [1, 0, 4, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Position starts at (1, 2)
     assert controller.game_state.level.get_player_position() == (1, 2)
@@ -65,9 +69,10 @@ def test_movement_unaffected_by_legacy_control_scheme():
     controller = GameController()
 
     grid = [[1, 1, 1, 1, 1, 1, 1], [1, 0, 4, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Check arrow key movement works
     event_arrow = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
@@ -86,9 +91,10 @@ def test_key_tap_twice_with_release_works():
     controller.config.set_control_scheme(ControlScheme.ARROWS)
 
     grid = [[1, 1, 1, 1, 1, 1], [1, 0, 4, 0, 0, 1], [1, 1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # First press
     event_down1 = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
@@ -109,6 +115,7 @@ def test_key_tap_twice_with_release_works():
 def test_global_shortcuts_active_in_arrows_mode():
     """Test that global shortcuts are triggered in ARROWS mode."""
     controller = GameController()
+    controller.set_gameplay_active(True)
     controller.config.set_control_scheme(ControlScheme.ARROWS)
 
     triggered_actions = []
@@ -158,6 +165,7 @@ def test_global_shortcuts_active_in_arrows_mode():
 def test_global_shortcuts_active_in_wasd_mode():
     """Test that global shortcuts are triggered in WASD mode."""
     controller = GameController()
+    controller.set_gameplay_active(True)
     controller.config.set_control_scheme(ControlScheme.WASD)
 
     triggered_actions = []
@@ -213,9 +221,10 @@ def test_reset_behavior_and_input_cleanup():
     controller.config.set_control_scheme(ControlScheme.ARROWS)
 
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Pause the game and add some key repeat state
     controller.is_paused = True
@@ -248,9 +257,10 @@ def test_reset_callbacks_consistency():
     """
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Make a move
     controller._on_move((0, 1))
@@ -344,9 +354,10 @@ def test_help_overlay_dismissal():
 
     app.controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     app.controller.current_level = level
     app.controller.game_state = GameState(level)
+    app.controller.set_gameplay_active(True)
 
     # 1. Open help overlay
     app.show_help = True

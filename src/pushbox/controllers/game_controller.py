@@ -95,6 +95,7 @@ class GameController:
         if not level:
             return False
 
+        level.validate_structure()
         gameplay_was_active = self.gameplay_active
         self.current_level = level
         self.game_state = GameState(level)
@@ -111,6 +112,7 @@ class GameController:
             level: Level instance to load.
             is_playtest: Whether this is a playtest session.
         """
+        level.validate_structure()
         gameplay_was_active = self.gameplay_active
         self.current_level = level
         self.game_state = GameState(level)
@@ -141,7 +143,7 @@ class GameController:
         Args:
             direction: Direction tuple (dr, dc).
         """
-        if not self.game_state or self.is_paused:
+        if not self.gameplay_active or not self.game_state or self.is_paused:
             return
 
         # Determine if a push is possible prior to the move
@@ -214,7 +216,7 @@ class GameController:
 
     def _on_undo(self) -> None:
         """Handle undo input."""
-        if self.is_paused:
+        if not self.gameplay_active or self.is_paused:
             return
         if self.game_state and self.game_state.move_history:
             command = self.game_state.move_history[-1]
@@ -224,7 +226,7 @@ class GameController:
 
     def _on_redo(self) -> None:
         """Handle redo input."""
-        if self.is_paused:
+        if not self.gameplay_active or self.is_paused:
             return
         if self.game_state and self.game_state.redo_stack:
             command = self.game_state.redo_stack[-1]
@@ -234,6 +236,8 @@ class GameController:
 
     def _on_reset(self) -> None:
         """Handle reset input."""
+        if not self.gameplay_active:
+            return
         self.is_paused = False
         self.input_handler.clear_input_state()
         if self.game_state:
@@ -269,11 +273,17 @@ class GameController:
         Returns:
             True if event was handled.
         """
+        if not self.gameplay_active:
+            return False
         return self.input_handler.handle_event(event)
 
     def toggle_pause(self) -> None:
         """Toggle the pause state of the game."""
-        if not self.game_state or self.game_state.status != GameStateEnum.PLAYING:
+        if (
+            not self.gameplay_active
+            or not self.game_state
+            or self.game_state.status != GameStateEnum.PLAYING
+        ):
             return
 
         self.is_paused = not self.is_paused

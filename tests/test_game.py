@@ -6,6 +6,8 @@ import pygame
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from level_fixtures import with_isolated_objectives
+
 from src.pushbox.models.game_state import GameState
 from src.pushbox.models.level import Level
 from src.pushbox.utils.constants import CellType
@@ -25,7 +27,7 @@ def test_level_creation():
 def test_game_state_initialization():
     """Test initializing game state."""
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 3, 1], [1, 0, 0, 2, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     game = GameState(level)
 
     assert game.status == GameStateEnum.PLAYING
@@ -36,7 +38,7 @@ def test_game_state_initialization():
 def test_player_movement():
     """Test player movement."""
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     game = GameState(level)
 
     # Move Right (0, 1)
@@ -50,7 +52,7 @@ def test_player_movement():
 def test_wall_collision():
     """Test player hitting a wall."""
     grid = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     game = GameState(level)
 
     # Try to move Right into a wall
@@ -63,7 +65,7 @@ def test_wall_collision():
 def test_box_push():
     """Test pushing a box."""
     grid = [[1, 1, 1, 1, 1], [1, 4, 3, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     game = GameState(level)
 
     # Push Box Right
@@ -89,18 +91,19 @@ def test_renderer_hud_no_crash():
 
     # 1. Test with default level (Level 23)
     grid_default = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-    level_default = Level("Level 23", grid_default)
+    level_default = Level("Level 23", with_isolated_objectives(grid_default))
     state_default = GameState(level_default)
     renderer.render_ui(state_default)
 
     # 2. Test with normal custom level
-    level_custom_short = Level("對稱自訂圖", grid_default)
+    level_custom_short = Level("對稱自訂圖", with_isolated_objectives(grid_default))
     state_custom_short = GameState(level_custom_short)
     renderer.render_ui(state_custom_short)
 
     # 3. Test with very long custom level (truncation path)
     level_custom_long = Level(
-        "ThisIsAVeryLongCustomLevelNameThatExceedsTwentyCharacters", grid_default
+        "ThisIsAVeryLongCustomLevelNameThatExceedsTwentyCharacters",
+        with_isolated_objectives(grid_default),
     )
     state_custom_long = GameState(level_custom_long)
     renderer.render_ui(state_custom_long)
