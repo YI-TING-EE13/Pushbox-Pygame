@@ -288,6 +288,12 @@ class Renderer:
     def set_animation_enabled(self, enabled: bool) -> None:
         """Enable or disable visual transition animations."""
         self.animation_enabled = enabled
+        if not enabled:
+            self.animations.clear()
+            self.shake_duration = 0.0
+            self.shake_intensity = 0
+            self.shake_offset_x = 0
+            self.shake_offset_y = 0
 
     def add_animation(self, animation: Animation) -> None:
         """Register a new screen animation to the execution loop."""

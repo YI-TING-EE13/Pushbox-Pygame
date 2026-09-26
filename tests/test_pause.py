@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -80,38 +79,31 @@ def test_pause_blocks_movement_and_resume_restores_it():
 
 
 def test_pause_freezes_timer_and_offset_adjusts():
-    """Test timer update suspension under pause and offset adjustment."""
+    """Test timer updates only with supplied active gameplay deltas."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
     level = Level("Test Level", grid)
     controller.current_level = level
     controller.game_state = GameState(level)
 
-    # Start and wait briefly
-    time.sleep(0.05)
-    controller.update()
+    controller.set_gameplay_active(True)
+    controller.update(0.1)
     t1 = controller.game_state.elapsed_time
-    assert t1 > 0
+    assert t1 == 0.1
 
-    # Pause and update
     controller.toggle_pause()
-    time.sleep(0.05)
-    controller.update()
+    controller.update(0.5)
     t2 = controller.game_state.elapsed_time
-    # Time must not increment when paused
     assert t2 == t1
 
-    # Resume and update
     controller.toggle_pause()
-    time.sleep(0.05)
-    controller.update()
+    controller.update(0.25)
     t3 = controller.game_state.elapsed_time
-    # Time must resume incrementing
-    assert t3 > t2
-    # The elapsed time should not include the pause duration (less than total time)
-    # Total physical time elapsed from start: > 0.15s,
-    # but elapsed_time should be around 0.1s because we paused for 0.05s
-    assert t3 < 0.13
+    assert t3 == 0.35
+
+    controller.set_gameplay_active(False)
+    controller.update(3.0)
+    assert controller.game_state.elapsed_time == t3
 
 
 def test_reset_exits_pause():

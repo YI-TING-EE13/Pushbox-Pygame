@@ -365,6 +365,20 @@ class TestDeadlock:
         game.move((0, 1))
         assert game.status == GameStateEnum.PLAYING
 
+    def test_malformed_one_box_two_targets_does_not_win(self):
+        game = _make_game(
+            [
+                [1, 1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 2, 0, 2, 1],
+                [1, 1, 1, 1, 1, 1, 1],
+            ]
+        )
+
+        assert game.move((0, 1)) is True
+        assert game.level.get_cell(1, 3) == CellType.BOX_ON_TARGET
+        assert game.level.get_cell(1, 5) == CellType.TARGET
+        assert game.status == GameStateEnum.PLAYING
+
     def test_undo_from_game_over_recovers(self):
         """Undo from GAME_OVER should restore PLAYING status."""
         game = _make_game(
@@ -512,6 +526,48 @@ class TestRedo:
         assert game.redo() is True
         assert game.level.get_player_position() == (1, 2)
         assert game.move_count == 1
+
+    def test_multiple_redos_preserve_remaining_redo_stack(self):
+        game = _make_game(
+            [
+                [1, 1, 1, 1, 1],
+                [1, 4, 0, 0, 1],
+                [1, 1, 1, 1, 1],
+            ]
+        )
+        game.move((0, 1))
+        game.move((0, 1))
+        game.undo()
+        game.undo()
+
+        assert game.redo() is True
+        assert game.level.get_player_position() == (1, 2)
+        assert len(game.redo_stack) == 1
+        assert game.redo() is True
+        assert game.level.get_player_position() == (1, 3)
+        assert game.redo_stack == []
+        assert game.move_count == 2
+
+    def test_multiple_push_redos_preserve_remaining_redo_stack(self):
+        game = _make_game(
+            [
+                [1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 0, 0, 1],
+                [1, 1, 1, 1, 1, 1],
+            ]
+        )
+        game.move((0, 1))
+        game.move((0, 1))
+        game.undo()
+        game.undo()
+
+        assert game.redo() is True
+        assert game.level.get_cell(1, 3) == CellType.BOX
+        assert len(game.redo_stack) == 1
+        assert game.redo() is True
+        assert game.level.get_cell(1, 4) == CellType.BOX
+        assert game.redo_stack == []
+        assert game.push_count == 2
 
     def test_redo_push(self):
         game = _make_game(

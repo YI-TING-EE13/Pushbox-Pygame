@@ -48,10 +48,13 @@ class GameApp:
         self.screen = pygame.display.set_mode(
             (self.width, self.height), pygame.RESIZABLE
         )
-        pygame.display.set_caption("Pushbox-Pygame - 推箱子")
+        pygame.display.set_caption(t("app.caption"))
         self.clock = pygame.time.Clock()
         self.fps = 60
         self.renderer = Renderer(self.screen)
+        self.renderer.set_animation_enabled(
+            self.controller.config.is_animation_enabled()
+        )
 
         # UI screens
         self.menu = Menu(self.screen, "PushBox")
@@ -73,6 +76,7 @@ class GameApp:
             self.controller.load_level("Level 0")
         else:
             self.current_screen = "menu"
+        self.controller.set_gameplay_active(self.current_screen == "game")
         self.show_help = False
         self.running = True
         self.control_feedback_timer = 0  # For showing control scheme change
@@ -84,6 +88,8 @@ class GameApp:
         self.transition_target = None
         self.transition_speed = 15  # Alpha speed per frame
         self.transition_state = "none"  # "none", "fade_out", "fade_in"
+        self._pending_editor_exit: str | None = None
+        self._settings_origin_screen = "menu"
 
         # Setup callbacks
         self._setup_callbacks()
@@ -254,12 +260,27 @@ class GameApp:
         if target_screen == self.current_screen:
             return
         self.transition_target = target_screen
+        if target_screen != "game":
+            self.controller.set_gameplay_active(False)
+        if not self.controller.config.is_animation_enabled():
+            self._complete_transition(target_screen)
+            self.transition_state = "none"
+            self.transition_alpha = 0
+            self.transition_target = None
+            return
         self.transition_state = "fade_out"
         self.transition_alpha = 0
 
     def _show_settings(self) -> None:
         """Show settings screen."""
+        self._settings_origin_screen = self.current_screen
+        self.settings.set_on_back(self._return_from_settings)
         self._start_transition("settings")
+
+    def _return_from_settings(self) -> None:
+        """Return to the screen that opened settings."""
+        target = self._settings_origin_screen
+        self._start_transition(target if target in ("game", "menu") else "menu")
 
     def _start_game(self) -> None:
         """Start the game with current level."""
@@ -290,23 +311,33 @@ class GameApp:
         success = self.controller.level_manager.delete_level(level_name)
         if success:
             self._show_level_select()
-            self.control_feedback_text = f"已刪除: {level_name}"
+            self.control_feedback_text = t("main_menu.feedback.deleted").format(
+                name=level_name
+            )
             self.control_feedback_timer = 120
 
     def _show_editor(self, existing_level=None) -> None:
         """Show level editor."""
         self.editor = LevelEditor(self.screen, existing_level)
         self.editor.set_on_save(self._on_editor_save)
-        self.editor.set_on_exit(self._back_to_menu)
+        self.editor.set_on_exit(self._complete_editor_exit)
         self.editor.set_on_playtest(self._on_editor_playtest)
         self._start_transition("editor")
 
-    def _on_editor_save(self, level) -> None:
+    def _on_editor_save(self, level) -> bool:
         """Handle editor save."""
-        self.controller.level_manager.save_level(level)
-        self.control_feedback_text = f"關卡已儲存: {level.name}"
+        try:
+            self.controller.level_manager.save_level(level)
+        except ValueError:
+            if self.editor:
+                self.editor.show_status(t("editor.status_error_name_conflict"))
+            return False
+        self.control_feedback_text = t("main_menu.feedback.saved").format(
+            name=level.name
+        )
         self.control_feedback_timer = 180
         self._back_to_menu()
+        return True
 
     def _on_editor_playtest(self, level) -> None:
         """Start playtesting a level from editor."""
@@ -323,8 +354,15 @@ class GameApp:
 
     def _toggle_controls(self) -> None:
         """Toggle control scheme with UI feedback."""
-        scheme = self.controller.toggle_control_scheme()
-        self.control_feedback_text = f"控制方式: {scheme}"
+        self.controller.toggle_control_scheme()
+        scheme_key = (
+            "settings.control.wasd"
+            if self.controller.config.get_control_scheme() == "wasd"
+            else "settings.control.arrows"
+        )
+        self.control_feedback_text = t("game.feedback.controls").format(
+            scheme=t(scheme_key)
+        )
         self.control_feedback_timer = 120
 
     def _show_tutorial(self) -> None:
@@ -334,6 +372,22 @@ class GameApp:
     def _back_to_menu(self) -> None:
         """Return to main menu."""
         self._start_transition("menu")
+
+    def _request_editor_exit(self, action: str) -> None:
+        """Route app-level editor exits through the editor's dirty check."""
+        if not self.editor:
+            return
+        self._pending_editor_exit = action
+        self.editor._request_exit()
+
+    def _complete_editor_exit(self) -> None:
+        """Complete the editor exit after its confirmation dialog accepts."""
+        action = self._pending_editor_exit
+        self._pending_editor_exit = None
+        if action == "quit":
+            self.running = False
+        else:
+            self._back_to_menu()
 
     def _quit(self) -> None:
         """Quit the game."""
@@ -351,6 +405,11 @@ class GameApp:
         """Handle pygame events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if self.current_screen == "editor" and self.editor:
+                    self._request_editor_exit("quit")
+                    if not self.running:
+                        return
+                    continue
                 self.running = False
                 return
 
@@ -360,6 +419,11 @@ class GameApp:
                 and event.key == pygame.K_q
                 and (getattr(event, "mod", 0) & pygame.KMOD_CTRL)
             ):
+                if self.current_screen == "editor" and self.editor:
+                    self._request_editor_exit("quit")
+                    if not self.running:
+                        return
+                    continue
                 self.running = False
                 return
 
@@ -413,7 +477,11 @@ class GameApp:
                                 self.show_help = not self.show_help
                         continue
                     elif event.key == pygame.K_m:
-                        if self.current_screen != "tutorial":
+                        if self.current_screen == "editor" and self.editor:
+                            self._request_editor_exit("menu")
+                        elif self.current_screen == "settings":
+                            self.settings.handle_event(event)
+                        elif self.current_screen != "tutorial":
                             self._back_to_menu()
                         continue
                     elif event.key == pygame.K_ESCAPE:
@@ -486,7 +554,11 @@ class GameApp:
                 self.level_selector.handle_event(event)
 
             elif self.current_screen == "editor" and self.editor:
-                self.editor.handle_event(event)
+                editor = self.editor
+                was_confirming_exit = editor.show_confirm_dialog
+                editor.handle_event(event)
+                if was_confirming_exit and not editor.show_confirm_dialog:
+                    self._pending_editor_exit = None
 
     def _handle_win_screen_input(self, event) -> None:
         """Handle input on win screen."""
@@ -509,7 +581,7 @@ class GameApp:
                         self.controller.load_level(next_level)
                     else:
                         # No next level (Game Completed)
-                        self.control_feedback_text = "恭喜! 已完成所有關卡"
+                        self.control_feedback_text = t("game.win.all_done")
                         self.control_feedback_timer = 180
                         self._back_to_menu()
 
@@ -547,7 +619,6 @@ class GameApp:
                 self.controller.toggle_pause()  # Unpause first
                 self.controller._on_reset()  # Reset level
             elif event.key == pygame.K_s:
-                self.controller.toggle_pause()  # Unpause first
                 self._show_settings()
             elif event.key == pygame.K_m:
                 if self.controller.is_playtest:
@@ -555,9 +626,14 @@ class GameApp:
                 else:
                     self._back_to_menu()
 
-    def update(self) -> None:
+    def update(self, delta_seconds: float | None = None) -> None:
         """Update game state."""
-        self.controller.update()
+        if delta_seconds is None:
+            delta_seconds = self.clock.get_time() / 1000.0
+        self.renderer.set_animation_enabled(
+            self.controller.config.is_animation_enabled()
+        )
+        self.controller.update(delta_seconds)
         self.renderer.update_animations()
         if self.control_feedback_timer > 0:
             self.control_feedback_timer -= 1
@@ -583,32 +659,8 @@ class GameApp:
             self.transition_alpha += self.transition_speed
             if self.transition_alpha >= 255:
                 self.transition_alpha = 255
-                # Perform actual screen switch
-                self.current_screen = self.transition_target
-                # Reset editor or pauses if returning to menu
-                if self.transition_target == "menu":
-                    self.editor = None
-                    self.controller.is_paused = False
-                    self.controller.input_handler.clear_input_state()
-                    self.menu_selected_index = 0
-                    self._setup_menu()
-                elif self.transition_target == "editor":
-                    self.controller.is_playtest = False
-                    self.controller.game_state = None
-                elif self.transition_target == "level_select":
-                    # setup level selector when transition finishes
-                    levels = self.controller.get_available_levels()
-                    progress = self.controller.save_manager.get_all_progress()
-                    self.level_selector.setup(
-                        levels,
-                        progress,
-                        self._on_level_selected,
-                        self._back_to_menu,
-                        self._on_edit_level,
-                        self._on_delete_level,
-                    )
-                elif self.transition_target == "game":
-                    self._init_game_buttons()
+                if self.transition_target is not None:
+                    self._complete_transition(self.transition_target)
 
                 self.transition_state = "fade_in"
         elif self.transition_state == "fade_in":
@@ -617,6 +669,33 @@ class GameApp:
                 self.transition_alpha = 0
                 self.transition_state = "none"
                 self.transition_target = None
+
+    def _complete_transition(self, target_screen: str) -> None:
+        """Apply screen setup after an immediate or faded transition."""
+        self.current_screen = target_screen
+        self.controller.set_gameplay_active(target_screen == "game")
+        if target_screen == "menu":
+            self.editor = None
+            self.controller.is_paused = False
+            self.controller.input_handler.clear_input_state()
+            self.menu_selected_index = 0
+            self._setup_menu()
+        elif target_screen == "editor":
+            self.controller.is_playtest = False
+            self.controller.game_state = None
+        elif target_screen == "level_select":
+            levels = self.controller.get_available_levels()
+            progress = self.controller.save_manager.get_all_progress()
+            self.level_selector.setup(
+                levels,
+                progress,
+                self._on_level_selected,
+                self._back_to_menu,
+                self._on_edit_level,
+                self._on_delete_level,
+            )
+        elif target_screen == "game":
+            self._init_game_buttons()
 
     def render(self) -> None:
         """Render current screen."""
@@ -639,6 +718,9 @@ class GameApp:
                 current,
                 progress,
                 draw_bg_callback=self._draw_attract_bg,
+                campaign_level_names=(
+                    self.controller.level_manager.get_campaign_level_names()
+                ),
             )
             self._draw_feedback()
 
@@ -890,10 +972,10 @@ class GameApp:
     def run(self) -> None:
         """Main game loop."""
         while self.running:
+            delta_seconds = self.clock.tick(self.fps) / 1000.0
+            self.update(delta_seconds)
             self.handle_events()
-            self.update()
             self.render()
-            self.clock.tick(self.fps)
 
         pygame.quit()
         sys.exit()
