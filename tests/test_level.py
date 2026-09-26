@@ -497,6 +497,47 @@ class TestLevelManager:
         assert "ValueError" in captured.err
         assert "value" in captured.err
 
+    @pytest.mark.parametrize(
+        "bad_value",
+        [True, False, "1", 1.0, None, 99],
+        ids=["true", "false", "string", "float", "null", "out-of-range"],
+    )
+    def test_raw_non_integer_grid_cells_are_rejected(self, tmp_path, capsys, bad_value):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        grid = [row[:] for row in VALID_CUSTOM_GRID]
+        grid[0][0] = bad_value
+        level_path = levels_dir / "malformed.json"
+        level_path.write_text(
+            json.dumps({"name": "Malformed", "grid": grid}), encoding="utf-8"
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        custom_levels = [
+            level for level in manager.levels.values() if level.source == "custom"
+        ]
+        assert custom_levels == []
+        assert manager.get_level("Malformed") is None
+        assert level_path.exists()
+        assert (
+            "Could not load custom level from malformed.json" in capsys.readouterr().err
+        )
+
+    def test_raw_integer_grid_loads_without_coercion(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        (levels_dir / "valid.json").write_text(
+            json.dumps({"name": "Valid Integer Grid", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        loaded = manager.get_level("Valid Integer Grid")
+        assert loaded is not None
+        assert loaded.initial_grid.tolist() == VALID_CUSTOM_GRID
+
     def test_one_bad_does_not_block_one_good_level(self, tmp_path):
         levels_dir = tmp_path / "levels"
         levels_dir.mkdir()
@@ -714,9 +755,14 @@ class TestLevelManager:
             storage_path=legacy_path,
         )
         original_unlink = Path.unlink
+        canonical_path = levels_dir / f"{original_id}.json"
 
         def fail_both_cleanup_operations(path, *args, **kwargs):
-            if path == legacy_path or path.suffix == ".pending":
+            if (
+                path == legacy_path
+                or path == canonical_path
+                or path.suffix == ".pending"
+            ):
                 raise OSError("injected migration cleanup failure")
             return original_unlink(path, *args, **kwargs)
 
@@ -725,14 +771,17 @@ class TestLevelManager:
         with pytest.raises(LevelPersistenceError, match="could not be saved"):
             manager.save_level(edited)
 
-        pending_files = list(levels_dir.glob("*.pending"))
         marker_path = levels_dir / f".{original_id}.migration"
         assert legacy_path.exists()
-        assert len(pending_files) == 1
-        assert marker_path.exists()
-        assert not (levels_dir / f"{original_id}.json").exists()
-        assert json.loads(pending_files[0].read_text(encoding="utf-8"))["grid"] == (
-            changed_grid
+        new_representations = [
+            path
+            for path in levels_dir.iterdir()
+            if path != legacy_path and path.suffix in (".json", ".pending")
+        ]
+        assert len(new_representations) == 1
+        assert (
+            json.loads(new_representations[0].read_text(encoding="utf-8"))["grid"]
+            == changed_grid
         )
         assert edited.name == "Renamed Legacy"
         assert edited.storage_path == legacy_path
@@ -747,6 +796,9 @@ class TestLevelManager:
         assert custom_levels[0].level_id == original_id
         assert custom_levels[0].name == "Legacy Name"
         assert custom_levels[0].initial_grid.tolist() == VALID_CUSTOM_GRID
+        assert len(list(levels_dir.glob("*.pending"))) == 1
+        assert marker_path.exists()
+        assert not canonical_path.exists()
 
     def test_crash_after_legacy_removal_recovers_staged_edit(self, tmp_path):
         levels_dir = tmp_path / "levels"

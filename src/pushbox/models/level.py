@@ -3,7 +3,7 @@
 import json
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import numpy as np
@@ -107,6 +107,38 @@ class Level:
         )
         if np.any(grid < CellType.EMPTY) or np.any(grid > maximum_cell):
             raise ValueError("Level grid contains an invalid cell value.")
+
+    @staticmethod
+    def _validate_serialized_grid(raw_grid: Any) -> list[list[int]]:
+        """Validate raw JSON grid values before NumPy can coerce their types."""
+        if not isinstance(raw_grid, list) or not raw_grid:
+            raise TypeError("Level grid must be a non-empty list of lists.")
+        if not isinstance(raw_grid[0], list):
+            raise TypeError("Level grid must be a list of lists.")
+
+        column_count = len(raw_grid[0])
+        if column_count == 0:
+            raise ValueError("Level grid rows cannot be empty.")
+
+        minimum_cell = int(CellType.EMPTY)
+        maximum_cell = int(CellType.PLAYER)
+        validated_grid: list[list[int]] = []
+        for row_index, row in enumerate(raw_grid):
+            if not isinstance(row, list):
+                raise TypeError(f"Row {row_index} in level grid is not a list.")
+            if len(row) != column_count:
+                raise ValueError("Level grid must be rectangular.")
+
+            validated_row: list[int] = []
+            for cell in row:
+                if type(cell) is not int:
+                    raise TypeError("Level grid cells must be integers.")
+                if cell < minimum_cell or cell > maximum_cell:
+                    raise ValueError("Level grid contains an invalid cell value.")
+                validated_row.append(cast(int, cell))
+            validated_grid.append(validated_row)
+
+        return validated_grid
 
     def validate_structure(self) -> None:
         """Validate the level's starting and current grids against Sokoban rules.
@@ -412,20 +444,7 @@ class LevelManager:
                 name = name.strip()
                 if not name:
                     raise ValueError("Level name cannot be empty.")
-                if not isinstance(grid, list) or not grid:
-                    raise TypeError("Level grid must be a non-empty list of lists.")
-
-                if not isinstance(grid[0], list):
-                    raise TypeError("Level grid must be a list of lists.")
-                cols = len(grid[0])
-                if cols == 0:
-                    raise ValueError("Level grid rows cannot be empty.")
-
-                for r_idx, row in enumerate(grid):
-                    if not isinstance(row, list):
-                        raise TypeError(f"Row {r_idx} in level grid is not a list.")
-                    if len(row) != cols:
-                        raise ValueError("Level grid must be rectangular.")
+                grid = Level._validate_serialized_grid(grid)
                 raw_id = data.get("id")
                 try:
                     level_id = UUID(raw_id).hex if isinstance(raw_id, str) else None
