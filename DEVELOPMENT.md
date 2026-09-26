@@ -393,7 +393,8 @@ gantt
 
 ### 2026-09-26 — Independent Requalification Follow-up
 - [x] New custom levels keep distinct persistent IDs; case-insensitive name conflicts fail cleanly, and resaving a loaded level preserves its ID.
-- [x] Legacy migration rolls back a newly written canonical file when legacy cleanup fails. Loading deduplicates interrupted legacy/canonical copies by logical ID and prefers a valid canonical file.
+- [x] Legacy migration writes a staged version and a transaction marker before removing the committed legacy file. A prepared transaction with the legacy file present loads the legacy version; once the legacy file is removed, restart recovery loads the staged or promoted version by the same logical ID.
+- [x] Conflicting unmarked files with the same logical ID are preserved and excluded from loading rather than guessed by filename; same-name levels with distinct IDs remain independent.
 - [x] One structural validator now governs custom loading, editor save/test-play, and gameplay construction; malformed states cannot report completion.
 - [x] Dirty editor drafts remain protected during test-play window close and Ctrl+Q; cancel restores test-play, pause, and transition state. Gameplay mutation stops as soon as a navigation transition disables the session.
 - [x] Restored Python 3.9-compatible annotations in `main.py`; share import name generation now uses the same case-insensitive comparison as persistence.

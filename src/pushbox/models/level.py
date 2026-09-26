@@ -249,6 +249,89 @@ class LevelManager:
         for name, grid in DEFAULT_LEVELS.items():
             self.levels[name] = Level(name, grid, source="builtin")
 
+    def _migration_marker_path(self, level_id: str) -> Path:
+        """Return the transaction marker path for a persistent level ID."""
+        return self.levels_dir / f".{level_id}.migration"
+
+    def _read_migration_marker(self, marker_path: Path) -> dict[str, Any]:
+        """Read and validate a migration marker without trusting stored paths."""
+        marker_id = marker_path.name[1 : -len(".migration")]
+        if UUID(marker_id).hex != marker_id:
+            raise ValueError("Migration marker has an invalid level ID.")
+
+        with marker_path.open(encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError("Migration marker must contain a JSON object.")
+        if type(data.get("version")) is not int or data["version"] != 1:
+            raise ValueError("Migration marker version is unsupported.")
+        if data.get("level_id") != marker_id:
+            raise ValueError("Migration marker level ID does not match its filename.")
+        if data.get("phase") not in ("prepared", "committed"):
+            raise ValueError("Migration marker phase is invalid.")
+
+        legacy_name = data.get("legacy")
+        staged_name = data.get("staged")
+        canonical_name = data.get("canonical")
+        if not isinstance(legacy_name, str) or Path(legacy_name).name != legacy_name:
+            raise ValueError("Migration marker legacy path is invalid.")
+        if not isinstance(staged_name, str) or Path(staged_name).name != staged_name:
+            raise ValueError("Migration marker staged path is invalid.")
+        if not staged_name.startswith(f".{marker_id}.") or not staged_name.endswith(
+            ".pending"
+        ):
+            raise ValueError("Migration marker staged path does not match its ID.")
+        if canonical_name != f"{marker_id}.json":
+            raise ValueError("Migration marker canonical path is invalid.")
+        return data
+
+    def _write_json_file(
+        self, destination: Path, data: dict[str, Any], *, replace_existing: bool
+    ) -> None:
+        """Write JSON through a same-directory temporary file."""
+        temporary = self.levels_dir / f".{uuid4().hex}.tmp"
+        try:
+            with temporary.open("x", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            if replace_existing:
+                temporary.replace(destination)
+            else:
+                if destination.exists():
+                    raise FileExistsError(destination)
+                temporary.rename(destination)
+        finally:
+            with suppress(OSError):
+                if temporary.exists():
+                    temporary.unlink()
+
+    def _finish_migration(self, marker_path: Path, metadata: dict[str, Any]) -> Path:
+        """Promote a committed staged level when possible; retain recoverable state."""
+        committed_metadata = dict(metadata)
+        committed_metadata["phase"] = "committed"
+        try:
+            self._write_json_file(
+                marker_path, committed_metadata, replace_existing=True
+            )
+        except OSError:
+            # A prepared marker plus a missing legacy file also recovers forward.
+            pass
+
+        staged_path = self.levels_dir / str(metadata["staged"])
+        canonical_path = self.levels_dir / str(metadata["canonical"])
+        if staged_path.exists() and not canonical_path.exists():
+            try:
+                staged_path.rename(canonical_path)
+            except OSError:
+                pass
+
+        if staged_path.exists():
+            return staged_path
+        if canonical_path.exists():
+            with suppress(OSError):
+                marker_path.unlink()
+            return canonical_path
+        return staged_path
+
     def _load_custom_levels(self) -> None:
         """Load custom levels from files."""
         import sys
@@ -256,9 +339,60 @@ class LevelManager:
         if not self.levels_dir.exists():
             return
 
+        migration_states: dict[str, dict[str, Any]] = {}
+        blocked_ids: set[str] = set()
+        for marker_path in sorted(
+            self.levels_dir.glob(".*.migration"), key=lambda path: path.name.casefold()
+        ):
+            marker_id = marker_path.name[1 : -len(".migration")]
+            try:
+                if UUID(marker_id).hex != marker_id:
+                    raise ValueError("Migration marker has an invalid level ID.")
+                metadata = self._read_migration_marker(marker_path)
+                legacy_path = self.levels_dir / metadata["legacy"]
+                staged_path = self.levels_dir / metadata["staged"]
+                canonical_path = self.levels_dir / metadata["canonical"]
+
+                if metadata["phase"] == "prepared" and legacy_path.exists():
+                    selected_path = legacy_path
+                elif staged_path.exists():
+                    selected_path = staged_path
+                elif canonical_path.exists():
+                    selected_path = canonical_path
+                else:
+                    selected_path = None
+
+                metadata["selected_path"] = selected_path
+                migration_states[marker_id] = metadata
+                if selected_path is None:
+                    blocked_ids.add(marker_id)
+                    print(
+                        f"Warning: Migration for level {marker_id} has no recoverable "
+                        "representation; preserving its transaction marker.",
+                        file=sys.stderr,
+                    )
+            except (OSError, TypeError, ValueError) as e:
+                blocked_ids.add(marker_id)
+                print(
+                    f"Warning: Could not read migration marker {marker_path.name} "
+                    f"[{type(e).__name__}]: {e}",
+                    file=sys.stderr,
+                )
+
+        load_paths = {
+            path.name.casefold(): path for path in self.levels_dir.glob("*.json")
+        }
+        expected_id_by_path: dict[str, str] = {}
+        for marker_id, metadata in migration_states.items():
+            selected_path = metadata["selected_path"]
+            if selected_path is not None:
+                expected_id_by_path[selected_path.name.casefold()] = marker_id
+                if selected_path.suffix.casefold() != ".json":
+                    load_paths[selected_path.name.casefold()] = selected_path
+
         candidates: list[Level] = []
         for level_file in sorted(
-            self.levels_dir.glob("*.json"), key=lambda path: path.name.casefold()
+            load_paths.values(), key=lambda path: path.name.casefold()
         ):
             try:
                 with open(level_file, encoding="utf-8") as f:
@@ -300,6 +434,22 @@ class LevelManager:
                 if level_id is None:
                     level_id = uuid5(NAMESPACE_URL, level_file.name.casefold()).hex
 
+                expected_id = expected_id_by_path.get(level_file.name.casefold())
+                if expected_id is not None and level_id != expected_id:
+                    raise ValueError(
+                        "Migration representation has a mismatched level ID."
+                    )
+                if level_id in blocked_ids:
+                    continue
+                migration_state = migration_states.get(level_id)
+                if migration_state is not None:
+                    selected_path = migration_state["selected_path"]
+                    if (
+                        selected_path is None
+                        or selected_path.name.casefold() != level_file.name.casefold()
+                    ):
+                        continue
+
                 level = Level(
                     name,
                     grid,
@@ -319,12 +469,11 @@ class LevelManager:
                     file=sys.stderr,
                 )
 
-        # A migration can be interrupted after the canonical file is written but
-        # before its legacy source is removed. Keep one deterministic record per ID.
         selected_by_id: dict[str, Level] = {}
+        ambiguous_ids: set[str] = set()
         for candidate in candidates:
             candidate_id = candidate.level_id
-            if candidate_id is None:
+            if candidate_id is None or candidate_id in ambiguous_ids:
                 continue
             current = selected_by_id.get(candidate_id)
             if current is None:
@@ -333,6 +482,19 @@ class LevelManager:
 
             candidate_path = candidate.storage_path
             current_path = current.storage_path
+            same_content = candidate.name == current.name and np.array_equal(
+                candidate.initial_grid, current.initial_grid
+            )
+            if not same_content:
+                ambiguous_ids.add(candidate_id)
+                del selected_by_id[candidate_id]
+                print(
+                    f"Warning: Conflicting custom level files share logical ID "
+                    f"{candidate_id}; preserving both files and loading neither.",
+                    file=sys.stderr,
+                )
+                continue
+
             candidate_is_canonical = (
                 candidate_path is not None
                 and candidate_path.stem.casefold() == candidate_id.casefold()
@@ -442,72 +604,154 @@ class LevelManager:
         if level_id is None:
             level_id = uuid4().hex
 
-        try:
-            self.levels_dir.mkdir(parents=True, exist_ok=True)
-            destination = self.levels_dir / f"{level_id}.json"
-            source_path = storage_path
-            if source_path is not None:
-                source_path = source_path.resolve()
-            resolved_destination = destination.resolve()
-
-            if destination.exists() and source_path != resolved_destination:
-                # Do not overwrite a file not loaded as this level.
-                while destination.exists():
-                    level_id = uuid4().hex
-                    destination = self.levels_dir / f"{level_id}.json"
-                resolved_destination = destination.resolve()
-
-            is_legacy_migration = (
-                source_path is not None
-                and source_path != resolved_destination
-                and source_path.parent == self.levels_dir.resolve()
-                and source_path.exists()
-            )
-        except OSError as exc:
-            raise LevelPersistenceError("The level could not be saved.") from exc
-
-        destination_created = False
         data = level.to_dict()
         data["name"] = display_name
         data["id"] = level_id
         data["source"] = "custom"
-        temporary = self.levels_dir / f".{uuid4().hex}.tmp"
-        try:
-            with temporary.open("x", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            if destination.exists() and source_path == resolved_destination:
-                temporary.replace(destination)
-            else:
-                temporary.rename(destination)
-                destination_created = True
 
-            if is_legacy_migration and source_path is not None:
-                source_path.unlink()
-        except OSError as exc:
-            if (
-                destination_created
-                and is_legacy_migration
-                and source_path is not None
-                and source_path.exists()
-            ):
-                try:
-                    destination.unlink()
-                except OSError as rollback_error:
+        try:
+            self.levels_dir.mkdir(parents=True, exist_ok=True)
+            levels_root = self.levels_dir.resolve()
+            destination = self.levels_dir / f"{level_id}.json"
+            resolved_destination = destination.resolve()
+            source_path = storage_path.resolve() if storage_path is not None else None
+            marker_path = self._migration_marker_path(level_id)
+            marker_metadata: Optional[dict[str, Any]] = None
+            is_recovered_stage = False
+            is_recovered_canonical = False
+
+            if marker_path.exists():
+                marker_metadata = self._read_migration_marker(marker_path)
+                staged_path = self.levels_dir / marker_metadata["staged"]
+                legacy_path = self.levels_dir / marker_metadata["legacy"]
+                canonical_path = self.levels_dir / marker_metadata["canonical"]
+                if (
+                    source_path == staged_path.resolve()
+                    and staged_path.exists()
+                    and (
+                        marker_metadata["phase"] == "committed"
+                        or not legacy_path.exists()
+                    )
+                ):
+                    is_recovered_stage = True
+                elif (
+                    source_path == canonical_path.resolve()
+                    and canonical_path.exists()
+                    and not staged_path.exists()
+                    and (
+                        marker_metadata["phase"] == "committed"
+                        or not legacy_path.exists()
+                    )
+                ):
+                    is_recovered_canonical = True
+                elif (
+                    source_path == legacy_path.resolve()
+                    and marker_metadata["phase"] == "prepared"
+                    and legacy_path.exists()
+                ):
+                    if staged_path.exists():
+                        staged_path.unlink()
+                    marker_path.unlink()
+                    marker_metadata = None
+                else:
                     raise LevelPersistenceError(
-                        "Level migration failed and its rollback was incomplete."
-                    ) from rollback_error
+                        "An unfinished level migration must be recovered before saving."
+                    )
+
+            is_legacy_migration = (
+                source_path is not None
+                and source_path != resolved_destination
+                and source_path.parent == levels_root
+                and source_path.exists()
+                and not is_recovered_stage
+            )
+
+            if destination.exists() and source_path != resolved_destination:
+                if is_legacy_migration or is_recovered_stage:
+                    raise LevelPersistenceError(
+                        "The level's canonical path is occupied by another file."
+                    )
+                while destination.exists():
+                    level_id = uuid4().hex
+                    destination = self.levels_dir / f"{level_id}.json"
+                data["id"] = level_id
+                resolved_destination = destination.resolve()
+                marker_path = self._migration_marker_path(level_id)
+        except LevelPersistenceError:
+            raise
+        except (OSError, TypeError, ValueError) as exc:
             raise LevelPersistenceError("The level could not be saved.") from exc
-        finally:
-            if temporary.exists():
+
+        if is_recovered_stage:
+            if source_path is None or marker_metadata is None:
+                raise LevelPersistenceError("The staged level could not be identified.")
+            try:
+                self._write_json_file(source_path, data, replace_existing=True)
+            except OSError as exc:
+                raise LevelPersistenceError("The level could not be saved.") from exc
+            saved_path = self._finish_migration(marker_path, marker_metadata)
+        elif is_recovered_canonical and marker_metadata is not None:
+            try:
+                self._write_json_file(destination, data, replace_existing=True)
+            except OSError as exc:
+                raise LevelPersistenceError("The level could not be saved.") from exc
+            saved_path = self._finish_migration(marker_path, marker_metadata)
+        elif is_legacy_migration and source_path is not None:
+            staged_path = self.levels_dir / f".{level_id}.{uuid4().hex}.pending"
+            marker_metadata = {
+                "version": 1,
+                "level_id": level_id,
+                "phase": "prepared",
+                "legacy": source_path.name,
+                "staged": staged_path.name,
+                "canonical": destination.name,
+            }
+            try:
+                self._write_json_file(staged_path, data, replace_existing=False)
+                self._write_json_file(
+                    marker_path, marker_metadata, replace_existing=False
+                )
+            except OSError as exc:
                 with suppress(OSError):
-                    temporary.unlink()
+                    if staged_path.exists():
+                        staged_path.unlink()
+                raise LevelPersistenceError("The level could not be saved.") from exc
+
+            try:
+                source_path.unlink()
+            except OSError as exc:
+                if source_path.exists():
+                    try:
+                        staged_path.unlink()
+                    except OSError:
+                        # The prepared marker keeps this residue uncommitted.
+                        pass
+                    else:
+                        with suppress(OSError):
+                            marker_path.unlink()
+                    raise LevelPersistenceError(
+                        "The level could not be saved."
+                    ) from exc
+
+            # Removing the old representation is the transaction commit point.
+            # A prepared marker plus a missing legacy file recovers forward.
+            saved_path = self._finish_migration(marker_path, marker_metadata)
+        else:
+            try:
+                replace_existing = source_path == resolved_destination
+                self._write_json_file(
+                    destination, data, replace_existing=replace_existing
+                )
+            except OSError as exc:
+                raise LevelPersistenceError("The level could not be saved.") from exc
+            saved_path = destination
 
         if previous_name is not None and previous_name != display_name:
             del self.levels[previous_name]
         level.name = display_name
         level.source = "custom"
         level.level_id = level_id
-        level.storage_path = destination
+        level.storage_path = saved_path
         self.levels[display_name] = level
 
     def delete_level(self, name: str) -> bool:

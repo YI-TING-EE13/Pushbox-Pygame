@@ -618,16 +618,26 @@ class TestLevelManager:
         assert legacy.storage_path == legacy_path
 
         previous_id = legacy.level_id
+        changed_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
         legacy.name = "Renamed Legacy"
+        legacy.initial_grid = np.array(changed_grid)
+        legacy.reset()
         manager.save_level(legacy)
 
         assert not legacy_path.exists()
         migrated_files = list(levels_dir.glob("*.json"))
         assert len(migrated_files) == 1
         assert migrated_files[0].stem == previous_id
+        assert not list(levels_dir.glob("*.pending"))
+        assert not list(levels_dir.glob(".*.migration"))
         restored = LevelManager(levels_dir=str(levels_dir)).get_level("Renamed Legacy")
         assert restored is not None
         assert restored.level_id == previous_id
+        assert restored.initial_grid.tolist() == changed_grid
 
     def test_failed_legacy_cleanup_rolls_back_canonical_file(
         self, tmp_path, monkeypatch
@@ -668,6 +678,8 @@ class TestLevelManager:
 
         assert legacy_path.exists()
         assert list(levels_dir.glob("*.json")) == [legacy_path]
+        assert not list(levels_dir.glob("*.pending"))
+        assert not list(levels_dir.glob(".*.migration"))
         assert manager.get_level("Legacy Name") is original
         assert manager.get_level("Renamed Legacy") is None
         assert original.level_id == original_id
@@ -676,8 +688,8 @@ class TestLevelManager:
         assert restarted.get_level("Legacy Name") is not None
         assert restarted.get_level("Renamed Legacy") is None
 
-    def test_interrupted_legacy_migration_prefers_canonical_duplicate_id(
-        self, tmp_path
+    def test_dual_legacy_cleanup_failure_keeps_old_version_authoritative(
+        self, tmp_path, monkeypatch
     ):
         levels_dir = tmp_path / "levels"
         levels_dir.mkdir()
@@ -686,18 +698,173 @@ class TestLevelManager:
             json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
             encoding="utf-8",
         )
-        logical_id = uuid5(NAMESPACE_URL, legacy_path.name.casefold()).hex
-        canonical_grid = [
+        manager = LevelManager(levels_dir=str(levels_dir))
+        original = manager.get_level("Legacy Name")
+        assert original is not None
+        original_id = original.level_id
+        changed_grid = [
             [1, 1, 1, 1, 1],
             [1, 4, 2, 3, 1],
             [1, 1, 1, 1, 1],
         ]
-        canonical_path = levels_dir / f"{logical_id}.json"
-        canonical_path.write_text(
+        edited = Level(
+            "Renamed Legacy",
+            changed_grid,
+            level_id=original_id,
+            storage_path=legacy_path,
+        )
+        original_unlink = Path.unlink
+
+        def fail_both_cleanup_operations(path, *args, **kwargs):
+            if path == legacy_path or path.suffix == ".pending":
+                raise OSError("injected migration cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_both_cleanup_operations)
+
+        with pytest.raises(LevelPersistenceError, match="could not be saved"):
+            manager.save_level(edited)
+
+        pending_files = list(levels_dir.glob("*.pending"))
+        marker_path = levels_dir / f".{original_id}.migration"
+        assert legacy_path.exists()
+        assert len(pending_files) == 1
+        assert marker_path.exists()
+        assert not (levels_dir / f"{original_id}.json").exists()
+        assert json.loads(pending_files[0].read_text(encoding="utf-8"))["grid"] == (
+            changed_grid
+        )
+        assert edited.name == "Renamed Legacy"
+        assert edited.storage_path == legacy_path
+        assert manager.get_level("Legacy Name") is original
+        assert manager.get_level("Renamed Legacy") is None
+
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        custom_levels = [
+            level for level in restarted.levels.values() if level.source == "custom"
+        ]
+        assert len(custom_levels) == 1
+        assert custom_levels[0].level_id == original_id
+        assert custom_levels[0].name == "Legacy Name"
+        assert custom_levels[0].initial_grid.tolist() == VALID_CUSTOM_GRID
+
+    def test_crash_after_legacy_removal_recovers_staged_edit(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        logical_id = uuid5(NAMESPACE_URL, legacy_path.name.casefold()).hex
+        edited_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+        staged_path = levels_dir / f".{logical_id}.0123456789abcdef.pending"
+        staged_path.write_text(
             json.dumps(
                 {
                     "name": "Renamed Legacy",
-                    "grid": canonical_grid,
+                    "grid": edited_grid,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+        marker_path = levels_dir / f".{logical_id}.migration"
+        marker_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "level_id": logical_id,
+                    "phase": "prepared",
+                    "legacy": legacy_path.name,
+                    "staged": staged_path.name,
+                    "canonical": f"{logical_id}.json",
+                }
+            ),
+            encoding="utf-8",
+        )
+        legacy_path.unlink()
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+        custom_levels = [
+            level for level in manager.levels.values() if level.source == "custom"
+        ]
+
+        assert len(custom_levels) == 1
+        assert custom_levels[0].name == "Renamed Legacy"
+        assert custom_levels[0].level_id == logical_id
+        assert custom_levels[0].storage_path == staged_path
+        assert custom_levels[0].initial_grid.tolist() == edited_grid
+        assert marker_path.exists()
+
+    def test_committed_marker_residue_keeps_canonical_level_resavable(
+        self, tmp_path, monkeypatch
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+        level = manager.get_level("Legacy Name")
+        assert level is not None
+        logical_id = level.level_id
+        marker_path = levels_dir / f".{logical_id}.migration"
+        original_unlink = Path.unlink
+
+        def fail_marker_cleanup(path, *args, **kwargs):
+            if path == marker_path:
+                raise OSError("injected transaction marker cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_marker_cleanup)
+
+        level.name = "Migrated Legacy"
+        manager.save_level(level)
+        assert not legacy_path.exists()
+        assert marker_path.exists()
+        assert level.storage_path == levels_dir / f"{logical_id}.json"
+
+        edited_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+        level.initial_grid = np.array(edited_grid)
+        level.reset()
+        manager.save_level(level)
+
+        restored = LevelManager(levels_dir=str(levels_dir)).get_level("Migrated Legacy")
+        assert restored is not None
+        assert restored.level_id == logical_id
+        assert restored.initial_grid.tolist() == edited_grid
+
+    def test_unmarked_conflicting_duplicate_id_is_not_guessed(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        logical_id = uuid5(NAMESPACE_URL, legacy_path.name.casefold()).hex
+        conflicting_path = levels_dir / f"{logical_id}.json"
+        conflicting_path.write_text(
+            json.dumps(
+                {
+                    "name": "Renamed Legacy",
+                    "grid": [
+                        [1, 1, 1, 1, 1],
+                        [1, 4, 2, 3, 1],
+                        [1, 1, 1, 1, 1],
+                    ],
                     "id": logical_id,
                     "source": "custom",
                 }
@@ -710,11 +877,12 @@ class TestLevelManager:
             level for level in manager.levels.values() if level.source == "custom"
         ]
 
-        assert len(custom_levels) == 1
-        assert custom_levels[0].name == "Renamed Legacy"
-        assert custom_levels[0].level_id == logical_id
-        assert custom_levels[0].storage_path == canonical_path
-        assert custom_levels[0].initial_grid.tolist() == canonical_grid
+        assert custom_levels == []
+        assert legacy_path.exists()
+        assert conflicting_path.exists()
+        assert (
+            "Conflicting custom level files share logical ID" in capsys.readouterr().err
+        )
 
     def test_ambiguous_legacy_names_are_kept_with_deterministic_labels(self, tmp_path):
         levels_dir = tmp_path / "levels"
@@ -739,6 +907,7 @@ class TestLevelManager:
         second = manager.get_level("Duplicate (2)")
         assert first is not None
         assert second is not None
+        assert first.level_id != second.level_id
         assert first.get_cell(1, 2) == CellType.BOX
         assert second.get_cell(1, 3) == CellType.BOX
 
