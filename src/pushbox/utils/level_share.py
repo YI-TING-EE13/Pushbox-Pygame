@@ -38,20 +38,18 @@ def deduplicate_level_name(name: str, existing_names: list[str]) -> str:
     """Generate a unique name if there is already a custom level with the same name."""
     sanitized = sanitize_level_name(name)
 
-    # Also explicitly avoid conflict with default levels (Level 0 through Level 30)
-    protected_names = {f"Level {i}" for i in range(31)}
+    # Match LevelManager's case-insensitive display-name uniqueness rule.
+    all_forbidden = {name.casefold() for name in existing_names}
+    all_forbidden.update(f"level {i}" for i in range(31))
 
-    # Merge existing and protected
-    all_forbidden = set(existing_names) | protected_names
-
-    if sanitized not in all_forbidden:
+    if sanitized.casefold() not in all_forbidden:
         return sanitized
 
     # Try appending (2), (3), etc.
     idx = 2
     while True:
         candidate = f"{sanitized} ({idx})"
-        if candidate not in all_forbidden:
+        if candidate.casefold() not in all_forbidden:
             return candidate
         idx += 1
 

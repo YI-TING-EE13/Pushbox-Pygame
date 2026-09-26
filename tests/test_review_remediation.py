@@ -107,6 +107,12 @@ def test_dirty_editor_testplay_exit_prompts_and_cancel_preserves_draft(
 
     assert app.current_screen == "game"
     assert app.controller.is_playtest is True
+    app.controller.game_state.elapsed_time = 2.5
+    app.controller.is_paused = True
+    app.transition_state = "fade_in"
+    app.transition_alpha = 90
+    app.transition_target = "game"
+    testplay_grid = app.controller.game_state.level.grid.copy()
     with patch("pygame.event.get", return_value=[exit_event]):
         app.handle_events()
 
@@ -122,10 +128,18 @@ def test_dirty_editor_testplay_exit_prompts_and_cancel_preserves_draft(
     ):
         app.handle_events()
 
-    assert app.current_screen == "editor"
+    assert app.current_screen == "game"
     assert app.editor.show_confirm_dialog is False
     assert app.editor.grid == draft
     assert app.running is True
+    assert app.controller.gameplay_active is True
+    assert app.controller.is_playtest is True
+    assert app.controller.is_paused is True
+    assert app.controller.game_state.elapsed_time == 2.5
+    assert (app.controller.game_state.level.grid == testplay_grid).all()
+    assert app.transition_state == "fade_in"
+    assert app.transition_alpha == 90
+    assert app.transition_target == "game"
 
 
 @pytest.mark.parametrize(
@@ -424,6 +438,7 @@ VALID_EDITOR_GRID = [
     [1, 4, 3, 2, 1],
     [1, 1, 1, 1, 1],
 ]
+
 
 def test_transition_out_blocks_events_time_and_progress(
     monkeypatch: pytest.MonkeyPatch,

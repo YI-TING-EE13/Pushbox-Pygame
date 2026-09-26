@@ -391,6 +391,14 @@ gantt
 - [x] Main-menu and level-sharing feedback use the selected UI language.
 - **Verification**: 288 tests passed; Ruff check and format check passed; MyPy passed for `src/`. A headless Pygame screen-render smoke test passed.
 
+### 2026-09-26 — Independent Requalification Follow-up
+- [x] New custom levels keep distinct persistent IDs; case-insensitive name conflicts fail cleanly, and resaving a loaded level preserves its ID.
+- [x] Legacy migration rolls back a newly written canonical file when legacy cleanup fails. Loading deduplicates interrupted legacy/canonical copies by logical ID and prefers a valid canonical file.
+- [x] One structural validator now governs custom loading, editor save/test-play, and gameplay construction; malformed states cannot report completion.
+- [x] Dirty editor drafts remain protected during test-play window close and Ctrl+Q; cancel restores test-play, pause, and transition state. Gameplay mutation stops as soon as a navigation transition disables the session.
+- [x] Restored Python 3.9-compatible annotations in `main.py`; share import name generation now uses the same case-insensitive comparison as persistence.
+- **Verification**: 312 tests passed on Python 3.12.11; Ruff, format check, MyPy, and `git diff --check` passed. Python 3.9.19 headless startup and targeted assertions passed; `main` imports also passed on Python 3.9.21 and 3.9.23. The Python 3.9 environments do not have pytest, and the project environment's pytest 9.0.2 requires Python 3.10+. Python 3.10/3.11 environments lack Pygame. Default uv-cache access was denied; the full suite passed with an isolated uv cache and `--no-sync`.
+
 ---
 
 ## 5. Deferred / Not for v1.0.0

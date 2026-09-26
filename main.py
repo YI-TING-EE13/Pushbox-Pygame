@@ -90,6 +90,7 @@ class GameApp:
         self.transition_speed = 15  # Alpha speed per frame
         self.transition_state = "none"  # "none", "fade_out", "fade_in"
         self._pending_editor_exit: Optional[str] = None
+        self._editor_exit_return_state: Optional[dict[str, Any]] = None
         self._settings_origin_screen = "menu"
 
         # Setup callbacks
@@ -388,6 +389,15 @@ class GameApp:
         if not self.editor:
             return
         if self.editor.is_dirty() and self.controller.is_playtest:
+            self._editor_exit_return_state = {
+                "screen": self.current_screen,
+                "gameplay_active": self.controller.gameplay_active,
+                "is_playtest": self.controller.is_playtest,
+                "is_paused": self.controller.is_paused,
+                "transition_state": self.transition_state,
+                "transition_alpha": self.transition_alpha,
+                "transition_target": self.transition_target,
+            }
             self.current_screen = "editor"
             self.controller.set_gameplay_active(False)
             self.controller.is_playtest = False
@@ -396,6 +406,21 @@ class GameApp:
             self.transition_target = None
         self._pending_editor_exit = action
         self.editor._request_exit()
+
+    def _restore_editor_exit_state(self) -> None:
+        """Restore test-play after the user cancels a dirty-editor exit prompt."""
+        state = self._editor_exit_return_state
+        self._editor_exit_return_state = None
+        if state is None:
+            return
+
+        self.current_screen = state["screen"]
+        self.controller.set_gameplay_active(state["gameplay_active"])
+        self.controller.is_playtest = state["is_playtest"]
+        self.controller.is_paused = state["is_paused"]
+        self.transition_state = state["transition_state"]
+        self.transition_alpha = state["transition_alpha"]
+        self.transition_target = state["transition_target"]
 
     def _has_active_editor_session(self) -> bool:
         """Return whether an editor draft remains active, including test-play."""
@@ -407,6 +432,7 @@ class GameApp:
         """Complete the editor exit after its confirmation dialog accepts."""
         action = self._pending_editor_exit
         self._pending_editor_exit = None
+        self._editor_exit_return_state = None
         if action == "quit":
             self.running = False
         else:
@@ -586,6 +612,7 @@ class GameApp:
                 editor.handle_event(event)
                 if was_confirming_exit and not editor.show_confirm_dialog:
                     self._pending_editor_exit = None
+                    self._restore_editor_exit_state()
 
     def _handle_win_screen_input(self, event) -> None:
         """Handle input on win screen."""

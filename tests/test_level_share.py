@@ -40,6 +40,20 @@ def test_round_trip_success() -> None:
     assert payload["grid"] == grid
 
 
+@pytest.mark.parametrize(
+    ("requested", "existing", "expected"),
+    [
+        ("foo", ["Foo"], "foo (2)"),
+        ("FOO", ["foo", "FOO (2)"], "FOO (3)"),
+        ("Level 1", [], "Level 1 (2)"),
+    ],
+)
+def test_name_dedup_uses_case_insensitive_persistence_equivalence(
+    requested: str, existing: list[str], expected: str
+) -> None:
+    assert deduplicate_level_name(requested, existing) == expected
+
+
 def test_invalid_prefix() -> None:
     """Verify that a code without the PBX_ prefix raises an error."""
     with pytest.raises(LevelShareError, match="must start with PBX_"):
