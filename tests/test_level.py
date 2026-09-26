@@ -374,6 +374,21 @@ class TestLevelManager:
 
         assert mgr.delete_level("To Delete") is True
         assert mgr.get_level("To Delete") is None
+        assert LevelManager(levels_dir=str(levels_dir)).get_level("To Delete") is None
+
+    def test_delete_legacy_level_without_migration_residue(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Only.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Only", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        mgr = LevelManager(levels_dir=str(levels_dir))
+
+        assert mgr.delete_level("Legacy Only") is True
+        assert not legacy_path.exists()
+        assert LevelManager(levels_dir=str(levels_dir)).get_level("Legacy Only") is None
 
     def test_cannot_delete_default_level(self, tmp_path):
         mgr = LevelManager(levels_dir=str(tmp_path / "levels"))
@@ -729,7 +744,7 @@ class TestLevelManager:
         assert restarted.get_level("Legacy Name") is not None
         assert restarted.get_level("Renamed Legacy") is None
 
-    def test_dual_legacy_cleanup_failure_keeps_old_version_authoritative(
+    def test_dual_legacy_cleanup_failure_delete_does_not_resurrect_stage(
         self, tmp_path, monkeypatch
     ):
         levels_dir = tmp_path / "levels"
@@ -740,6 +755,9 @@ class TestLevelManager:
             encoding="utf-8",
         )
         manager = LevelManager(levels_dir=str(levels_dir))
+        unrelated = Level("Unrelated", VALID_CUSTOM_GRID)
+        manager.save_level(unrelated)
+        unrelated_id = unrelated.level_id
         original = manager.get_level("Legacy Name")
         assert original is not None
         original_id = original.level_id
@@ -773,14 +791,10 @@ class TestLevelManager:
 
         marker_path = levels_dir / f".{original_id}.migration"
         assert legacy_path.exists()
-        new_representations = [
-            path
-            for path in levels_dir.iterdir()
-            if path != legacy_path and path.suffix in (".json", ".pending")
-        ]
-        assert len(new_representations) == 1
+        staged_representations = list(levels_dir.glob("*.pending"))
+        assert len(staged_representations) == 1
         assert (
-            json.loads(new_representations[0].read_text(encoding="utf-8"))["grid"]
+            json.loads(staged_representations[0].read_text(encoding="utf-8"))["grid"]
             == changed_grid
         )
         assert edited.name == "Renamed Legacy"
@@ -792,13 +806,109 @@ class TestLevelManager:
         custom_levels = [
             level for level in restarted.levels.values() if level.source == "custom"
         ]
-        assert len(custom_levels) == 1
-        assert custom_levels[0].level_id == original_id
-        assert custom_levels[0].name == "Legacy Name"
-        assert custom_levels[0].initial_grid.tolist() == VALID_CUSTOM_GRID
+        restored_originals = [
+            level for level in custom_levels if level.level_id == original_id
+        ]
+        assert len(restored_originals) == 1
+        assert restored_originals[0].name == "Legacy Name"
+        assert restored_originals[0].initial_grid.tolist() == VALID_CUSTOM_GRID
+        assert restarted.get_level("Unrelated") is not None
+        assert restarted.get_level("Unrelated").level_id == unrelated_id
         assert len(list(levels_dir.glob("*.pending"))) == 1
         assert marker_path.exists()
         assert not canonical_path.exists()
+
+        monkeypatch.undo()
+        assert restarted.delete_level("Legacy Name") is True
+
+        after_delete = LevelManager(levels_dir=str(levels_dir))
+        remaining_custom_levels = [
+            level for level in after_delete.levels.values() if level.source == "custom"
+        ]
+        assert [level.level_id for level in remaining_custom_levels] == [unrelated_id]
+        assert after_delete.get_level("Legacy Name") is None
+        assert after_delete.get_level("Renamed Legacy") is None
+
+    @pytest.mark.parametrize("failed_artifact", ["pending", "marker", "legacy"])
+    def test_delete_failure_keeps_legacy_authoritative(
+        self, tmp_path, monkeypatch, failed_artifact
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        logical_id = uuid5(NAMESPACE_URL, legacy_path.name.casefold()).hex
+        staged_path = levels_dir / f".{logical_id}.0123456789abcdef.pending"
+        new_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+        staged_path.write_text(
+            json.dumps(
+                {
+                    "name": "New Failed Save",
+                    "grid": new_grid,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+        marker_path = levels_dir / f".{logical_id}.migration"
+        marker_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "level_id": logical_id,
+                    "phase": "prepared",
+                    "legacy": legacy_path.name,
+                    "staged": staged_path.name,
+                    "canonical": f"{logical_id}.json",
+                }
+            ),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+        original = manager.get_level("Legacy Name")
+        assert original is not None
+        original_unlink = Path.unlink
+        failed_path = {
+            "pending": staged_path,
+            "marker": marker_path,
+            "legacy": legacy_path,
+        }[failed_artifact]
+
+        def fail_delete_cleanup(path, *args, **kwargs):
+            if path == failed_path:
+                raise OSError(f"injected {failed_artifact} cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_delete_cleanup)
+        with pytest.raises(LevelPersistenceError, match="could not be deleted"):
+            manager.delete_level("Legacy Name")
+
+        assert legacy_path.exists()
+        assert staged_path.exists() is (failed_artifact == "pending")
+        assert marker_path.exists() is (failed_artifact in ("pending", "marker"))
+        assert manager.get_level("Legacy Name") is original
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        restored = restarted.get_level("Legacy Name")
+        assert restored is not None
+        assert restored.level_id == logical_id
+        assert restored.initial_grid.tolist() == VALID_CUSTOM_GRID
+        assert restarted.get_level("New Failed Save") is None
+
+        monkeypatch.undo()
+        assert manager.delete_level("Legacy Name") is True
+        assert not [
+            level
+            for level in LevelManager(levels_dir=str(levels_dir)).levels.values()
+            if level.level_id == logical_id
+        ]
 
     def test_crash_after_legacy_removal_recovers_staged_edit(self, tmp_path):
         levels_dir = tmp_path / "levels"
@@ -893,10 +1003,124 @@ class TestLevelManager:
         level.reset()
         manager.save_level(level)
 
-        restored = LevelManager(levels_dir=str(levels_dir)).get_level("Migrated Legacy")
+        restored_manager = LevelManager(levels_dir=str(levels_dir))
+        restored = restored_manager.get_level("Migrated Legacy")
         assert restored is not None
         assert restored.level_id == logical_id
         assert restored.initial_grid.tolist() == edited_grid
+
+        monkeypatch.undo()
+        assert restored_manager.delete_level("Migrated Legacy") is True
+        after_delete = LevelManager(levels_dir=str(levels_dir))
+        assert not [
+            level
+            for level in after_delete.levels.values()
+            if level.level_id == logical_id
+        ]
+        assert not marker_path.exists()
+
+    def test_delete_committed_staged_level_after_promotion_failure(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        logical_id = uuid5(NAMESPACE_URL, "committed-staged-level").hex
+        staged_path = levels_dir / f".{logical_id}.0123456789abcdef.pending"
+        staged_path.write_text(
+            json.dumps(
+                {
+                    "name": "Committed Staged",
+                    "grid": VALID_CUSTOM_GRID,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+        marker_path = levels_dir / f".{logical_id}.migration"
+        marker_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "level_id": logical_id,
+                    "phase": "committed",
+                    "legacy": "Legacy_Only.json",
+                    "staged": staged_path.name,
+                    "canonical": f"{logical_id}.json",
+                }
+            ),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        assert manager.get_level("Committed Staged") is not None
+        assert manager.delete_level("Committed Staged") is True
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        assert not [
+            level for level in restarted.levels.values() if level.level_id == logical_id
+        ]
+        assert not staged_path.exists()
+        assert not marker_path.exists()
+
+    @pytest.mark.parametrize("active_kind", ["staged", "canonical"])
+    def test_delete_failure_preserves_committed_representation_for_retry(
+        self, tmp_path, monkeypatch, active_kind
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        logical_id = uuid5(NAMESPACE_URL, f"committed-{active_kind}").hex
+        active_path = (
+            levels_dir / f".{logical_id}.0123456789abcdef.pending"
+            if active_kind == "staged"
+            else levels_dir / f"{logical_id}.json"
+        )
+        active_path.write_text(
+            json.dumps(
+                {
+                    "name": "Committed Level",
+                    "grid": VALID_CUSTOM_GRID,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+        marker_path = levels_dir / f".{logical_id}.migration"
+        marker_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "level_id": logical_id,
+                    "phase": "committed",
+                    "legacy": "Legacy_Only.json",
+                    "staged": f".{logical_id}.0123456789abcdef.pending",
+                    "canonical": f"{logical_id}.json",
+                }
+            ),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+        assert manager.get_level("Committed Level") is not None
+        original_unlink = Path.unlink
+
+        def fail_active_cleanup(path, *args, **kwargs):
+            if path == active_path:
+                raise OSError(f"injected {active_kind} cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_active_cleanup)
+        with pytest.raises(LevelPersistenceError, match="could not be deleted"):
+            manager.delete_level("Committed Level")
+
+        assert active_path.exists()
+        assert marker_path.exists()
+        assert manager.get_level("Committed Level") is not None
+        assert LevelManager(levels_dir=str(levels_dir)).get_level("Committed Level")
+
+        monkeypatch.undo()
+        assert manager.delete_level("Committed Level") is True
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        assert not [
+            level for level in restarted.levels.values() if level.level_id == logical_id
+        ]
 
     def test_unmarked_conflicting_duplicate_id_is_not_guessed(self, tmp_path, capsys):
         levels_dir = tmp_path / "levels"

@@ -285,6 +285,29 @@ class LevelManager:
         """Return the transaction marker path for a persistent level ID."""
         return self.levels_dir / f".{level_id}.migration"
 
+    @staticmethod
+    def _persistent_level_id(data: dict[str, Any], file_name: str) -> str:
+        """Return the same persistent ID used when loading a level file."""
+        raw_id = data.get("id")
+        try:
+            level_id = UUID(raw_id).hex if isinstance(raw_id, str) else None
+        except ValueError:
+            level_id = None
+        if level_id is None:
+            level_id = uuid5(NAMESPACE_URL, file_name.casefold()).hex
+        return level_id
+
+    def _json_file_level_id(self, level_path: Path) -> Optional[str]:
+        """Read a level file's identity without treating malformed files as levels."""
+        try:
+            with level_path.open(encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, UnicodeError):
+            return None
+        if not isinstance(data, dict):
+            return None
+        return self._persistent_level_id(data, level_path.name)
+
     def _read_migration_marker(self, marker_path: Path) -> dict[str, Any]:
         """Read and validate a migration marker without trusting stored paths."""
         marker_id = marker_path.name[1 : -len(".migration")]
@@ -445,13 +468,7 @@ class LevelManager:
                 if not name:
                     raise ValueError("Level name cannot be empty.")
                 grid = Level._validate_serialized_grid(grid)
-                raw_id = data.get("id")
-                try:
-                    level_id = UUID(raw_id).hex if isinstance(raw_id, str) else None
-                except ValueError:
-                    level_id = None
-                if level_id is None:
-                    level_id = uuid5(NAMESPACE_URL, level_file.name.casefold()).hex
+                level_id = self._persistent_level_id(data, level_file.name)
 
                 expected_id = expected_id_by_path.get(level_file.name.casefold())
                 if expected_id is not None and level_id != expected_id:
@@ -786,9 +803,76 @@ class LevelManager:
         if level is None or level.source == "builtin":
             return False
 
-        if level.storage_path is not None and level.storage_path.exists():
-            storage_path = level.storage_path.resolve()
-            if storage_path.parent == self.levels_dir.resolve():
-                storage_path.unlink()
+        if level.level_id is None:
+            raise LevelPersistenceError("The level could not be deleted without an ID.")
+
+        level_id = level.level_id
+        marker_path = self._migration_marker_path(level_id)
+        try:
+            levels_root = self.levels_dir.resolve()
+            marker_metadata = (
+                self._read_migration_marker(marker_path)
+                if marker_path.exists()
+                else None
+            )
+
+            artifacts: set[Path] = set()
+            for level_path in self.levels_dir.glob("*.json"):
+                if self._json_file_level_id(level_path) == level_id:
+                    artifacts.add(level_path)
+
+            if level.storage_path is not None:
+                if level.storage_path.parent.resolve() == levels_root:
+                    artifacts.add(level.storage_path)
+
+            staged_path = None
+            canonical_path = None
+            legacy_path = None
+            if marker_metadata is not None:
+                staged_path = self.levels_dir / marker_metadata["staged"]
+                canonical_path = self.levels_dir / marker_metadata["canonical"]
+                legacy_path = self.levels_dir / marker_metadata["legacy"]
+                artifacts.update((staged_path, canonical_path, legacy_path))
+
+            def remove_artifact(path: Path) -> None:
+                if path.parent.resolve() == levels_root:
+                    path.unlink(missing_ok=True)
+
+            if (
+                marker_metadata is not None
+                and marker_metadata["phase"] == "prepared"
+                and legacy_path is not None
+                and legacy_path.exists()
+            ):
+                # Keep the old committed file authoritative until its fallback
+                # representation and transaction marker are gone.
+                if staged_path is not None:
+                    remove_artifact(staged_path)
+                    artifacts.discard(staged_path)
+                for artifact in sorted(
+                    artifacts - {legacy_path}, key=lambda path: path.name.casefold()
+                ):
+                    remove_artifact(artifact)
+                remove_artifact(marker_path)
+                remove_artifact(legacy_path)
+            else:
+                active_path = None
+                if staged_path is not None and staged_path.exists():
+                    active_path = staged_path
+                elif canonical_path is not None and canonical_path.exists():
+                    active_path = canonical_path
+
+                for artifact in sorted(
+                    artifacts - ({active_path} if active_path is not None else set()),
+                    key=lambda path: path.name.casefold(),
+                ):
+                    remove_artifact(artifact)
+                if active_path is not None:
+                    remove_artifact(active_path)
+                if marker_metadata is not None:
+                    remove_artifact(marker_path)
+        except (OSError, TypeError, ValueError) as exc:
+            raise LevelPersistenceError("The level could not be deleted.") from exc
+
         del self.levels[name]
         return True

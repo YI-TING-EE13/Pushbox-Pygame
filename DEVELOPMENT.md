@@ -404,7 +404,8 @@ gantt
 ### 2026-09-26 — Final Requalification Remediation
 - [x] Legacy edits use a staged file and migration marker; restart loads the old version while it remains committed, and rolls forward from the staged version after legacy removal.
 - [x] Custom JSON grid shape and exact integer cell types are validated before NumPy conversion. Boolean, float, string, null, and out-of-range cells are rejected without partially loading a level.
-- **Verification**: 322 tests passed with Python 3.12.11; Ruff check, Ruff format check, MyPy, and `git diff --check` passed. Headless startup/render plus migration and malformed-grid checks passed on Python 3.9.19, 3.9.21, and 3.9.23 using temporary app-data directories.
+- [x] Custom-level deletion resolves persistence artifacts by logical ID. Prepared migrations remove pending data and the marker before deleting the authoritative legacy file; committed staged/canonical representations are removed before their marker so restart cannot resurrect a deleted level.
+- **Verification**: 329 tests passed with Python 3.12.11; Ruff check, Ruff format check, MyPy, and `git diff --check` passed. Prepared and committed-staged deletion restart probes passed on Python 3.9.19, 3.9.21, and 3.9.23 using temporary level directories.
 
 ---
 
