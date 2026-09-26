@@ -1,5 +1,6 @@
 """Level editor for creating custom levels."""
 
+from pathlib import Path
 from typing import Callable, Optional
 
 import pygame
@@ -43,8 +44,12 @@ class LevelEditor:
             self.cols = existing_level.cols
             self.grid = existing_level.initial_grid.tolist()
             self.level_name = existing_level.name
+            self.level_id = existing_level.level_id
+            self.storage_path = existing_level.storage_path
         else:
             self.level_name = "Custom Level"
+            self.level_id = None
+            self.storage_path = None
 
         self.selected_tool = CellType.WALL
         self.player_placed = False
@@ -62,7 +67,7 @@ class LevelEditor:
         self.offset_x = self.sidebar_width + 20
         self.offset_y = 20
 
-        self.on_save: Optional[Callable[[Level], None]] = None
+        self.on_save: Optional[Callable[[Level], Optional[bool]]] = None
         self.on_exit: Optional[Callable[[], None]] = None
         self.on_playtest: Optional[Callable[[Level], None]] = None
 
@@ -479,36 +484,28 @@ class LevelEditor:
         """Perform grid validation checks and invoke the save callback."""
         from ..utils.i18n import t
 
-        has_player = any(CellType.PLAYER in row for row in self.grid)
-        if not has_player:
-            self.show_status(t("editor.status_error_player"))
-            return
-
-        box_count = sum(row.count(CellType.BOX) for row in self.grid)
-        target_count = sum(row.count(CellType.TARGET) for row in self.grid)
-
-        if box_count == 0:
-            self.show_status(t("editor.status_error_box"))
-            return
-        if box_count != target_count:
-            self.show_status(
-                t("editor.status_error_counts").format(
-                    box_count=box_count, target_count=target_count
-                )
-            )
-            return
-
         level_name = self.name_input.text.strip()
         if not level_name:
             self.show_status(t("editor.status_error_name"))
             return
 
         trimmed_grid = [row[:] for row in self.grid]
-        level = Level(level_name, trimmed_grid)
+        level = self._create_validated_level(
+            level_name,
+            trimmed_grid,
+            level_id=self.level_id,
+            storage_path=self.storage_path,
+        )
+        if level is None:
+            return
         if self.on_save:
+            saved = self.on_save(level)
+            if saved is False:
+                return
+            self.level_id = level.level_id
+            self.storage_path = level.storage_path
             self.original_grid = trimmed_grid
             self.original_name = level_name
-            self.on_save(level)
 
     def draw(self) -> None:
         """Draw the entire editor interface including sidebar, tools, and grid."""
@@ -808,32 +805,49 @@ class LevelEditor:
 
     def _playtest_level(self) -> None:
         """Validate grid layout and request a playtest session."""
-        from ..utils.i18n import t
-
-        has_player = any(CellType.PLAYER in row for row in self.grid)
-        if not has_player:
-            self.show_status(t("editor.status_error_player"))
-            return
-
-        box_count = sum(row.count(CellType.BOX) for row in self.grid)
-        target_count = sum(row.count(CellType.TARGET) for row in self.grid)
-
-        if box_count == 0:
-            self.show_status(t("editor.status_error_box"))
-            return
-        if box_count != target_count:
-            self.show_status(
-                t("editor.status_error_playtest_counts").format(
-                    box_count=box_count, target_count=target_count
-                )
-            )
-            return
-
         level_name = self.name_input.text.strip() or "Play Test"
         trimmed_grid = [row[:] for row in self.grid]
-        level = Level(level_name, trimmed_grid)
+        level = self._create_validated_level(level_name, trimmed_grid)
+        if level is None:
+            return
         if self.on_playtest:
             self.on_playtest(level)
+
+    def _create_validated_level(
+        self,
+        name: str,
+        grid: list[list[int]],
+        level_id: Optional[str] = None,
+        storage_path: Optional[Path] = None,
+    ) -> Optional[Level]:
+        """Build an editor level only when it satisfies the shared model contract."""
+        from ..utils.i18n import t
+
+        try:
+            level = Level(
+                name,
+                grid,
+                level_id=level_id,
+                source="custom",
+                storage_path=storage_path,
+            )
+            level.validate_structure()
+        except (TypeError, ValueError) as error:
+            reason = str(error).casefold()
+            if "player" in reason:
+                message = t("editor.status_error_player")
+            elif "goal" in reason and "box" not in reason:
+                message = t("editor.status_error_goal")
+            elif "box" in reason:
+                message = t("editor.status_error_counts").format(
+                    box_count=sum(row.count(CellType.BOX) for row in grid),
+                    target_count=sum(row.count(CellType.TARGET) for row in grid),
+                )
+            else:
+                message = t("editor.status_error_invalid_level")
+            self.show_status(message)
+            return None
+        return level
 
     def _draw_confirm_dialog(self) -> None:
         """Draw a beautiful confirmation overlay dialog."""

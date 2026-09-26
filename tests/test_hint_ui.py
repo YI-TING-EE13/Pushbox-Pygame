@@ -23,6 +23,7 @@ def app() -> GameApp:
     app_instance.controller.config.set("show_tutorial", False)
     app_instance.current_screen = "game"
     app_instance.controller.load_level("Level 1")
+    app_instance.controller.set_gameplay_active(True)
     return app_instance
 
 

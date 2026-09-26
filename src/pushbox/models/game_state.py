@@ -56,6 +56,7 @@ class GameState:
         Args:
             level: Level to play.
         """
+        level.validate_structure()
         self.level = level
         self.level.reset()
         self.status = GameStateEnum.PLAYING
@@ -63,7 +64,6 @@ class GameState:
         self.redo_stack: list[MoveCommand] = []
         self.move_count = 0
         self.push_count = 0
-        self.start_time = time.time()
         self.elapsed_time = 0.0
 
     def reset(self) -> None:
@@ -74,13 +74,12 @@ class GameState:
         self.redo_stack.clear()
         self.move_count = 0
         self.push_count = 0
-        self.start_time = time.time()
         self.elapsed_time = 0.0
 
-    def update_time(self) -> None:
-        """Update elapsed time."""
+    def update_time(self, delta_seconds: float) -> None:
+        """Add active gameplay time using a caller-provided frame delta."""
         if self.status == GameStateEnum.PLAYING:
-            self.elapsed_time = time.time() - self.start_time
+            self.elapsed_time += max(0.0, delta_seconds)
 
     def get_formatted_time(self) -> str:
         """Get formatted elapsed time string.
@@ -137,7 +136,9 @@ class GameState:
 
         return False
 
-    def _execute_move(self, pr: int, pc: int, nr: int, nc: int) -> None:
+    def _execute_move(
+        self, pr: int, pc: int, nr: int, nc: int, clear_redo: bool = True
+    ) -> None:
         """Execute a simple player move.
 
         Args:
@@ -147,7 +148,8 @@ class GameState:
         # Record move
         command = MoveCommand((pr, pc), (nr, nc))
         self.move_history.append(command)
-        self.redo_stack.clear()
+        if clear_redo:
+            self.redo_stack.clear()
         self.move_count += 1
 
         # Update grid
@@ -165,7 +167,14 @@ class GameState:
             self.move_history.pop(0)
 
     def _execute_push(
-        self, pr: int, pc: int, br: int, bc: int, nbr: int, nbc: int
+        self,
+        pr: int,
+        pc: int,
+        br: int,
+        bc: int,
+        nbr: int,
+        nbc: int,
+        clear_redo: bool = True,
     ) -> None:
         """Execute a push move.
 
@@ -177,7 +186,8 @@ class GameState:
         # Record move
         command = MoveCommand((pr, pc), (br, bc), (br, bc), (nbr, nbc))
         self.move_history.append(command)
-        self.redo_stack.clear()
+        if clear_redo:
+            self.redo_stack.clear()
         self.move_count += 1
         self.push_count += 1
 
@@ -278,6 +288,7 @@ class GameState:
                 command.box_from[1],
                 command.box_to[0],
                 command.box_to[1],
+                clear_redo=False,
             )
         else:
             self._execute_move(
@@ -285,6 +296,7 @@ class GameState:
                 command.player_from[1],
                 command.player_to[0],
                 command.player_to[1],
+                clear_redo=False,
             )
 
         # Remove from history since _execute adds it

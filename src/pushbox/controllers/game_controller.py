@@ -1,6 +1,5 @@
 """Main game controller managing game flow."""
 
-import time
 from typing import Any, Callable, Optional
 
 import pygame
@@ -40,6 +39,7 @@ class GameController:
         self.input_handler = InputHandler(self.config)
         self.is_paused = False
         self.is_playtest = False
+        self.gameplay_active = False
 
         # Callbacks
         self._state_callbacks: dict[str, list[Callable[..., None]]] = {
@@ -95,10 +95,13 @@ class GameController:
         if not level:
             return False
 
+        level.validate_structure()
+        gameplay_was_active = self.gameplay_active
         self.current_level = level
         self.game_state = GameState(level)
         self.is_paused = False
         self.is_playtest = False
+        self.gameplay_active = gameplay_was_active
         self.input_handler.clear_input_state()
         return True
 
@@ -109,10 +112,13 @@ class GameController:
             level: Level instance to load.
             is_playtest: Whether this is a playtest session.
         """
+        level.validate_structure()
+        gameplay_was_active = self.gameplay_active
         self.current_level = level
         self.game_state = GameState(level)
         self.is_paused = False
         self.is_playtest = is_playtest
+        self.gameplay_active = gameplay_was_active
         self.input_handler.clear_input_state()
 
     def get_current_level_name(self) -> Optional[str]:
@@ -137,7 +143,7 @@ class GameController:
         Args:
             direction: Direction tuple (dr, dc).
         """
-        if not self.game_state or self.is_paused:
+        if not self.gameplay_active or not self.game_state or self.is_paused:
             return
 
         # Determine if a push is possible prior to the move
@@ -193,7 +199,11 @@ class GameController:
         # Update save data
         stats = self.game_state.get_stats()
         is_record = False
-        if not self.is_playtest and self.current_level.name != "Level 0":
+        if (
+            not self.is_playtest
+            and self.current_level.source == "builtin"
+            and self.current_level.name != "Level 0"
+        ):
             is_record = self.save_manager.update_level_progress(
                 self.current_level.name,
                 stats["moves"],
@@ -206,7 +216,7 @@ class GameController:
 
     def _on_undo(self) -> None:
         """Handle undo input."""
-        if self.is_paused:
+        if not self.gameplay_active or self.is_paused:
             return
         if self.game_state and self.game_state.move_history:
             command = self.game_state.move_history[-1]
@@ -216,7 +226,7 @@ class GameController:
 
     def _on_redo(self) -> None:
         """Handle redo input."""
-        if self.is_paused:
+        if not self.gameplay_active or self.is_paused:
             return
         if self.game_state and self.game_state.redo_stack:
             command = self.game_state.redo_stack[-1]
@@ -226,6 +236,8 @@ class GameController:
 
     def _on_reset(self) -> None:
         """Handle reset input."""
+        if not self.gameplay_active:
+            return
         self.is_paused = False
         self.input_handler.clear_input_state()
         if self.game_state:
@@ -261,29 +273,36 @@ class GameController:
         Returns:
             True if event was handled.
         """
+        if not self.gameplay_active:
+            return False
         return self.input_handler.handle_event(event)
 
     def toggle_pause(self) -> None:
         """Toggle the pause state of the game."""
-        if not self.game_state or self.game_state.status != GameStateEnum.PLAYING:
+        if (
+            not self.gameplay_active
+            or not self.game_state
+            or self.game_state.status != GameStateEnum.PLAYING
+        ):
             return
 
         self.is_paused = not self.is_paused
         self.input_handler.clear_input_state()
 
-        if self.is_paused:
-            self._pause_start_time = time.time()
-        else:
-            if hasattr(self, "_pause_start_time"):
-                pause_duration = time.time() - self._pause_start_time
-                self.game_state.start_time += pause_duration
+    def set_gameplay_active(self, active: bool) -> None:
+        """Mark whether the game screen is currently active."""
+        self.gameplay_active = active
+        if not active:
+            self.input_handler.clear_input_state()
 
-    def update(self) -> None:
-        """Update game state."""
+    def update(self, delta_seconds: float = 0.0) -> None:
+        """Update active gameplay using an injected frame delta."""
+        if not self.gameplay_active:
+            return
+
         self.input_handler.update()
-
         if self.game_state and not self.is_paused:
-            self.game_state.update_time()
+            self.game_state.update_time(delta_seconds)
 
     def get_control_scheme(self) -> str:
         """Get current control scheme name.

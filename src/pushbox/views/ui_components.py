@@ -103,12 +103,19 @@ class ModernButton:
                 screen.blit(title_surf, title_rect)
 
                 if self.is_locked:
-                    sub_text = "未解鎖"
+                    from ..utils.i18n import t
+
+                    sub_text = t("level_selector.locked")
                     sub_color: ColorLike = (100, 100, 105)
                 else:
                     diff = self.metadata.get("difficulty", "")
                     boxes = self.metadata.get("boxes", 0)
-                    sub_text = f"{diff} · {boxes} boxes"
+                    from ..utils.i18n import t
+
+                    translated_diff = t(f"difficulty.{diff}")
+                    sub_text = (
+                        f"{translated_diff} · {boxes} {t('level_selector.boxes')}"
+                    )
                     sub_color = COLORS["text_dim"]
                 sub_surf = self.small_font.render(sub_text, True, sub_color)
                 sub_rect = sub_surf.get_rect(
@@ -172,7 +179,12 @@ class InputBox:
         """Render text value or default placeholders to screen surfaces."""
         if self.font:
             # Handle empty text prompt
-            display_text = self.text if self.text else "請輸入或貼上..."
+            if self.text:
+                display_text = self.text
+            else:
+                from ..utils.i18n import t
+
+                display_text = t("input.placeholder")
             color = COLORS["text_main"] if self.text else COLORS["text_dim"]
             self.txt_surface = self.font.render(display_text, True, color)
 
@@ -300,6 +312,7 @@ class Menu:
         current_level: Optional[str] = None,
         progress: Optional[dict] = None,
         draw_bg_callback: Optional[Callable[[], None]] = None,
+        campaign_level_names: Optional[list[str]] = None,
     ) -> None:
         """Render the complete main menu screen, titles, and buttons."""
         self.screen.fill(COLORS["background"])
@@ -327,25 +340,38 @@ class Menu:
             self.screen.blit(title_surface, title_rect)
 
         # Draw completion progress indicator
-        if progress and self.font:
+        if self.font:
+            from ..utils.i18n import t
+
+            campaign_names = campaign_level_names
+            if campaign_names is None:
+                campaign_names = list(DEFAULT_LEVEL_METADATA)
+            progress = progress or {}
             completed_count = sum(
-                1
-                for lvl, data in progress.items()
-                if data.get("completed") and not lvl.startswith("Custom_")
+                1 for lvl in campaign_names if progress.get(lvl, {}).get("completed")
             )
-            total_count = 30
-            if level_names:
-                total_count = sum(
-                    1 for lvl in level_names if not lvl.startswith("Custom_")
-                )
-            progress_text = f"★ {completed_count} / {total_count} 關"
+            total_count = len(campaign_names)
+            progress_text = t("main_menu.progress").format(
+                completed=completed_count, total=total_count
+            )
             progress_surf = self.font.render(progress_text, True, COLORS["warning"])
             progress_rect = progress_surf.get_rect(centerx=center_x, y=115)
             self.screen.blit(progress_surf, progress_rect)
 
-        # Hide current level pill if it's not selected / None / "未選擇" / empty
-        if current_level and current_level not in ["未選擇", "None", ""] and self.font:
-            text = f"當前關卡: {current_level}"
+        from ..utils.i18n import t
+
+        # Hide the current level pill when the selection is empty.
+        if (
+            current_level
+            and current_level
+            not in [
+                t("main_menu.unselected"),
+                "None",
+                "",
+            ]
+            and self.font
+        ):
+            text = t("main_menu.current_level").format(name=current_level)
             text_surf = self.font.render(text, True, COLORS["text_highlight"])
             pill_rect = text_surf.get_rect()
             pill_rect.inflate_ip(30, 10)
@@ -631,8 +657,11 @@ class LevelSelector:
             x = start_x + col * (button_width + spacing_x)
             y = start_y + row * (button_height + spacing_y)
 
+            level = self.level_manager.get_level(level_name)
             is_custom = (
-                level_name.startswith("Custom") or level_name not in default_level_names
+                level.source == "custom"
+                if level is not None
+                else level_name not in default_level_names
             )
 
             is_locked = False
@@ -1332,11 +1361,11 @@ class LevelSelector:
 
         except LevelShareError as e:
             self.import_error_message = str(e)
-        except Exception as e:
+        except Exception:
             from ..utils.i18n import t
 
             self.import_error_message = t("custom_level.import_fail").format(
-                error=str(e)
+                error=t("custom_level.import_unknown_error")
             )
 
     def _draw_import_dialog(self) -> None:

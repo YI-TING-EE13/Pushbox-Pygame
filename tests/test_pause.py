@@ -1,9 +1,10 @@
 import os
 import sys
-import time
 
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from level_fixtures import with_isolated_objectives
 
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.game_state import GameState
@@ -16,9 +17,10 @@ def test_pause_toggle_during_playing():
     """Test that toggle_pause switches is_paused during PLAYING state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     assert controller.game_state.status == GameStateEnum.PLAYING
     assert not controller.is_paused
@@ -36,9 +38,10 @@ def test_pause_blocked_during_non_playing():
     """Test that toggle_pause does not enter pause in WON or GAME_OVER state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Test WON state blocking pause
     controller.game_state.status = GameStateEnum.WON
@@ -55,9 +58,10 @@ def test_pause_blocks_movement_and_resume_restores_it():
     """Test that movement input is ignored during pause and restored after resume."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     # Move normally
     controller._on_move((0, 1))
@@ -80,47 +84,41 @@ def test_pause_blocks_movement_and_resume_restores_it():
 
 
 def test_pause_freezes_timer_and_offset_adjusts():
-    """Test timer update suspension under pause and offset adjustment."""
+    """Test timer updates only with supplied active gameplay deltas."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
 
-    # Start and wait briefly
-    time.sleep(0.05)
-    controller.update()
+    controller.set_gameplay_active(True)
+    controller.update(0.1)
     t1 = controller.game_state.elapsed_time
-    assert t1 > 0
+    assert t1 == 0.1
 
-    # Pause and update
     controller.toggle_pause()
-    time.sleep(0.05)
-    controller.update()
+    controller.update(0.5)
     t2 = controller.game_state.elapsed_time
-    # Time must not increment when paused
     assert t2 == t1
 
-    # Resume and update
     controller.toggle_pause()
-    time.sleep(0.05)
-    controller.update()
+    controller.update(0.25)
     t3 = controller.game_state.elapsed_time
-    # Time must resume incrementing
-    assert t3 > t2
-    # The elapsed time should not include the pause duration (less than total time)
-    # Total physical time elapsed from start: > 0.15s,
-    # but elapsed_time should be around 0.1s because we paused for 0.05s
-    assert t3 < 0.13
+    assert t3 == 0.35
+
+    controller.set_gameplay_active(False)
+    controller.update(3.0)
+    assert controller.game_state.elapsed_time == t3
 
 
 def test_reset_exits_pause():
     """Test that resetting the level clears the pause state."""
     controller = GameController()
     grid = [[1, 1, 1, 1, 1], [1, 4, 0, 0, 1], [1, 1, 1, 1, 1]]
-    level = Level("Test Level", grid)
+    level = Level("Test Level", with_isolated_objectives(grid))
     controller.current_level = level
     controller.game_state = GameState(level)
+    controller.set_gameplay_active(True)
 
     controller.toggle_pause()
     assert controller.is_paused

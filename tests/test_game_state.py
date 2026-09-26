@@ -3,6 +3,8 @@
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.pushbox.models.game_state import GameState, MoveCommand
@@ -16,7 +18,31 @@ from src.pushbox.utils.constants import GameState as GameStateEnum
 
 
 def _make_game(grid: list[list[int]]) -> GameState:
-    """Create a GameState from a small grid."""
+    """Create a GameState from a fixture with an isolated valid objective."""
+    grid = [row[:] for row in grid]
+    player_count = sum(row.count(CellType.PLAYER) for row in grid)
+    box_count = sum(row.count(CellType.BOX) for row in grid)
+    goal_count = sum(row.count(CellType.TARGET) for row in grid)
+    if player_count == 1 and (box_count != goal_count or box_count == 0):
+        missing_boxes = max(0, goal_count - box_count)
+        missing_goals = max(0, box_count - goal_count)
+        if box_count == 0 and goal_count == 0:
+            missing_boxes = 1
+            missing_goals = 1
+        original_rows = len(grid)
+        original_cols = len(grid[0])
+        added_cells = [CellType.BOX] * missing_boxes + [CellType.TARGET] * missing_goals
+        expanded = [
+            [CellType.WALL] * (original_cols + len(added_cells) + 3)
+            for _ in range(original_rows + 4)
+        ]
+        for row_index, row in enumerate(grid):
+            expanded[row_index][:original_cols] = row
+        room_row = original_rows + 1
+        room_col = original_cols + 1
+        for offset, cell in enumerate(added_cells):
+            expanded[room_row][room_col + offset] = cell
+        grid = expanded
     return GameState(Level("Test", grid))
 
 
@@ -216,12 +242,12 @@ class TestPush:
         assert game.level.get_cell(1, 3) == CellType.BOX_ON_TARGET
 
     def test_push_box_on_target_off_target(self):
-        """Pushing a BOX_ON_TARGET off a target should turn it back to BOX."""
+        """A box pushed off a target is restored to an ordinary box."""
         game = _make_game(
             [
-                [1, 1, 1, 1, 1, 1],
-                [1, 4, 0, 5, 0, 1],
-                [1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 2, 0, 3, 2, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
             ]
         )
         # Move right to be next to box_on_target
@@ -364,6 +390,19 @@ class TestDeadlock:
         # but open above (1,4) => only one wall axis => not deadlocked
         game.move((0, 1))
         assert game.status == GameStateEnum.PLAYING
+
+    def test_malformed_one_box_two_targets_does_not_win(self):
+        with pytest.raises(ValueError, match="matching"):
+            GameState(
+                Level(
+                    "Malformed",
+                    [
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 4, 3, 2, 0, 2, 1],
+                        [1, 1, 1, 1, 1, 1, 1],
+                    ],
+                )
+            )
 
     def test_undo_from_game_over_recovers(self):
         """Undo from GAME_OVER should restore PLAYING status."""
@@ -512,6 +551,48 @@ class TestRedo:
         assert game.redo() is True
         assert game.level.get_player_position() == (1, 2)
         assert game.move_count == 1
+
+    def test_multiple_redos_preserve_remaining_redo_stack(self):
+        game = _make_game(
+            [
+                [1, 1, 1, 1, 1],
+                [1, 4, 0, 0, 1],
+                [1, 1, 1, 1, 1],
+            ]
+        )
+        game.move((0, 1))
+        game.move((0, 1))
+        game.undo()
+        game.undo()
+
+        assert game.redo() is True
+        assert game.level.get_player_position() == (1, 2)
+        assert len(game.redo_stack) == 1
+        assert game.redo() is True
+        assert game.level.get_player_position() == (1, 3)
+        assert game.redo_stack == []
+        assert game.move_count == 2
+
+    def test_multiple_push_redos_preserve_remaining_redo_stack(self):
+        game = _make_game(
+            [
+                [1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 0, 0, 1],
+                [1, 1, 1, 1, 1, 1],
+            ]
+        )
+        game.move((0, 1))
+        game.move((0, 1))
+        game.undo()
+        game.undo()
+
+        assert game.redo() is True
+        assert game.level.get_cell(1, 3) == CellType.BOX
+        assert len(game.redo_stack) == 1
+        assert game.redo() is True
+        assert game.level.get_cell(1, 4) == CellType.BOX
+        assert game.redo_stack == []
+        assert game.push_count == 2
 
     def test_redo_push(self):
         game = _make_game(

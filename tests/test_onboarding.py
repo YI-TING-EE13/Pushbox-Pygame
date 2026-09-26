@@ -44,6 +44,7 @@ def test_level_0_win_does_not_save():
 
     # Load Level 0
     controller.load_level("Level 0")
+    controller.set_gameplay_active(True)
     assert controller.get_current_level_name() == "Level 0"
 
     # Manually trigger win

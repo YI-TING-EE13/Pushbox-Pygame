@@ -383,6 +383,36 @@ gantt
 
 ---
 
+### 2026-09-26 — v1.0.0 Review Remediation
+- [x] Custom levels use persistent IDs and isolated storage paths; legacy files are loaded deterministically, validated, and migrated after a successful write.
+- [x] Custom grids require one player and matching non-zero box/target counts. Completion checks every target and rejects extra boxes or mismatched runtime grids.
+- [x] Editor exits, including window close and Ctrl+Q, use the unsaved-changes confirmation. Gameplay time advances from active frame deltas and stays frozen while paused or off-screen; returning from Settings preserves the paused game.
+- [x] Multi-step Redo preserves its remaining history. Built-in campaign progress is classified by level source, and the animation preference gates gameplay effects and screen fades.
+- [x] Main-menu and level-sharing feedback use the selected UI language.
+- **Verification**: 288 tests passed; Ruff check and format check passed; MyPy passed for `src/`. A headless Pygame screen-render smoke test passed.
+
+### 2026-09-26 — Independent Requalification Follow-up
+- [x] New custom levels keep distinct persistent IDs; case-insensitive name conflicts fail cleanly, and resaving a loaded level preserves its ID.
+- [x] Legacy migration writes a staged version and a transaction marker before removing the committed legacy file. A prepared transaction with the legacy file present loads the legacy version; once the legacy file is removed, restart recovery loads the staged or promoted version by the same logical ID.
+- [x] Conflicting unmarked files with the same logical ID are preserved and excluded from loading rather than guessed by filename; same-name levels with distinct IDs remain independent.
+- [x] Custom JSON grids are checked for shape and exact integer cell types before NumPy conversion; booleans, floats, strings, nulls, and unsupported tile integers are skipped through the invalid-level path.
+- [x] One structural validator now governs custom loading, editor save/test-play, and gameplay construction; malformed states cannot report completion.
+- [x] Dirty editor drafts remain protected during test-play window close and Ctrl+Q; cancel restores test-play, pause, and transition state. Gameplay mutation stops as soon as a navigation transition disables the session.
+- [x] Restored Python 3.9-compatible annotations in `main.py`; share import name generation now uses the same case-insensitive comparison as persistence.
+- **Verification**: 312 tests passed on Python 3.12.11; Ruff, format check, MyPy, and `git diff --check` passed. Python 3.9.19 headless startup and targeted assertions passed; `main` imports also passed on Python 3.9.21 and 3.9.23. The Python 3.9 environments do not have pytest, and the project environment's pytest 9.0.2 requires Python 3.10+. Python 3.10/3.11 environments lack Pygame. Default uv-cache access was denied; the full suite passed with an isolated uv cache and `--no-sync`.
+
+### 2026-09-26 — Final Requalification Remediation
+- [x] Legacy edits use a staged file and migration marker; restart loads the old version while it remains committed, and rolls forward from the staged version after legacy removal.
+- [x] Custom JSON grid shape and exact integer cell types are validated before NumPy conversion. Boolean, float, string, null, and out-of-range cells are rejected without partially loading a level.
+- [x] Custom-level deletion resolves persistence artifacts by logical ID. Prepared migrations remove pending data and the marker before deleting the authoritative legacy file; committed staged/canonical representations are removed before their marker so restart cannot resurrect a deleted level.
+- **Verification**: 329 tests passed with Python 3.12.11; Ruff check, Ruff format check, MyPy, and `git diff --check` passed. Prepared and committed-staged deletion restart probes passed on Python 3.9.19, 3.9.21, and 3.9.23 using temporary level directories.
+
+### 2026-09-26 — Delete Commit Semantics Remediation
+- [x] Once deletion removes the final loader-recoverable representation, failure to remove its migration marker is treated as post-commit residue: the in-memory entry is removed and deletion succeeds. Marker-only state blocks the ID during restart; pre-commit cleanup failures remain errors.
+- **Verification**: 331 tests passed with Python 3.12.11; Ruff check, Ruff format check, and MyPy passed. Python 3.9.19 persistence smoke verified post-commit marker failures for staged/canonical representations and pre-commit representation failure behavior.
+
+---
+
 ## 5. Deferred / Not for v1.0.0
 
 為確保 `v1.0.0` 能夠在短期內高規格收尾發布，以下高複雜度或需遠端網路支援的項目**明確列為暫緩**，不在 v1.0.0 考慮範圍內：

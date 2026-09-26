@@ -2,6 +2,7 @@
 
 import pytest
 
+from src.pushbox.utils import i18n
 from src.pushbox.utils.level_share import (
     LevelShareError,
     deduplicate_level_name,
@@ -9,6 +10,15 @@ from src.pushbox.utils.level_share import (
     import_level_from_code,
     sanitize_level_name,
 )
+
+
+@pytest.fixture(autouse=True)
+def english_error_messages():
+    """Keep translation-sensitive exception assertions deterministic."""
+    previous_language = i18n.get_language()
+    i18n.set_language("en")
+    yield
+    i18n.set_language(previous_language)
 
 
 def test_round_trip_success() -> None:
@@ -30,15 +40,29 @@ def test_round_trip_success() -> None:
     assert payload["grid"] == grid
 
 
+@pytest.mark.parametrize(
+    ("requested", "existing", "expected"),
+    [
+        ("foo", ["Foo"], "foo (2)"),
+        ("FOO", ["foo", "FOO (2)"], "FOO (3)"),
+        ("Level 1", [], "Level 1 (2)"),
+    ],
+)
+def test_name_dedup_uses_case_insensitive_persistence_equivalence(
+    requested: str, existing: list[str], expected: str
+) -> None:
+    assert deduplicate_level_name(requested, existing) == expected
+
+
 def test_invalid_prefix() -> None:
     """Verify that a code without the PBX_ prefix raises an error."""
-    with pytest.raises(LevelShareError, match="必須以 PBX_ 開頭"):
+    with pytest.raises(LevelShareError, match="must start with PBX_"):
         import_level_from_code("INVALID_CODE_XYZ")
 
 
 def test_invalid_base64_format() -> None:
     """Verify that a non-base64 code raises an error."""
-    with pytest.raises(LevelShareError, match="無法進行 Base64 解碼"):
+    with pytest.raises(LevelShareError, match="Base64 decoding failed"):
         import_level_from_code("PBX_!!!notbase64!!!")
 
 
@@ -48,7 +72,7 @@ def test_invalid_zlib_decompression() -> None:
 
     bad_bytes = b"Some plain text, not compressed by zlib"
     bad_b64 = base64.b64encode(bad_bytes).decode("ascii")
-    with pytest.raises(LevelShareError, match="無法進行 zlib 解壓縮"):
+    with pytest.raises(LevelShareError, match="decompression failed"):
         import_level_from_code(f"PBX_{bad_b64}")
 
 
@@ -59,7 +83,7 @@ def test_invalid_json_format() -> None:
 
     compressed = zlib.compress(b"{bad json, missing brackets")
     bad_b64 = base64.b64encode(compressed).decode("ascii")
-    with pytest.raises(LevelShareError, match="無法進行 JSON 解析"):
+    with pytest.raises(LevelShareError, match="JSON parsing failed"):
         import_level_from_code(f"PBX_{bad_b64}")
 
 
@@ -77,14 +101,14 @@ def test_schema_mismatch() -> None:
     json_bytes = json.dumps(bad_payload).encode("utf-8")
     compressed = zlib.compress(json_bytes)
     b64 = base64.b64encode(compressed).decode("ascii")
-    with pytest.raises(LevelShareError, match="不支援此分享碼的版本"):
+    with pytest.raises(LevelShareError, match="version is not supported"):
         import_level_from_code(f"PBX_{b64}")
 
 
 def test_code_length_limit() -> None:
     """Verify that sharing code string exceeding 20000 chars is rejected."""
     long_code = "PBX_" + "A" * 20001
-    with pytest.raises(LevelShareError, match="分享碼過長或資料過大"):
+    with pytest.raises(LevelShareError, match="too large"):
         import_level_from_code(long_code)
 
 
@@ -98,7 +122,7 @@ def test_empty_grid_rejected() -> None:
 
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="網格不可為空"):
+    with pytest.raises(LevelShareError, match="grid is empty"):
         import_level_from_code(code)
 
 
@@ -119,7 +143,7 @@ def test_non_rectangular_grid_rejected() -> None:
     payload = {"schema": "pushbox-level-share-v1", "name": name, "grid": grid}
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="網格必須是矩形"):
+    with pytest.raises(LevelShareError, match="must be rectangular"):
         import_level_from_code(code)
 
 
@@ -140,7 +164,7 @@ def test_dimension_bounds() -> None:
     payload = {"schema": "pushbox-level-share-v1", "name": "Under", "grid": under_grid}
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="地圖尺寸需在 5x5 到 20x20 之間"):
+    with pytest.raises(LevelShareError, match="dimensions must be 5x5 to 20x20"):
         import_level_from_code(code)
 
 
@@ -160,7 +184,7 @@ def test_illegal_cell_value() -> None:
     payload = {"schema": "pushbox-level-share-v1", "name": "IllegalCell", "grid": grid}
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="包含非法物件值 5"):
+    with pytest.raises(LevelShareError, match="illegal cell value 5"):
         import_level_from_code(code)
 
 
@@ -185,7 +209,7 @@ def test_player_count() -> None:
     }
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="必須恰好只有 1 位玩家"):
+    with pytest.raises(LevelShareError, match="Exactly one player is required"):
         import_level_from_code(code)
 
     # Scenario B: Multiple players
@@ -199,7 +223,7 @@ def test_player_count() -> None:
     payload["grid"] = grid_multi_player
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="必須恰好只有 1 位玩家"):
+    with pytest.raises(LevelShareError, match="Exactly one player is required"):
         import_level_from_code(code)
 
 
@@ -220,7 +244,7 @@ def test_box_and_target_counts() -> None:
     payload = {"schema": "pushbox-level-share-v1", "name": "NoBox", "grid": grid_no_box}
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="至少需要一個箱子"):
+    with pytest.raises(LevelShareError, match="at least one box is required"):
         import_level_from_code(code)
 
     # Scenario B: Boxes != Targets
@@ -234,7 +258,9 @@ def test_box_and_target_counts() -> None:
     payload["grid"] = grid_unbalanced
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="箱子\\(2\\)與目標\\(1\\)數量需一致"):
+    with pytest.raises(
+        LevelShareError, match="Boxes \\(2\\) and targets \\(1\\) must match"
+    ):
         import_level_from_code(code)
 
 
@@ -258,7 +284,7 @@ def test_perimeter_enclosure() -> None:
     }
     json_bytes = json.dumps(payload).encode("utf-8")
     code = "PBX_" + base64.b64encode(zlib.compress(json_bytes)).decode("ascii")
-    with pytest.raises(LevelShareError, match="外圍邊界必須完全封閉為牆壁"):
+    with pytest.raises(LevelShareError, match="Outer border must be sealed with walls"):
         import_level_from_code(code)
 
 

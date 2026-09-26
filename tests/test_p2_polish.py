@@ -7,6 +7,8 @@ import pytest
 # Add the project root to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from level_fixtures import with_isolated_objectives
+
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.level import Level
 from src.pushbox.utils.constants import CellType
@@ -28,7 +30,7 @@ def test_game_controller_load_level_instance():
     """Test load_level_instance and is_playtest behavior in GameController."""
     controller = GameController()
     grid = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-    level = Level("Test Playtest Level", grid)
+    level = Level("Test Playtest Level", with_isolated_objectives(grid))
 
     # 1. Load instance without playtest
     controller.load_level_instance(level, is_playtest=False)
@@ -38,6 +40,7 @@ def test_game_controller_load_level_instance():
 
     # 2. Load instance with playtest
     controller.load_level_instance(level, is_playtest=True)
+    controller.set_gameplay_active(True)
     assert controller.current_level == level
     assert controller.is_playtest is True
 
@@ -61,6 +64,7 @@ def test_playtest_does_not_save_progress():
     grid = [[1, 1, 1, 1], [1, 4, 3, 2], [1, 1, 1, 1]]
     level = Level("Win Test", grid)
     controller.load_level_instance(level, is_playtest=True)
+    controller.set_gameplay_active(True)
 
     # Move right to push box to target and win
     controller._on_move((0, 1))
@@ -81,8 +85,9 @@ def test_invalid_move_event_trigger():
     controller.register_callback("invalid_move", on_invalid_move)
 
     grid = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-    level = Level("Invalid Test", grid)
+    level = Level("Invalid Test", with_isolated_objectives(grid))
     controller.load_level_instance(level, is_playtest=False)
+    controller.set_gameplay_active(True)
 
     # Move into wall (invalid)
     controller._on_move((0, 1))

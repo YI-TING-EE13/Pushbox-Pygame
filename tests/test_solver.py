@@ -7,6 +7,7 @@ import numpy as np
 from src.pushbox.models.game_state import GameState
 from src.pushbox.models.level import Level
 from src.pushbox.models.solver import SolverStatus, is_dead_corner, solve
+from src.pushbox.utils.constants import CellType
 
 
 def verify_replay(initial_level: Level, path: list[tuple[int, int]]) -> bool:
@@ -20,7 +21,21 @@ def verify_replay(initial_level: Level, path: list[tuple[int, int]]) -> bool:
         True if all actions were valid and led to a won/completed state.
     """
     level_copy = copy.deepcopy(initial_level)
+    runtime_grid = level_copy.grid.copy()
+    presolved_positions = np.argwhere(level_copy.initial_grid == CellType.BOX_ON_TARGET)
+    if len(presolved_positions):
+        starting_grid = level_copy.initial_grid.copy()
+        starting_grid[starting_grid == CellType.BOX_ON_TARGET] = CellType.TARGET
+        empty_positions = np.argwhere(starting_grid == CellType.EMPTY)
+        if len(empty_positions) < len(presolved_positions):
+            return False
+        for row, col in empty_positions[: len(presolved_positions)]:
+            starting_grid[row, col] = CellType.BOX
+        level_copy = Level(initial_level.name, starting_grid)
+
     state = GameState(level_copy)
+    if len(presolved_positions):
+        state.level.grid = runtime_grid
 
     for action in path:
         success = state.move(action)

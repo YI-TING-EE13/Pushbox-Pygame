@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pygame
 import pytest
+from level_fixtures import with_isolated_objectives
 
 from src.pushbox.controllers.game_controller import GameController
 from src.pushbox.models.level import Level
@@ -42,7 +43,7 @@ def mock_level() -> Level:
         ]
     )
     # Player at (1, 1), Box at (1, 3), Target at (2, 2)
-    lvl = Level("TestLevel", grid)
+    lvl = Level("TestLevel", with_isolated_objectives(grid))
     return lvl
 
 
@@ -52,6 +53,7 @@ def test_successful_move_calls_play_move(
     """Verify that a normal successful move plays move.wav only."""
     controller = GameController()
     controller.load_level_instance(mock_level)
+    controller.set_gameplay_active(True)
 
     # Move Down (1, 1) -> (2, 1) which is empty floor (0)
     # direction Down is (1, 0)
@@ -66,6 +68,7 @@ def test_invalid_move_calls_play_bump(mock_audio: MagicMock, mock_level: Level) 
     """Verify that an invalid move (hitting wall) plays bump.wav only."""
     controller = GameController()
     controller.load_level_instance(mock_level)
+    controller.set_gameplay_active(True)
 
     # Move Left (1, 1) -> (1, 0) which is a wall (1)
     controller._on_move((0, -1))
@@ -92,9 +95,10 @@ def test_successful_push_calls_play_push_only(
             [0, 0, 0, 0, 0],
         ]
     )
-    lvl = Level("PushLevel", grid)
+    lvl = Level("PushLevel", with_isolated_objectives(grid))
     controller = GameController()
     controller.load_level_instance(lvl)
+    controller.set_gameplay_active(True)
 
     # Move Right (1, 1) -> (1, 2) which is a box, pushing it to (1, 3)
     controller._on_move((0, 1))
@@ -121,9 +125,10 @@ def test_push_onto_target_plays_push_and_target(
             [0, 0, 0, 0, 0],
         ]
     )
-    lvl = Level("TargetPushLevel", grid)
+    lvl = Level("TargetPushLevel", with_isolated_objectives(grid))
     controller = GameController()
     controller.load_level_instance(lvl)
+    controller.set_gameplay_active(True)
 
     # Move Right (1, 1) -> (1, 2) pushing box onto target (1, 3)
     controller._on_move((0, 1))
@@ -137,6 +142,7 @@ def test_undo_success_calls_play_undo(mock_audio: MagicMock, mock_level: Level) 
     """Verify that a successful undo operation triggers undo.wav."""
     controller = GameController()
     controller.load_level_instance(mock_level)
+    controller.set_gameplay_active(True)
 
     # Make a move first
     controller._on_move((1, 0))
@@ -152,6 +158,7 @@ def test_redo_success_calls_play_redo(mock_audio: MagicMock, mock_level: Level) 
     """Verify that a successful redo operation triggers redo.wav."""
     controller = GameController()
     controller.load_level_instance(mock_level)
+    controller.set_gameplay_active(True)
 
     # Make a move and undo it
     controller._on_move((1, 0))
@@ -176,9 +183,10 @@ def test_win_transition_calls_play_win_once(mock_audio: MagicMock) -> None:
             [0, 0, 0, 0, 0],
         ]
     )
-    lvl = Level("WinLevel", grid)
+    lvl = Level("WinLevel", with_isolated_objectives(grid))
     controller = GameController()
     controller.load_level_instance(lvl)
+    controller.set_gameplay_active(True)
 
     # Move box to target -> completes level and transitions to WON
     controller._on_move((0, 1))
@@ -206,6 +214,7 @@ def test_uninitialized_or_failed_audio_manager_does_not_crash(
     with patch("pygame.mixer.init", side_effect=pygame.error("Driver missing")):
         controller = GameController()
         controller.load_level_instance(mock_level)
+        controller.set_gameplay_active(True)
 
         # Confirm audio manager is disabled/failed
         assert controller.audio.is_enabled() is False
