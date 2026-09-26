@@ -371,8 +371,11 @@ class TestLevelManager:
 
         custom = Level("To Delete", VALID_CUSTOM_GRID)
         mgr.save_level(custom)
+        orphan_pending = levels_dir / f".{custom.level_id}.orphan.pending"
+        orphan_pending.write_text("stale", encoding="utf-8")
 
         assert mgr.delete_level("To Delete") is True
+        assert not orphan_pending.exists()
         assert mgr.get_level("To Delete") is None
         assert LevelManager(levels_dir=str(levels_dir)).get_level("To Delete") is None
 
@@ -758,6 +761,8 @@ class TestLevelManager:
         unrelated = Level("Unrelated", VALID_CUSTOM_GRID)
         manager.save_level(unrelated)
         unrelated_id = unrelated.level_id
+        unrelated_pending = levels_dir / f".{unrelated_id}.orphan.pending"
+        unrelated_pending.write_text("unrelated", encoding="utf-8")
         original = manager.get_level("Legacy Name")
         assert original is not None
         original_id = original.level_id
@@ -791,7 +796,9 @@ class TestLevelManager:
 
         marker_path = levels_dir / f".{original_id}.migration"
         assert legacy_path.exists()
-        staged_representations = list(levels_dir.glob("*.pending"))
+        staged_representations = [
+            path for path in levels_dir.glob("*.pending") if path != unrelated_pending
+        ]
         assert len(staged_representations) == 1
         assert (
             json.loads(staged_representations[0].read_text(encoding="utf-8"))["grid"]
@@ -814,7 +821,7 @@ class TestLevelManager:
         assert restored_originals[0].initial_grid.tolist() == VALID_CUSTOM_GRID
         assert restarted.get_level("Unrelated") is not None
         assert restarted.get_level("Unrelated").level_id == unrelated_id
-        assert len(list(levels_dir.glob("*.pending"))) == 1
+        assert unrelated_pending.exists()
         assert marker_path.exists()
         assert not canonical_path.exists()
 
@@ -828,6 +835,7 @@ class TestLevelManager:
         assert [level.level_id for level in remaining_custom_levels] == [unrelated_id]
         assert after_delete.get_level("Legacy Name") is None
         assert after_delete.get_level("Renamed Legacy") is None
+        assert unrelated_pending.exists()
 
     @pytest.mark.parametrize("failed_artifact", ["pending", "marker", "legacy"])
     def test_delete_failure_keeps_legacy_authoritative(

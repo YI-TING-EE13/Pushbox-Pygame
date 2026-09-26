@@ -820,6 +820,10 @@ class LevelManager:
             for level_path in self.levels_dir.glob("*.json"):
                 if self._json_file_level_id(level_path) == level_id:
                     artifacts.add(level_path)
+            pending_prefix = f".{level_id}.".casefold()
+            for pending_path in self.levels_dir.glob(".*.pending"):
+                if pending_path.name.casefold().startswith(pending_prefix):
+                    artifacts.add(pending_path)
 
             if level.storage_path is not None:
                 if level.storage_path.parent.resolve() == levels_root:
