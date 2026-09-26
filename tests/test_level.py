@@ -1130,6 +1130,74 @@ class TestLevelManager:
             level for level in restarted.levels.values() if level.level_id == logical_id
         ]
 
+    @pytest.mark.parametrize("active_kind", ["staged", "canonical"])
+    def test_delete_committed_level_succeeds_when_marker_cleanup_fails(
+        self, tmp_path, monkeypatch, active_kind
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        logical_id = uuid5(NAMESPACE_URL, f"committed-marker-residue-{active_kind}").hex
+        staged_path = levels_dir / f".{logical_id}.0123456789abcdef.pending"
+        canonical_path = levels_dir / f"{logical_id}.json"
+        active_path = staged_path if active_kind == "staged" else canonical_path
+        active_path.write_text(
+            json.dumps(
+                {
+                    "name": "Committed Level",
+                    "grid": VALID_CUSTOM_GRID,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+        marker_path = levels_dir / f".{logical_id}.migration"
+        marker_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "level_id": logical_id,
+                    "phase": "committed",
+                    "legacy": "Legacy_Only.json",
+                    "staged": staged_path.name,
+                    "canonical": canonical_path.name,
+                }
+            ),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+        assert manager.get_level("Committed Level") is not None
+        original_unlink = Path.unlink
+
+        def fail_marker_unlink(path, *args, **kwargs):
+            if path == marker_path:
+                assert not active_path.exists()
+                raise OSError("injected migration marker cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_marker_unlink)
+        assert manager.delete_level("Committed Level") is True
+
+        assert not active_path.exists()
+        assert marker_path.exists()
+        assert manager.get_level("Committed Level") is None
+        assert not [
+            level for level in manager.levels.values() if level.level_id == logical_id
+        ]
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        assert not [
+            level for level in restarted.levels.values() if level.level_id == logical_id
+        ]
+
+        monkeypatch.undo()
+        assert manager.delete_level("Committed Level") is False
+        assert marker_path.exists()
+        assert not [
+            level
+            for level in LevelManager(levels_dir=str(levels_dir)).levels.values()
+            if level.level_id == logical_id
+        ]
+
     def test_unmarked_conflicting_duplicate_id_is_not_guessed(self, tmp_path, capsys):
         levels_dir = tmp_path / "levels"
         levels_dir.mkdir()

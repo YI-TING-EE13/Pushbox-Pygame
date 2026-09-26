@@ -874,7 +874,12 @@ class LevelManager:
                 if active_path is not None:
                     remove_artifact(active_path)
                 if marker_metadata is not None:
-                    remove_artifact(marker_path)
+                    try:
+                        remove_artifact(marker_path)
+                    except OSError:
+                        # A marker without a recoverable representation blocks
+                        # its ID on restart and cannot restore the deleted level.
+                        pass
         except (OSError, TypeError, ValueError) as exc:
             raise LevelPersistenceError("The level could not be deleted.") from exc
 

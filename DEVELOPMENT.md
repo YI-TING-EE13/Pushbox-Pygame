@@ -407,6 +407,10 @@ gantt
 - [x] Custom-level deletion resolves persistence artifacts by logical ID. Prepared migrations remove pending data and the marker before deleting the authoritative legacy file; committed staged/canonical representations are removed before their marker so restart cannot resurrect a deleted level.
 - **Verification**: 329 tests passed with Python 3.12.11; Ruff check, Ruff format check, MyPy, and `git diff --check` passed. Prepared and committed-staged deletion restart probes passed on Python 3.9.19, 3.9.21, and 3.9.23 using temporary level directories.
 
+### 2026-09-26 — Delete Commit Semantics Remediation
+- [x] Once deletion removes the final loader-recoverable representation, failure to remove its migration marker is treated as post-commit residue: the in-memory entry is removed and deletion succeeds. Marker-only state blocks the ID during restart; pre-commit cleanup failures remain errors.
+- **Verification**: 331 tests passed with Python 3.12.11; Ruff check, Ruff format check, and MyPy passed. Python 3.9.19 persistence smoke verified post-commit marker failures for staged/canonical representations and pre-commit representation failure behavior.
+
 ---
 
 ## 5. Deferred / Not for v1.0.0
