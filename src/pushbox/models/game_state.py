@@ -56,6 +56,7 @@ class GameState:
         Args:
             level: Level to play.
         """
+        level.validate_structure()
         self.level = level
         self.level.reset()
         self.status = GameStateEnum.PLAYING

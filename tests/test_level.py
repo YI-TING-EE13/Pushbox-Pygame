@@ -3,13 +3,16 @@
 import json
 import os
 import sys
+from pathlib import Path
+from uuid import NAMESPACE_URL, uuid5
 
 import numpy as np
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.pushbox.models.level import Level, LevelManager
+from src.pushbox.models.game_state import GameState
+from src.pushbox.models.level import Level, LevelManager, LevelPersistenceError
 from src.pushbox.utils.constants import DEFAULT_LEVEL_METADATA, DEFAULT_LEVELS, CellType
 
 VALID_CUSTOM_GRID = [
@@ -171,23 +174,56 @@ class TestLevelCompletion:
 
     def test_complete_level_no_free_boxes(self):
         """Level is complete when no CellType.BOX exists (all are BOX_ON_TARGET)."""
-        grid = [
+        initial_grid = [
             [1, 1, 1, 1, 1],
-            [1, 4, 5, 0, 1],
+            [1, 4, 3, 2, 1],
             [1, 1, 1, 1, 1],
         ]
-        level = Level("Complete", grid)
+        level = Level("Complete", initial_grid)
+        level.grid = np.array([[1, 1, 1, 1, 1], [1, 0, 4, 5, 1], [1, 1, 1, 1, 1]])
         assert level.is_complete() is True
 
     def test_complete_level_empty_grid(self):
-        """A grid with no boxes at all is technically complete."""
+        """A level without goals or boxes is invalid and cannot be complete."""
         grid = [
             [1, 1, 1],
             [1, 4, 1],
             [1, 1, 1],
         ]
         level = Level("No Boxes", grid)
-        assert level.is_complete() is True
+        assert level.is_complete() is False
+        with pytest.raises(ValueError, match="at least one goal"):
+            level.validate_structure()
+        with pytest.raises(ValueError, match="at least one goal"):
+            GameState(level)
+
+    @pytest.mark.parametrize(
+        "grid",
+        [
+            [
+                [1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 2, 2, 1],
+                [1, 1, 1, 1, 1, 1],
+            ],
+            [
+                [1, 1, 1, 1, 1, 1],
+                [1, 4, 3, 3, 2, 1],
+                [1, 1, 1, 1, 1, 1],
+            ],
+            [
+                [1, 1, 1, 1, 1, 1],
+                [1, 4, 4, 3, 2, 1],
+                [1, 1, 1, 1, 1, 1],
+            ],
+        ],
+        ids=["one-box-two-goals", "two-boxes-one-goal", "multiple-players"],
+    )
+    def test_invalid_structure_cannot_be_complete_or_enter_gameplay(self, grid):
+        level = Level("Invalid", grid)
+
+        assert level.is_complete() is False
+        with pytest.raises(ValueError):
+            GameState(level)
 
     def test_extra_box_prevents_completion_when_all_targets_are_filled(self):
         grid = [
@@ -229,12 +265,9 @@ class TestLevelCompletion:
 
     def test_box_on_target_not_counted_as_deadlock_or_incomplete(self):
         """BOX_ON_TARGET should not trigger deadlock (it's not CellType.BOX)."""
-        grid = [
-            [1, 1, 1, 1],
-            [1, 5, 4, 1],
-            [1, 1, 1, 1],
-        ]
-        level = Level("BOT corner", grid)
+        initial_grid = [[1, 1, 1, 1, 1], [1, 2, 4, 3, 1], [1, 1, 1, 1, 1]]
+        level = Level("BOT corner", initial_grid)
+        level.grid = np.array([[1, 1, 1, 1, 1], [1, 5, 4, 0, 1], [1, 1, 1, 1, 1]])
         # BOX_ON_TARGET at (1,1) is in a corner but is_deadlocked
         # only checks CellType.BOX, not BOX_ON_TARGET
         assert level.is_deadlocked() is False
@@ -336,8 +369,7 @@ class TestLevelManager:
         levels_dir = tmp_path / "levels"
         mgr = LevelManager(levels_dir=str(levels_dir))
 
-        grid = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-        custom = Level("To Delete", grid)
+        custom = Level("To Delete", VALID_CUSTOM_GRID)
         mgr.save_level(custom)
 
         assert mgr.delete_level("To Delete") is True
@@ -511,6 +543,52 @@ class TestLevelManager:
         assert reloaded.get_level("A B").get_cell(1, 2) == CellType.BOX
         assert reloaded.get_level("A_B").get_cell(1, 3) == CellType.BOX
 
+    def test_new_same_name_level_cannot_overwrite_existing_level(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        manager = LevelManager(levels_dir=str(levels_dir))
+        first = Level("Foo", VALID_CUSTOM_GRID)
+        manager.save_level(first)
+        first_path = first.storage_path
+        original_bytes = first_path.read_bytes()
+        second_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+
+        with pytest.raises(ValueError, match="already exists"):
+            manager.save_level(Level("Foo", second_grid))
+
+        assert first_path.read_bytes() == original_bytes
+        restored = LevelManager(levels_dir=str(levels_dir)).get_level("Foo")
+        assert restored is not None
+        assert restored.level_id == first.level_id
+        assert restored.initial_grid.tolist() == VALID_CUSTOM_GRID
+
+    @pytest.mark.parametrize("second_name", ["foo", "FOO"])
+    def test_new_level_name_conflict_is_case_insensitive(self, tmp_path, second_name):
+        manager = LevelManager(levels_dir=str(tmp_path / "levels"))
+        manager.save_level(Level("Foo", VALID_CUSTOM_GRID))
+
+        with pytest.raises(ValueError, match="already exists"):
+            manager.save_level(Level(second_name, VALID_CUSTOM_GRID))
+
+    def test_loaded_level_can_be_renamed_without_changing_identity(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        manager = LevelManager(levels_dir=str(levels_dir))
+        manager.save_level(Level("Foo", VALID_CUSTOM_GRID))
+        loaded_manager = LevelManager(levels_dir=str(levels_dir))
+        loaded = loaded_manager.get_level("Foo")
+        assert loaded is not None
+        original_id = loaded.level_id
+
+        loaded.name = "Renamed Foo"
+        loaded_manager.save_level(loaded)
+
+        restored = LevelManager(levels_dir=str(levels_dir)).get_level("Renamed Foo")
+        assert restored is not None
+        assert restored.level_id == original_id
+
     def test_custom_name_cannot_replace_builtin_level(self, tmp_path):
         levels_dir = tmp_path / "levels"
         manager = LevelManager(levels_dir=str(levels_dir))
@@ -550,6 +628,93 @@ class TestLevelManager:
         restored = LevelManager(levels_dir=str(levels_dir)).get_level("Renamed Legacy")
         assert restored is not None
         assert restored.level_id == previous_id
+
+    def test_failed_legacy_cleanup_rolls_back_canonical_file(
+        self, tmp_path, monkeypatch
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        manager = LevelManager(levels_dir=str(levels_dir))
+        original = manager.get_level("Legacy Name")
+        assert original is not None
+        original_id = original.level_id
+        changed_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+        edited = Level(
+            "Renamed Legacy",
+            changed_grid,
+            level_id=original_id,
+            storage_path=legacy_path,
+        )
+        original_unlink = Path.unlink
+
+        def fail_legacy_unlink(path, *args, **kwargs):
+            if path == legacy_path:
+                raise OSError("injected legacy cleanup failure")
+            return original_unlink(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "unlink", fail_legacy_unlink)
+
+        with pytest.raises(LevelPersistenceError, match="could not be saved"):
+            manager.save_level(edited)
+
+        assert legacy_path.exists()
+        assert list(levels_dir.glob("*.json")) == [legacy_path]
+        assert manager.get_level("Legacy Name") is original
+        assert manager.get_level("Renamed Legacy") is None
+        assert original.level_id == original_id
+
+        restarted = LevelManager(levels_dir=str(levels_dir))
+        assert restarted.get_level("Legacy Name") is not None
+        assert restarted.get_level("Renamed Legacy") is None
+
+    def test_interrupted_legacy_migration_prefers_canonical_duplicate_id(
+        self, tmp_path
+    ):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        logical_id = uuid5(NAMESPACE_URL, legacy_path.name.casefold()).hex
+        canonical_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 2, 3, 1],
+            [1, 1, 1, 1, 1],
+        ]
+        canonical_path = levels_dir / f"{logical_id}.json"
+        canonical_path.write_text(
+            json.dumps(
+                {
+                    "name": "Renamed Legacy",
+                    "grid": canonical_grid,
+                    "id": logical_id,
+                    "source": "custom",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+        custom_levels = [
+            level for level in manager.levels.values() if level.source == "custom"
+        ]
+
+        assert len(custom_levels) == 1
+        assert custom_levels[0].name == "Renamed Legacy"
+        assert custom_levels[0].level_id == logical_id
+        assert custom_levels[0].storage_path == canonical_path
+        assert custom_levels[0].initial_grid.tolist() == canonical_grid
 
     def test_ambiguous_legacy_names_are_kept_with_deterministic_labels(self, tmp_path):
         levels_dir = tmp_path / "levels"
@@ -666,6 +831,7 @@ class TestDefaultLevelsIntegrity:
 
             # 8. Not complete initially
             assert not level.is_complete(), f"{name} is complete initially"
+            level.validate_structure()
 
 
 class TestDefaultLevelsMetadata:

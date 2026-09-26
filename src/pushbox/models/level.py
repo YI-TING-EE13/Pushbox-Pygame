@@ -1,6 +1,7 @@
 """Level data model."""
 
 import json
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Optional
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
@@ -8,6 +9,10 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 import numpy as np
 
 from ..utils.constants import DEFAULT_LEVELS, CellType
+
+
+class LevelPersistenceError(Exception):
+    """Raised when a level could not be persisted without losing consistency."""
 
 
 class Level:
@@ -89,26 +94,68 @@ class Level:
         if self.is_valid_position(row, col):
             self.grid[row, col] = value
 
+    @staticmethod
+    def _validate_grid_values(grid: np.ndarray, *, allow_box_on_target: bool) -> None:
+        """Validate grid shape and cell representation without checking counts."""
+        if grid.ndim != 2 or grid.shape[0] == 0 or grid.shape[1] == 0:
+            raise ValueError("Level grid must be a non-empty rectangular grid.")
+        if not np.issubdtype(grid.dtype, np.integer):
+            raise ValueError("Level grid cells must be integers.")
+
+        maximum_cell = (
+            CellType.BOX_ON_TARGET if allow_box_on_target else CellType.PLAYER
+        )
+        if np.any(grid < CellType.EMPTY) or np.any(grid > maximum_cell):
+            raise ValueError("Level grid contains an invalid cell value.")
+
+    def validate_structure(self) -> None:
+        """Validate the level's starting and current grids against Sokoban rules.
+
+        Raises:
+            ValueError: If either grid is malformed or has invalid player, box, or
+                goal counts.
+        """
+        self._validate_grid_values(self.initial_grid, allow_box_on_target=False)
+        self._validate_grid_values(self.grid, allow_box_on_target=True)
+        if self.grid.shape != self.initial_grid.shape:
+            raise ValueError(
+                "Runtime level grid shape does not match its initial grid."
+            )
+
+        initial_players = int(np.count_nonzero(self.initial_grid == CellType.PLAYER))
+        initial_boxes = int(np.count_nonzero(self.initial_grid == CellType.BOX))
+        goal_count = int(np.count_nonzero(self.initial_grid == CellType.TARGET))
+        if initial_players != 1:
+            raise ValueError("A level must contain exactly one player.")
+        if goal_count == 0:
+            raise ValueError("A level must contain at least one goal.")
+        if initial_boxes != goal_count:
+            raise ValueError(
+                "Custom levels need matching, non-zero box and target counts."
+            )
+
+        current_players = int(np.count_nonzero(self.grid == CellType.PLAYER))
+        current_boxes = int(
+            np.count_nonzero(np.isin(self.grid, [CellType.BOX, CellType.BOX_ON_TARGET]))
+        )
+        if current_players != 1:
+            raise ValueError("A runtime level must contain exactly one player.")
+        if current_boxes != goal_count:
+            raise ValueError("Runtime box count must match the number of goals.")
+
     def is_complete(self) -> bool:
         """Check if level is complete (all boxes on targets).
 
         Returns:
             True if level is complete.
         """
-        if self.grid.shape != self.initial_grid.shape:
+        try:
+            self.validate_structure()
+        except (AttributeError, TypeError, ValueError):
             return False
 
-        target_mask = np.isin(
-            self.initial_grid, [CellType.TARGET, CellType.BOX_ON_TARGET]
-        )
-        target_positions = list(zip(*np.where(target_mask)))
-        box_count = int(
-            np.count_nonzero(np.isin(self.grid, [CellType.BOX, CellType.BOX_ON_TARGET]))
-        )
-        if not target_positions:
-            return box_count == 0
-
-        return box_count == len(target_positions) and all(
+        target_positions = zip(*np.where(self.initial_grid == CellType.TARGET))
+        return all(
             self.grid[row, col] == CellType.BOX_ON_TARGET
             for row, col in target_positions
         )
@@ -209,10 +256,7 @@ class LevelManager:
         if not self.levels_dir.exists():
             return
 
-        builtin_names = {"level 0"}
-        builtin_names.update(name.casefold() for name in DEFAULT_LEVELS)
-        used_names = set(builtin_names)
-
+        candidates: list[Level] = []
         for level_file in sorted(
             self.levels_dir.glob("*.json"), key=lambda path: path.name.casefold()
         ):
@@ -237,48 +281,17 @@ class LevelManager:
                 if not isinstance(grid, list) or not grid:
                     raise TypeError("Level grid must be a non-empty list of lists.")
 
-                rows = len(grid)
-                if rows == 0:
-                    raise ValueError("Level grid has 0 rows.")
-
-                # Check list of lists and rectangularity
                 if not isinstance(grid[0], list):
                     raise TypeError("Level grid must be a list of lists.")
                 cols = len(grid[0])
                 if cols == 0:
                     raise ValueError("Level grid rows cannot be empty.")
 
-                player_count = 0
-                box_count = 0
-                target_count = 0
                 for r_idx, row in enumerate(grid):
                     if not isinstance(row, list):
                         raise TypeError(f"Row {r_idx} in level grid is not a list.")
                     if len(row) != cols:
                         raise ValueError("Level grid must be rectangular.")
-                    for c_idx, cell in enumerate(row):
-                        if (
-                            not isinstance(cell, int)
-                            or isinstance(cell, bool)
-                            or cell < 0
-                            or cell > 4
-                        ):
-                            raise ValueError(
-                                f"Invalid cell value {cell} at "
-                                f"row {r_idx}, col {c_idx}. "
-                                "Must be between 0 and 4."
-                            )
-                        player_count += cell == CellType.PLAYER
-                        box_count += cell == CellType.BOX
-                        target_count += cell == CellType.TARGET
-
-                if player_count != 1:
-                    raise ValueError("Custom levels must contain exactly one player.")
-                if box_count < 1 or box_count != target_count:
-                    raise ValueError(
-                        "Custom levels need matching, non-zero box and target counts."
-                    )
-
                 raw_id = data.get("id")
                 try:
                     level_id = UUID(raw_id).hex if isinstance(raw_id, str) else None
@@ -287,38 +300,15 @@ class LevelManager:
                 if level_id is None:
                     level_id = uuid5(NAMESPACE_URL, level_file.name.casefold()).hex
 
-                if any(
-                    existing.level_id == level_id
-                    for existing in self.levels.values()
-                    if existing.source == "custom"
-                ):
-                    level_id = uuid5(
-                        NAMESPACE_URL, f"duplicate:{level_file.name.casefold()}"
-                    ).hex
-
-                display_name = name
-                if display_name.casefold() in builtin_names:
-                    display_name = f"{name} (Custom)"
-                suffix = 2
-                base_name = display_name
-                while display_name.casefold() in used_names:
-                    display_name = f"{base_name} ({suffix})"
-                    suffix += 1
-
-                # Built-in levels have a separate, immutable source identity.
                 level = Level(
-                    display_name,
+                    name,
                     grid,
                     level_id=level_id,
                     source="custom",
                     storage_path=level_file,
                 )
-                # Verify unpacking shape
-                if level.rows != rows or level.cols != cols:
-                    raise ValueError("Level grid shape unpacking mismatch.")
-
-                self.levels[level.name] = level
-                used_names.add(level.name.casefold())
+                level.validate_structure()
+                candidates.append(level)
 
             except Exception as e:
                 # Output details to stderr as requested
@@ -328,6 +318,57 @@ class LevelManager:
                     f"[{err_type}]: {e}",
                     file=sys.stderr,
                 )
+
+        # A migration can be interrupted after the canonical file is written but
+        # before its legacy source is removed. Keep one deterministic record per ID.
+        selected_by_id: dict[str, Level] = {}
+        for candidate in candidates:
+            candidate_id = candidate.level_id
+            if candidate_id is None:
+                continue
+            current = selected_by_id.get(candidate_id)
+            if current is None:
+                selected_by_id[candidate_id] = candidate
+                continue
+
+            candidate_path = candidate.storage_path
+            current_path = current.storage_path
+            candidate_is_canonical = (
+                candidate_path is not None
+                and candidate_path.stem.casefold() == candidate_id.casefold()
+            )
+            current_is_canonical = (
+                current_path is not None
+                and current_path.stem.casefold() == candidate_id.casefold()
+            )
+            if candidate_is_canonical and not current_is_canonical:
+                selected_by_id[candidate_id] = candidate
+            elif candidate_is_canonical == current_is_canonical:
+                candidate_key = candidate_path.name.casefold() if candidate_path else ""
+                current_key = current_path.name.casefold() if current_path else ""
+                if candidate_key < current_key:
+                    selected_by_id[candidate_id] = candidate
+
+        builtin_names = {"level 0"}
+        builtin_names.update(name.casefold() for name in DEFAULT_LEVELS)
+        used_names = set(builtin_names)
+        for level in sorted(
+            selected_by_id.values(),
+            key=lambda item: (
+                item.storage_path.name.casefold() if item.storage_path else ""
+            ),
+        ):
+            display_name = level.name.strip()
+            if display_name.casefold() in builtin_names:
+                display_name = f"{display_name} (Custom)"
+            suffix = 2
+            base_name = display_name
+            while display_name.casefold() in used_names:
+                display_name = f"{base_name} ({suffix})"
+                suffix += 1
+            level.name = display_name
+            self.levels[level.name] = level
+            used_names.add(level.name.casefold())
 
     def get_level(self, name: str) -> Optional[Level]:
         """Get a level by name.
@@ -366,6 +407,7 @@ class LevelManager:
         Args:
             level: Level to save.
         """
+        level.validate_structure()
         display_name = level.name.strip()
         if not display_name:
             raise ValueError("Custom level name cannot be empty.")
@@ -378,17 +420,16 @@ class LevelManager:
         same_name = self.levels.get(display_name)
         if same_name is not None and same_name.source == "builtin":
             raise ValueError("Custom levels cannot replace built-in levels.")
-        if level.level_id is None and same_name is not None:
-            level.level_id = same_name.level_id
-            level.storage_path = same_name.storage_path
 
         previous_name = None
+        level_id = level.level_id
+        storage_path = level.storage_path
         if level.level_id is not None:
             for name, existing in self.levels.items():
                 if existing.source == "custom" and existing.level_id == level.level_id:
                     previous_name = name
-                    if level.storage_path is None:
-                        level.storage_path = existing.storage_path
+                    if storage_path is None:
+                        storage_path = existing.storage_path
                     break
 
         normalized_name = display_name.casefold()
@@ -398,27 +439,37 @@ class LevelManager:
             if existing_name.casefold() == normalized_name:
                 raise ValueError("A level with this name already exists.")
 
-        level.name = display_name
-        level.source = "custom"
-        if level.level_id is None:
-            level.level_id = uuid4().hex
+        if level_id is None:
+            level_id = uuid4().hex
 
-        self.levels_dir.mkdir(parents=True, exist_ok=True)
-        destination = self.levels_dir / f"{level.level_id}.json"
-        source_path = level.storage_path
-        if source_path is not None:
-            source_path = source_path.resolve()
-        resolved_destination = destination.resolve()
-
-        if destination.exists() and source_path != resolved_destination:
-            # Do not overwrite a file that this manager did not load as this level.
-            while destination.exists():
-                level.level_id = uuid4().hex
-                destination = self.levels_dir / f"{level.level_id}.json"
+        try:
+            self.levels_dir.mkdir(parents=True, exist_ok=True)
+            destination = self.levels_dir / f"{level_id}.json"
+            source_path = storage_path
+            if source_path is not None:
+                source_path = source_path.resolve()
             resolved_destination = destination.resolve()
 
+            if destination.exists() and source_path != resolved_destination:
+                # Do not overwrite a file not loaded as this level.
+                while destination.exists():
+                    level_id = uuid4().hex
+                    destination = self.levels_dir / f"{level_id}.json"
+                resolved_destination = destination.resolve()
+
+            is_legacy_migration = (
+                source_path is not None
+                and source_path != resolved_destination
+                and source_path.parent == self.levels_dir.resolve()
+                and source_path.exists()
+            )
+        except OSError as exc:
+            raise LevelPersistenceError("The level could not be saved.") from exc
+
+        destination_created = False
         data = level.to_dict()
-        data["id"] = level.level_id
+        data["name"] = display_name
+        data["id"] = level_id
         data["source"] = "custom"
         temporary = self.levels_dir / f".{uuid4().hex}.tmp"
         try:
@@ -428,22 +479,36 @@ class LevelManager:
                 temporary.replace(destination)
             else:
                 temporary.rename(destination)
+                destination_created = True
+
+            if is_legacy_migration and source_path is not None:
+                source_path.unlink()
+        except OSError as exc:
+            if (
+                destination_created
+                and is_legacy_migration
+                and source_path is not None
+                and source_path.exists()
+            ):
+                try:
+                    destination.unlink()
+                except OSError as rollback_error:
+                    raise LevelPersistenceError(
+                        "Level migration failed and its rollback was incomplete."
+                    ) from rollback_error
+            raise LevelPersistenceError("The level could not be saved.") from exc
         finally:
             if temporary.exists():
-                temporary.unlink()
+                with suppress(OSError):
+                    temporary.unlink()
 
-        if (
-            source_path is not None
-            and source_path != resolved_destination
-            and source_path.parent == self.levels_dir.resolve()
-            and source_path.exists()
-        ):
-            source_path.unlink()
-
-        if previous_name is not None and previous_name != level.name:
+        if previous_name is not None and previous_name != display_name:
             del self.levels[previous_name]
+        level.name = display_name
+        level.source = "custom"
+        level.level_id = level_id
         level.storage_path = destination
-        self.levels[level.name] = level
+        self.levels[display_name] = level
 
     def delete_level(self, name: str) -> bool:
         """Delete a custom level.
