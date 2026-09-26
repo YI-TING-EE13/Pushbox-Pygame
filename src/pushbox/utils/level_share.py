@@ -11,7 +11,10 @@ from typing import Any
 class LevelShareError(Exception):
     """Custom exception raised during level import/export operations."""
 
-    pass
+    def __init__(self, translation_key: str, **values: object) -> None:
+        from .i18n import t
+
+        super().__init__(t(translation_key).format(**values))
 
 
 def sanitize_level_name(name: str) -> str:
@@ -56,32 +59,32 @@ def deduplicate_level_name(name: str, existing_names: list[str]) -> str:
 def validate_import_payload(payload_dict: Any) -> None:
     """Validate a decompressed dict payload against strict safety rules."""
     if not isinstance(payload_dict, dict):
-        raise LevelShareError("分享碼格式不正確（必須是 JSON 物件）。")
+        raise LevelShareError("level_share.error.payload_object")
 
     schema = payload_dict.get("schema")
     if schema != "pushbox-level-share-v1":
-        raise LevelShareError("不支援此分享碼的版本。")
+        raise LevelShareError("level_share.error.schema")
 
     name = payload_dict.get("name")
     if name is not None and not isinstance(name, str):
-        raise LevelShareError("關卡名稱必須是文字。")
+        raise LevelShareError("level_share.error.name")
 
     grid = payload_dict.get("grid")
     if not isinstance(grid, list) or not grid:
-        raise LevelShareError("關卡資料不合法：網格不可為空。")
+        raise LevelShareError("level_share.error.grid_empty")
 
     rows = len(grid)
     for r_idx, row in enumerate(grid):
         if not isinstance(row, list):
-            raise LevelShareError(f"關卡資料不合法：第 {r_idx} 行必須是列表。")
+            raise LevelShareError("level_share.error.row_type", row=r_idx)
 
     cols = len(grid[0])
     for _r_idx, row in enumerate(grid):
         if len(row) != cols:
-            raise LevelShareError("關卡資料不合法：網格必須是矩形。")
+            raise LevelShareError("level_share.error.not_rectangular")
 
     if not (5 <= rows <= 20) or not (5 <= cols <= 20):
-        raise LevelShareError("關卡資料不合法：地圖尺寸需在 5x5 到 20x20 之間。")
+        raise LevelShareError("level_share.error.dimensions")
 
     # Allowed cells are 0 (EMPTY), 1 (WALL), 2 (TARGET), 3 (BOX), 4 (PLAYER)
     # 5 is not allowed in imported starting grid
@@ -93,7 +96,7 @@ def validate_import_payload(payload_dict: Any) -> None:
         for c in range(cols):
             cell = grid[r][c]
             if not isinstance(cell, int) or cell < 0 or cell > 4:
-                raise LevelShareError(f"關卡資料不合法：包含非法物件值 {cell}。")
+                raise LevelShareError("level_share.error.cell", cell=cell)
             if cell == 4:  # CellType.PLAYER
                 player_count += 1
             elif cell == 3:  # CellType.BOX
@@ -102,21 +105,23 @@ def validate_import_payload(payload_dict: Any) -> None:
                 target_count += 1
 
     if player_count != 1:
-        raise LevelShareError("關卡資料不合法：必須恰好只有 1 位玩家。")
+        raise LevelShareError("level_share.error.players")
     if box_count < 1:
-        raise LevelShareError("關卡資料不合法：至少需要一個箱子。")
+        raise LevelShareError("level_share.error.boxes")
     if box_count != target_count:
         raise LevelShareError(
-            f"關卡資料不合法：箱子({box_count})與目標({target_count})數量需一致。"
+            "level_share.error.box_target_counts",
+            boxes=box_count,
+            targets=target_count,
         )
 
     # Perimeter wall check
     for c in range(cols):
         if grid[0][c] != 1 or grid[rows - 1][c] != 1:
-            raise LevelShareError("關卡資料不合法：外圍邊界必須完全封閉為牆壁。")
+            raise LevelShareError("level_share.error.perimeter")
     for r in range(rows):
         if grid[r][0] != 1 or grid[r][cols - 1] != 1:
-            raise LevelShareError("關卡資料不合法：外圍邊界必須完全封閉為牆壁。")
+            raise LevelShareError("level_share.error.perimeter")
 
 
 def export_level_to_code(name: str, grid: list[list[int]]) -> str:
@@ -134,55 +139,55 @@ def export_level_to_code(name: str, grid: list[list[int]]) -> str:
         b64 = base64.b64encode(compressed).decode("ascii")
         return f"PBX_{b64}"
     except Exception as e:
-        raise LevelShareError(f"匯出失敗，請確認地圖資料完整。({e})") from e
+        raise LevelShareError("level_share.error.export") from e
 
 
 def import_level_from_code(code: str) -> dict[str, Any]:
     """Import a level payload dictionary from a PBX_ code string."""
     if not isinstance(code, str):
-        raise LevelShareError("分享碼格式不正確（必須是字串）。")
+        raise LevelShareError("level_share.error.code_type")
 
     code = code.strip()
     if len(code) > 20000:
-        raise LevelShareError("分享碼過長或資料過大。")
+        raise LevelShareError("level_share.error.too_large")
 
     if not code.startswith("PBX_"):
-        raise LevelShareError("分享碼格式不正確（必須以 PBX_ 開頭）。")
+        raise LevelShareError("level_share.error.prefix")
 
     b64_part = code[4:]
 
     try:
         compressed = base64.b64decode(b64_part)
     except Exception as e:
-        raise LevelShareError("分享碼格式不正確（無法進行 Base64 解碼）。") from e
+        raise LevelShareError("level_share.error.base64") from e
 
     # Preliminary size check of compressed data
     if len(compressed) > 100000:
-        raise LevelShareError("分享碼解壓後資料過大。")
+        raise LevelShareError("level_share.error.too_large")
 
     try:
         utf8_bytes = zlib.decompress(compressed)
     except Exception as e:
-        raise LevelShareError("分享碼格式不正確（無法進行 zlib 解壓縮）。") from e
+        raise LevelShareError("level_share.error.compression") from e
 
     # STRICT check on decompressed string length (max 100,000 characters)
     if len(utf8_bytes) > 100000:
-        raise LevelShareError("分享碼解壓後資料過大。")
+        raise LevelShareError("level_share.error.too_large")
 
     try:
         payload_str = utf8_bytes.decode("utf-8")
     except Exception as e:
-        raise LevelShareError("分享碼格式不正確（無法進行 UTF-8 解碼）。") from e
+        raise LevelShareError("level_share.error.utf8") from e
 
     try:
         payload = json.loads(payload_str)
     except Exception as e:
-        raise LevelShareError("分享碼格式不正確（無法進行 JSON 解析）。") from e
+        raise LevelShareError("level_share.error.json") from e
 
     validate_import_payload(payload)
     if isinstance(payload, dict):
         return payload
-    raise LevelShareError("分享碼格式不正確。")
+    raise LevelShareError("level_share.error.invalid")
 
 
 def best_effort_copy_to_clipboard(text: str) -> bool:

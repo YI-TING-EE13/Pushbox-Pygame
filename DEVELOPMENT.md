@@ -383,6 +383,16 @@ gantt
 
 ---
 
+### 2026-09-26 — v1.0.0 Review Remediation
+- [x] Custom levels use persistent IDs and isolated storage paths; legacy files are loaded deterministically, validated, and migrated after a successful write.
+- [x] Custom grids require one player and matching non-zero box/target counts. Completion checks every target and rejects extra boxes or mismatched runtime grids.
+- [x] Editor exits, including window close and Ctrl+Q, use the unsaved-changes confirmation. Gameplay time advances from active frame deltas and stays frozen while paused or off-screen; returning from Settings preserves the paused game.
+- [x] Multi-step Redo preserves its remaining history. Built-in campaign progress is classified by level source, and the animation preference gates gameplay effects and screen fades.
+- [x] Main-menu and level-sharing feedback use the selected UI language.
+- **Verification**: 288 tests passed; Ruff check and format check passed; MyPy passed for `src/`. A headless Pygame screen-render smoke test passed.
+
+---
+
 ## 5. Deferred / Not for v1.0.0
 
 為確保 `v1.0.0` 能夠在短期內高規格收尾發布，以下高複雜度或需遠端網路支援的項目**明確列為暫緩**，不在 v1.0.0 考慮範圍內：
