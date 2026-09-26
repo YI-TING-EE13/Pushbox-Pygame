@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-200+%20passing-green.svg)](#🛠️-for-developers)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Ruff-black.svg)](#🛠️-for-developers)
-[![Version](https://img.shields.io/badge/Version-v1.0.0-blue.svg)](#-roadmap)
+[![Version](https://img.shields.io/badge/Version-v1.0.1-blue.svg)](#-roadmap)
 
 ## Overview
 
@@ -46,10 +46,10 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Windows Standalone Package (v1.0.0 Official Stable Release) is now available!**
-> The Windows `onedir` standalone packaging pipeline has been officially released, and compiled in pure GUI windowed mode (`console=False`). Standalone ZIP packages are officially published on GitHub Releases.
+> **Current source version: v1.0.1 Stability and Persistence Patch.**
+> This patch builds on the v1.0.0 stable release. The Windows `onedir` package uses the existing pure GUI windowed packaging pipeline (`console=False`). The expected ZIP filename is `Pushbox-Pygame-v1.0.1-windows-x64.zip`; check GitHub Releases for its availability.
 > 
-> **Verified Smoke Test Scenarios:**
+> **Smoke test scenarios verified for the v1.0.0 package:**
 > - Clean extraction and execution from empty folders.
 > - Execution from directory paths containing spaces and Chinese characters.
 > - Pure GUI windowed mode execution with **no terminal command console (CMD) windows appearing**.
@@ -58,11 +58,11 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 > - **Single-Instance Protection**: A ctypes Win32 named mutex ensures that repeatedly launching the executable only opens a single game window. Any additional instances exit silently.
 > - **Optional SFX Support**: Implemented a defense-in-depth gameplay SFX system powered by lightweight procedurally generated CC0 wave sounds, completely optional and safe against driver initialization errors.
 > 
-> *The stable release is **v1.0.0**, which consolidates the fully featured, highly stable puzzle adventure, including an optional procedural CC0 SFX audio system, comprehensive i18n English/Traditional Chinese localization, an in-game solver hint helper, and custom app icon packaging.*
+> *v1.0.1 updates the v1.0.0 stable baseline with persistence and gameplay correctness fixes. It does not add a gameplay feature.*
 
 ### How to Run the Packaged Version
 
-1. **Obtain the ZIP archive**: Acquire the standalone package `Pushbox-Pygame-v1.0.0-windows-x64.zip` (generated via the official local build pipelines).
+1. **Check GitHub Releases for the Windows package**: The expected standalone ZIP filename is `Pushbox-Pygame-v1.0.1-windows-x64.zip`; availability is shown on the release page.
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
@@ -272,6 +272,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 - **v0.9.3 (Traditional Chinese Localization)**: Added comprehensive English and Traditional Chinese localization across core UI screens and persisted language settings.
 - **v0.9.5 (Official SFX Release ✅)**: Implemented an optional procedurally generated CC0 gameplay sound effects framework (move, push, bump, target, undo, redo, and win).
 - **v1.0.0 (Official Stable Release ✅)**: Stable official player-facing release.
+- **v1.0.1 (Stability and Persistence Patch)**: Version metadata and release notes prepared; package availability is shown on GitHub Releases.
 - **Future BGM & Features (Deferred)**: Background music, online sharing servers, and cloud saving remain deferred.
 
 ---
