@@ -4,10 +4,19 @@ import json
 import os
 import sys
 
+import numpy as np
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.pushbox.models.level import Level, LevelManager
 from src.pushbox.utils.constants import DEFAULT_LEVEL_METADATA, DEFAULT_LEVELS, CellType
+
+VALID_CUSTOM_GRID = [
+    [1, 1, 1, 1, 1],
+    [1, 4, 3, 2, 1],
+    [1, 1, 1, 1, 1],
+]
 
 # ---------------------------------------------------------------------------
 # Level creation and basic properties
@@ -180,6 +189,20 @@ class TestLevelCompletion:
         level = Level("No Boxes", grid)
         assert level.is_complete() is True
 
+    def test_extra_box_prevents_completion_when_all_targets_are_filled(self):
+        grid = [
+            [1, 1, 1, 1, 1, 1],
+            [1, 4, 5, 3, 1, 1],
+            [1, 1, 1, 1, 1, 1],
+        ]
+        level = Level("Extra Box", grid)
+        assert level.is_complete() is False
+
+    def test_mismatched_runtime_grid_shape_is_not_complete(self):
+        level = Level("Resized Runtime Grid", VALID_CUSTOM_GRID)
+        level.grid = np.array([[CellType.BOX_ON_TARGET]])
+        assert level.is_complete() is False
+
     def test_deadlock_corner(self):
         """Box in a corner (wall above and wall to the left) => deadlocked."""
         grid = [
@@ -288,18 +311,21 @@ class TestLevelManager:
         levels_dir = tmp_path / "levels"
         mgr = LevelManager(levels_dir=str(levels_dir))
 
-        grid = [[1, 1, 1], [1, 4, 1], [1, 1, 1]]
-        custom = Level("Custom Test", grid)
+        custom = Level("Custom Test", VALID_CUSTOM_GRID)
         mgr.save_level(custom)
 
-        # Verify file was written
-        expected_file = levels_dir / "Custom_Test.json"
-        assert expected_file.exists()
+        # Custom files use persistent IDs instead of display-name-derived paths.
+        level_files = list(levels_dir.glob("*.json"))
+        assert len(level_files) == 1
+        expected_file = level_files[0]
+        assert expected_file.stem == custom.level_id
 
         # Verify data is correct
         with open(expected_file, encoding="utf-8") as f:
             data = json.load(f)
         assert data["name"] == "Custom Test"
+        assert data["id"] == custom.level_id
+        assert data["source"] == "custom"
 
         # Verify in-memory access
         loaded = mgr.get_level("Custom Test")
@@ -331,10 +357,7 @@ class TestLevelManager:
         levels_dir = tmp_path / "levels"
         levels_dir.mkdir()
 
-        level_data = {
-            "name": "Disk Level",
-            "grid": [[1, 1, 1], [1, 4, 1], [1, 1, 1]],
-        }
+        level_data = {"name": "Disk Level", "grid": VALID_CUSTOM_GRID}
         with open(levels_dir / "Disk_Level.json", "w", encoding="utf-8") as f:
             json.dump(level_data, f)
 
@@ -450,7 +473,7 @@ class TestLevelManager:
         (levels_dir / "bad.json").write_text("{broken", encoding="utf-8")
 
         # 2. Write one good level
-        good_data = {"name": "Good Level", "grid": [[1, 1, 1], [1, 4, 1], [1, 1, 1]]}
+        good_data = {"name": "Good Level", "grid": VALID_CUSTOM_GRID}
         with open(levels_dir / "good.json", "w", encoding="utf-8") as f:
             json.dump(good_data, f)
 
@@ -460,6 +483,132 @@ class TestLevelManager:
         assert mgr.get_level("Good Level") is not None
         # Default levels also loaded
         assert "Level 1" in mgr.get_level_names()
+
+    def test_normalized_names_have_distinct_persistent_identity(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        manager = LevelManager(levels_dir=str(levels_dir))
+        other_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 0, 3, 2],
+            [1, 1, 1, 1, 1],
+        ]
+
+        first = Level("A B", VALID_CUSTOM_GRID)
+        second = Level("A_B", other_grid)
+        manager.save_level(first)
+        first_saved_grid = manager.get_level("A B").initial_grid.copy()
+        manager.save_level(second)
+
+        assert first.level_id != second.level_id
+        assert len(list(levels_dir.glob("*.json"))) == 2
+        assert (manager.get_level("A B").initial_grid == first_saved_grid).all()
+
+        reloaded = LevelManager(levels_dir=str(levels_dir))
+        assert reloaded.get_level("A B") is not None
+        assert reloaded.get_level("A_B") is not None
+        assert reloaded.get_level("A B").level_id == first.level_id
+        assert reloaded.get_level("A_B").level_id == second.level_id
+        assert reloaded.get_level("A B").get_cell(1, 2) == CellType.BOX
+        assert reloaded.get_level("A_B").get_cell(1, 3) == CellType.BOX
+
+    def test_custom_name_cannot_replace_builtin_level(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        manager = LevelManager(levels_dir=str(levels_dir))
+        original = manager.get_level("Level 1").initial_grid.copy()
+
+        with pytest.raises(ValueError, match="built-in"):
+            manager.save_level(Level("Level 1", VALID_CUSTOM_GRID))
+
+        reloaded = LevelManager(levels_dir=str(levels_dir))
+        assert reloaded.get_level("Level 1").source == "builtin"
+        assert (reloaded.get_level("Level 1").initial_grid == original).all()
+        assert not list(levels_dir.glob("*.json"))
+
+    def test_legacy_levels_remain_loadable_and_migrate_safely(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        legacy_path = levels_dir / "Legacy_Name.json"
+        legacy_path.write_text(
+            json.dumps({"name": "Legacy Name", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+        legacy = manager.get_level("Legacy Name")
+        assert legacy is not None
+        assert legacy.source == "custom"
+        assert legacy.storage_path == legacy_path
+
+        previous_id = legacy.level_id
+        legacy.name = "Renamed Legacy"
+        manager.save_level(legacy)
+
+        assert not legacy_path.exists()
+        migrated_files = list(levels_dir.glob("*.json"))
+        assert len(migrated_files) == 1
+        assert migrated_files[0].stem == previous_id
+        restored = LevelManager(levels_dir=str(levels_dir)).get_level("Renamed Legacy")
+        assert restored is not None
+        assert restored.level_id == previous_id
+
+    def test_ambiguous_legacy_names_are_kept_with_deterministic_labels(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        second_grid = [
+            [1, 1, 1, 1, 1],
+            [1, 4, 0, 3, 2],
+            [1, 1, 1, 1, 1],
+        ]
+        (levels_dir / "a.json").write_text(
+            json.dumps({"name": "Duplicate", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+        (levels_dir / "b.json").write_text(
+            json.dumps({"name": "Duplicate", "grid": second_grid}),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        first = manager.get_level("Duplicate")
+        second = manager.get_level("Duplicate (2)")
+        assert first is not None
+        assert second is not None
+        assert first.get_cell(1, 2) == CellType.BOX
+        assert second.get_cell(1, 3) == CellType.BOX
+
+    def test_legacy_custom_name_cannot_shadow_builtin(self, tmp_path):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        (levels_dir / "legacy-level-1.json").write_text(
+            json.dumps({"name": "Level 1", "grid": VALID_CUSTOM_GRID}),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        assert manager.get_level("Level 1").source == "builtin"
+        custom = manager.get_level("Level 1 (Custom)")
+        assert custom is not None
+        assert custom.source == "custom"
+
+    def test_invalid_custom_level_counts_are_rejected(self, tmp_path, capsys):
+        levels_dir = tmp_path / "levels"
+        levels_dir.mkdir()
+        invalid_grid = [
+            [1, 1, 1, 1, 1, 1],
+            [1, 4, 3, 2, 0, 2],
+            [1, 1, 1, 1, 1, 1],
+        ]
+        (levels_dir / "unbalanced.json").write_text(
+            json.dumps({"name": "Unbalanced", "grid": invalid_grid}),
+            encoding="utf-8",
+        )
+
+        manager = LevelManager(levels_dir=str(levels_dir))
+
+        assert manager.get_level("Unbalanced") is None
+        assert "matching, non-zero box and target counts" in capsys.readouterr().err
 
 
 class TestDefaultLevelsIntegrity:

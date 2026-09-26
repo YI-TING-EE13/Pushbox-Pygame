@@ -43,8 +43,12 @@ class LevelEditor:
             self.cols = existing_level.cols
             self.grid = existing_level.initial_grid.tolist()
             self.level_name = existing_level.name
+            self.level_id = existing_level.level_id
+            self.storage_path = existing_level.storage_path
         else:
             self.level_name = "Custom Level"
+            self.level_id = None
+            self.storage_path = None
 
         self.selected_tool = CellType.WALL
         self.player_placed = False
@@ -62,7 +66,7 @@ class LevelEditor:
         self.offset_x = self.sidebar_width + 20
         self.offset_y = 20
 
-        self.on_save: Optional[Callable[[Level], None]] = None
+        self.on_save: Optional[Callable[[Level], Optional[bool]]] = None
         self.on_exit: Optional[Callable[[], None]] = None
         self.on_playtest: Optional[Callable[[Level], None]] = None
 
@@ -504,11 +508,21 @@ class LevelEditor:
             return
 
         trimmed_grid = [row[:] for row in self.grid]
-        level = Level(level_name, trimmed_grid)
+        level = Level(
+            level_name,
+            trimmed_grid,
+            level_id=self.level_id,
+            source="custom",
+            storage_path=self.storage_path,
+        )
         if self.on_save:
+            saved = self.on_save(level)
+            if saved is False:
+                return
+            self.level_id = level.level_id
+            self.storage_path = level.storage_path
             self.original_grid = trimmed_grid
             self.original_name = level_name
-            self.on_save(level)
 
     def draw(self) -> None:
         """Draw the entire editor interface including sidebar, tools, and grid."""

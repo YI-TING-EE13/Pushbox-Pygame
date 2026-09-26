@@ -120,4 +120,4 @@ def test_manual_path_injection_override(tmp_path):
     custom_lvl = Level("Injected Level", [[1, 1, 1], [1, 4, 1], [1, 1, 1]])
     lvl_mgr.save_level(custom_lvl)
     assert custom_levels.exists()
-    assert (custom_levels / "Injected_Level.json").exists()
+    assert (custom_levels / f"{custom_lvl.level_id}.json").exists()
