@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## v1.0.1 — Stability and Persistence Patch (2026-09-26)
+
+### Fixed
+
+* Prevented custom levels from overwriting each other because of display-name/file collisions.
+* Hardened custom-level identity, legacy migration, interrupted-save recovery, and logical deletion.
+* Prevented failed migrations or transaction residue from resurrecting deleted or uncommitted levels.
+* Strengthened malformed-level validation and completion semantics.
+* Fixed multi-step Redo history behavior.
+* Corrected gameplay timing outside active gameplay.
+* Prevented state-changing gameplay input during outgoing transitions.
+* Preserved unsaved editor drafts through test-play exit paths.
+* Corrected built-in/custom level classification and campaign statistics.
+* Made animation settings and affected localization paths consistent.
+* Restored Python 3.9 runtime compatibility.
+* Fixed case-insensitive shared-level import naming conflicts.
+
+### Validation
+
+* 331 automated tests passed on merged `main`.
+* Ruff linting, Ruff format check, and MyPy passed.
+* Python 3.9 runtime/headless persistence checks passed during qualification.
+
+### Notes
+
+* This is a patch release based on v1.0.0.
+* Existing v1.0.0 release/tag history remains unchanged.
+* No new gameplay feature is introduced by this release.
+
+---
+
 ## v1.0.0 — Stable Official Release (2026-05-29)
 
 ### Added
