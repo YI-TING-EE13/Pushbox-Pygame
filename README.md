@@ -46,23 +46,22 @@ Pushbox-Pygame is a modern Sokoban puzzle game built with Python and Pygame. It 
 ### Current Status
 
 > [!IMPORTANT]
-> **Current source version: v1.0.1 Stability and Persistence Patch.**
-> This patch builds on the v1.0.0 stable release. The Windows `onedir` package uses the existing pure GUI windowed packaging pipeline (`console=False`). The expected ZIP filename is `Pushbox-Pygame-v1.0.1-windows-x64.zip`; check GitHub Releases for its availability.
+> **Current stable release: v1.0.1 — Stability and Persistence Patch.**
+> The Windows standalone package is published on [GitHub Releases](https://github.com/YI-TING-EE13/Pushbox-Pygame/releases/tag/v1.0.1): `Pushbox-Pygame-v1.0.1-windows-x64.zip`.
 > 
-> **Smoke test scenarios verified for the v1.0.0 package:**
-> - Clean extraction and execution from empty folders.
-> - Execution from directory paths containing spaces and Chinese characters.
-> - Pure GUI windowed mode execution with **no terminal command console (CMD) windows appearing**.
-> - Automated runtime sibling creation of `data/` (saves, configurations) and `levels/` (custom editor levels) next to the executable for absolute save file portability.
-> - Procedural vector player character (procedural bear fallback) rendering works reliably and beautifully without requiring external `player.jpeg` image files.
-> - **Single-Instance Protection**: A ctypes Win32 named mutex ensures that repeatedly launching the executable only opens a single game window. Any additional instances exit silently.
-> - **Optional SFX Support**: Implemented a defense-in-depth gameplay SFX system powered by lightweight procedurally generated CC0 wave sounds, completely optional and safe against driver initialization errors.
+> The v1.0.1 Windows package passed release smoke tests covering:
+> - Clean extraction.
+> - Launching from a path containing spaces and Chinese characters.
+> - The About screen showing version v1.0.1.
+> - Portable runtime storage in `data/` and `levels/` next to the executable.
+> - Built-in gameplay and manual Windows GUI acceptance.
+> - SHA-256 verification.
 > 
-> *v1.0.1 updates the v1.0.0 stable baseline with persistence and gameplay correctness fixes. It does not add a gameplay feature.*
+> v1.0.1 is a stability and persistence patch based on v1.0.0; it does not add a gameplay feature.
 
 ### How to Run the Packaged Version
 
-1. **Check GitHub Releases for the Windows package**: The expected standalone ZIP filename is `Pushbox-Pygame-v1.0.1-windows-x64.zip`; availability is shown on the release page.
+1. **Download the Windows package**: The [v1.0.1 GitHub Release](https://github.com/YI-TING-EE13/Pushbox-Pygame/releases/tag/v1.0.1) provides `Pushbox-Pygame-v1.0.1-windows-x64.zip`.
 2. **Extract it**: Extract the ZIP file completely to any directory on your computer (e.g., `C:\Games\Pushbox-Pygame\`).
 3. **Run the executable**: Double-click `Pushbox-Pygame.exe` inside the extracted folder to start playing!
    - *Note on SmartScreen*: Since the executable is compiled via PyInstaller and is unsigned, Windows Defender / SmartScreen may display an "Unknown Publisher" warning on first run. This is safe and normal. Click **"More info"** and then **"Run anyway"** to launch.
@@ -272,7 +271,7 @@ All user settings, progressions, high scores, and custom maps are stored locally
 - **v0.9.3 (Traditional Chinese Localization)**: Added comprehensive English and Traditional Chinese localization across core UI screens and persisted language settings.
 - **v0.9.5 (Official SFX Release ✅)**: Implemented an optional procedurally generated CC0 gameplay sound effects framework (move, push, bump, target, undo, redo, and win).
 - **v1.0.0 (Official Stable Release ✅)**: Stable official player-facing release.
-- **v1.0.1 (Stability and Persistence Patch)**: Version metadata and release notes prepared; package availability is shown on GitHub Releases.
+- **v1.0.1 (Stability and Persistence Patch — Released ✅)**: Published the Windows standalone package on GitHub Releases and completed the release smoke tests.
 - **Future BGM & Features (Deferred)**: Background music, online sharing servers, and cloud saving remain deferred.
 
 ---
@@ -300,4 +299,4 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
 
 - **Python & Pygame**: For the robust game engine framework.
 - **Open-source community**: Contributors and supporters of standard Python game architectures.
-- *External Asset Credits*: Will be fully documented in this section before the official player-facing release. All external image assets (such as `player.jpeg`) have been removed for absolute open-source licensing compliance, transitioning to an elegant, procedurally drawn vector player character.
+- **Asset credits and licensing**: See [CREDITS.md](CREDITS.md) for asset licensing and attribution.

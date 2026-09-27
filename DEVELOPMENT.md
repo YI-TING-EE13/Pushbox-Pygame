@@ -1,5 +1,11 @@
 # Pushbox-Pygame Development Guide & Product Roadmap
 
+## Current Project Status
+
+- Current stable release: v1.0.1.
+- v1.0.1 is a completed stability and persistence patch.
+- No post-v1.0.1 work is currently committed; future work remains deferred.
+
 ## 1. Development Guide
 
 ### Prerequisites
@@ -53,7 +59,7 @@ uv run mypy src/ --explicit-package-bases
 ## 2. Historical Product / UX Audit (v0.6.0)
 
 > [!NOTE]
-> This section is preserved as a historical product audit completed in v0.6.0. It serves as valuable context for the project's design and mechanical decisions. Its recommendations have been progressively implemented (such as onboarding levels, smooth undo/redo, and minimap previews). For the active development priorities, please refer strictly to the **Current Roadmap Toward v1.0.0** in Section 4.
+> This section is preserved as a historical product audit completed in v0.6.0. It serves as valuable context for the project's design and mechanical decisions. Its recommendations have been progressively implemented (such as onboarding levels, smooth undo/redo, and minimap previews). The v1.0.0 roadmap in Section 4 records completed historical milestones; current release status appears at the top of this document.
 
 ### 一、九大體驗面向深度評估（Core UX Audit）
 
@@ -159,14 +165,14 @@ uv run mypy src/ --explicit-package-bases
 
 ---
 
-## 4. Current Roadmap Toward v1.0.0
+## 4. Completed Historical Roadmap: v1.0.0
 
-> [!IMPORTANT]
-> This is the only active productization roadmap for the project. The ultimate goal toward v1.0.0 is to **make the game highly reliable, self-contained, and packaging-ready so that general desktop players can download, unpack, and play seamlessly without a Python developer setup.**
+> [!NOTE]
+> This section preserves the completed roadmap that led to v1.0.0. The current stable release is v1.0.1, a completed stability and persistence patch. No post-v1.0.1 roadmap is currently committed.
 
 ```mermaid
 gantt
-    title Pushbox-Pygame 產品化里程碑與 v1.0.0 路線圖
+    title Pushbox-Pygame 產品化里程碑（v1.0.0 歷史路線圖）
     dateFormat  YYYY-MM-DD
     section v0.8.0 (已發布)
     Onboarding, Solver, Level Sharing :done, 2026-05-20, 2026-05-26
@@ -456,7 +462,7 @@ gantt
 ## 7. Future Technical Debt / Post-v1.0 Ideas
 
 > [!NOTE]
-> This section logs long-term technical enhancements, refactoring plans, and visual ideas designed to clean up technical debt and expand the game engine in post-v1.0 iterations. These ideas are deliberately excluded from the current v1.0.0 release scope.
+> This section records uncommitted, deferred technical-debt ideas for possible post-v1.0 work. No post-v1.0.1 feature roadmap is currently committed, and these ideas are future work rather than part of the released patch.
 
 ### 7.1 統一資源與字型管理器 (`FontManager`)
 * **現狀問題**：目前 `Menu`、`SettingsScreen`、`Renderer` 等類別在每次實例化或重繪時都單獨調用 `pygame.font.Font()` 從硬碟載入 `.ttf` 文件，造成重複 I/O 與記憶體碎片。

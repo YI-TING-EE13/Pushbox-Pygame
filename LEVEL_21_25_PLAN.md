@@ -17,7 +17,7 @@ By detailing themes, skill goals, grid shapes, and deadlocks in advance, we ensu
 
 ## 2. Design Goals
 
-All planned levels strictly follow the standards defined in [LEVEL_DESIGN.md](file:///c:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox_v1/LEVEL_DESIGN.md):
+All planned levels strictly follow the standards defined in [LEVEL_DESIGN.md](LEVEL_DESIGN.md):
 * **Graduated Complexity:** Create a smooth curve from Level 20's Advanced+ difficulty into high-tier spatial challenges.
 * **Aesthetic & Structural Uniqueness:** Avoid reskinned clones of prior levels by utilizing diverse wall topologies and room layouts.
 * **Clear Pedagogical Skills:** Each level is engineered to teach or test a specific spatial reasoning skill (e.g. routing, ordering locks, zone transferring).
@@ -41,7 +41,7 @@ The following table summarizes the proposed specifications for the next five lev
 
 ## 4. Per-Level Design Notes & Draft Grids
 
-*Note: These visual ASCII drafts have been successfully implemented and integrated in the active [constants.py](file:///c:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox_v1/src/pushbox/utils/constants.py) file.*
+*Note: These visual ASCII drafts have been successfully implemented and integrated in the active [constants.py](src/pushbox/utils/constants.py) file.*
 
 ### Level 21: Long Reposition Route
 * **Intended Mechanic:** Repositioning loops.
