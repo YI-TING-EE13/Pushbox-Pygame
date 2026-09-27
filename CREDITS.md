@@ -13,7 +13,7 @@ You can copy, modify, distribute and play the work, even for commercial purposes
 - **License**: [Creative Commons CC0 1.0 Universal / Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/)
 - **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
 - **Author/Creator**: Pushbox-Pygame project contributors
-- **Generation Source**: [scripts/generate_sfx.py](file:///scripts/generate_sfx.py) (Mathematical Waveform Synthesis)
+- **Generation Source**: [scripts/generate_sfx.py](scripts/generate_sfx.py) (Mathematical Waveform Synthesis)
 - **Generation Date**: 2026-05-27
 - **Modifications**: None (procedurally generated from scratch using pure Python algorithms)
 

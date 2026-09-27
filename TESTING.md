@@ -17,12 +17,12 @@ uv run ruff check .
 uv run ruff format --check .
 
 # Run static type checking
-uv run mypy src/
+uv run mypy src/ --explicit-package-bases
 ```
 
 ### Solver Core Automated Tests (v0.8.0 Phase 2)
 
-The pathfinding solver core (`src/pushbox/models/solver.py`) is covered by comprehensive unit tests inside [test_solver.py](file:///C:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox/tests/test_solver.py). These tests validate the solver logic independently of Pygame rendering:
+The pathfinding solver core (`src/pushbox/models/solver.py`) is covered by comprehensive unit tests inside [test_solver.py](tests/test_solver.py). These tests validate the solver logic independently of Pygame rendering:
 
 - **Level 0 Solvability**: Verifies that the onboarding tutorial-only Level 0 returns a successful `SolverStatus.SOLVED` and a valid action path.
 - **Shortest Action Path Replay**: Uses a test helper to copy a level, replay the actions step-by-step on `GameState`, and assert that the level completes successfully (victory/won state).
@@ -39,7 +39,7 @@ uv run python -m pytest tests/test_solver.py -v
 ## 2. Manual Smoke Test
 
 > [!NOTE]
-> When adding or refining default built-in levels, please check them against the design constraints, patterns, and checklists detailed in [LEVEL_DESIGN.md](file:///c:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox_v1/LEVEL_DESIGN.md).
+> When adding or refining default built-in levels, please check them against the design constraints, patterns, and checklists detailed in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
 
 Since this is a graphical game, many UX elements must be verified manually. Follow these steps to ensure the core game loop is functional.
 
@@ -259,7 +259,7 @@ The following items currently require manual visual inspection as they are not c
 這是一個專為打包後的 Windows 獨立發佈版本（Standalone Exe Release）設計的冒煙測試清單。每次重新打包發佈前，應在乾淨的 Windows 測試機或獨立虛擬機中完成以下所有項目的手動驗證：
 
 ### 1. Clean Directory Launch (全新乾淨目錄啟動)
-- [ ] 將打包產出的 ZIP 壓縮檔（例如 `Pushbox-Pygame-v0.9.0-windows-x64.zip`）複製到一個乾淨的、不包含任何舊版遊戲殘留或 Python 環境的暫存目錄。
+- [ ] 將打包產出的 ZIP 壓縮檔（例如 `Pushbox-Pygame-v<version>-windows-x64.zip`）複製到一個乾淨的、不包含任何舊版遊戲殘留或 Python 環境的暫存目錄。
 - [ ] 完整解壓縮 ZIP 檔。
 - [ ] 驗證解壓縮後的資料夾結構乾淨，不包含 `data/`（存檔與設定）或 `levels/`（自訂關卡）目錄。
 - [ ] 雙擊執行 `Pushbox-Pygame.exe`，確認遊戲能正常開啟並成功顯示開頭的 Tutorial 畫面。

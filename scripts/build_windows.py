@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build script for Windows Packaging (v0.9.0).
+"""Build script for Windows packaging.
 
 This script performs the following actions:
 1. Runs PyInstaller using pushbox.spec in onedir mode.

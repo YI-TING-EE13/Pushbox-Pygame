@@ -19,7 +19,7 @@ Default levels serve as the core progression experience for the player. These gu
 
 All default levels are stored statically within the codebase and are loaded at runtime.
 
-* **File Location:** [constants.py](file:///c:/Users/LAB-606/Desktop/Software%20Side%20Project/PushBox_v1/src/pushbox/utils/constants.py)
+* **File Location:** [constants.py](src/pushbox/utils/constants.py)
 * **Default Grid Map:** Loaded from the dictionary `DEFAULT_LEVELS`. Grids are stored as 2D lists (rows containing integer cell values).
 * **Grid Cell Key:**
   ```text

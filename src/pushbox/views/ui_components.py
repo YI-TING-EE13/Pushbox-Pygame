@@ -1925,8 +1925,8 @@ class AboutScreen:
         self.credit_lines = [
             "Code & Design: Project contributors",
             "Thanks: Python, Pygame, and the open-source community",
-            "External assets: External asset credits "
-            "will be documented before release.",
+            "External assets: Licensing and attribution are documented in "
+            "the project repository.",
         ]
 
         # Callback function for exit/back
